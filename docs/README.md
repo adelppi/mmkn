@@ -1,6 +1,6 @@
 # mmkn ドキュメント
 
-{{一行説明}}
+グループ内で発生したお金の動きを記録し、その記録から「今、誰が誰にいくら送ればよいか」を導出するシステム。
 
 ## このドキュメントの使い方
 
@@ -24,11 +24,22 @@ docs/
 ├── open-questions.md      … 未確定論点（[保留] の集約）
 ├── domain/                … 業務ルール（機能ごとに 1 ファイル）
 │   ├── _template.md       … ドメイン文書の雛形
-│   └── {{機能名}}.md
+│   ├── group.md           … グループとメンバー
+│   ├── money.md           … 金額と通貨
+│   ├── record.md          … 記録（支払いと送金）
+│   └── settlement.md      … 差額と清算案
 └── adr/                   … 技術的意思決定の記録
     ├── _template.md       … ADR の雛形
-    └── XXXX-{{英語スラッグ}}.md
+    ├── 0001-settlement-greedy.md … 清算案を貪欲法で求める
+    ├── 0002-invite-code.md       … 参加コードを cuid2 で生成する
+    ├── 0003-tech-stack.md        … 技術スタック（Next.js / Supabase / Discord HTTP Interactions）
+    ├── 0004-layers-and-dependencies.md      … 層の分け方と依存方向の機械検査
+    ├── 0005-data-access-and-authorization.md … データアクセス経路と認可の置き場所
+    ├── 0006-discord-http-interactions.md    … Discord クライアントの接続方式と実装要件
+    └── 0007-external-account-linking.md     … 外部アカウントの連携方式
 ```
+
+<!-- 0003 がスタック全体の親。0004〜0007 は 0003 を前提とする個別決定。0001・0002 はスタックに依存しない決定。 -->
 
 必要になったら文書を足してよい（用語集・データモデル・非機能要件など）。**足したらこのツリーと下の表を更新する。**
 
@@ -48,8 +59,34 @@ docs/
 
 | 事実 | 一次情報（正） |
 |---|---|
-| <!-- 例: 「プランの状態定義・遷移」 --> | <!-- 例: `domain/plan.md` --> |
-| | |
+| 持つ機能／持たない機能とその理由 | `features.md` |
+| プロダクトのビジョン・コアループ | `overview.md` |
+| ターゲット、プラットフォーム・対応地域・収益・開発体制 | `overview.md` |
+| 成功の見方（定量指標を持たないこと） | `overview.md` |
+| User / Group / Member の定義、参加コード、表示名 | `domain/group.md` |
+| グループ作成・参加・表示名変更・設定変更の振る舞い | `domain/group.md` |
+| User と外部アカウントの関係、連携・解除の振る舞い、未連携時に起きること | `domain/group.md` |
+| 「場」の定義、場と Group の対応づけ・解除、未対応の場から操作したときに起きること | `domain/group.md` |
+| 金額の表し方（整数 + 通貨）、通貨をまたがないこと | `domain/money.md` |
+| 扱う通貨の範囲（ISO 4217）と金額の上限 | `domain/money.md` |
+| Payment / Transfer の定義と属性 | `domain/record.md` |
+| 負担額の均等配分と端数の寄せ方 | `domain/record.md` |
+| 発生日の扱い（未来の日付を許すこと） | `domain/record.md` |
+| 記録の並び順 | `domain/record.md` |
+| 登録者の扱い（権限に使わないこと） | `domain/record.md` |
+| 記録の編集・削除、削除履歴を持たないこと | `domain/record.md` |
+| 同じ記録に同時に手が入ったときに起きること | `domain/record.md` |
+| 差額の導出ルールと性質 | `domain/settlement.md` |
+| 清算案の導出ルール、保存しないこと | `domain/settlement.md` |
+| 清算案の送金を記録する振る舞い（金額を登録時点で導出し直すこと） | `domain/settlement.md` |
+| 清算案の送金の組み合わせの求め方 | `adr/0001-settlement-greedy.md` |
+| 参加コードの形式と生成方法 | `adr/0002-invite-code.md` |
+| 技術スタック、サーバーレスの制約、環境変数の区分 | `adr/0003-tech-stack.md` |
+| 層の責務と依存の向き、ディレクトリ構造、依存方向の検査、テストの組み立て方 | `adr/0004-layers-and-dependencies.md` |
+| データアクセス経路、ORM、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式 | `adr/0005-data-access-and-authorization.md` |
+| Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性・コンポーネント・上限と運用 | `adr/0006-discord-http-interactions.md` |
+| 外部アカウント連携の実現方式とスコープ・トークンの扱い | `adr/0007-external-account-linking.md` |
+| まだ決まっていないこと | `open-questions.md` |
 
 ## ステータス印
 
