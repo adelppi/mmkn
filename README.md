@@ -1,105 +1,71 @@
-# AI駆動開発テンプレート
+# mmkn
 
-要件定義から実装・PR まで、Claude Code と一緒に進めるためのプロジェクト雛形。
-
-**技術スタックには依存しない。** Web でもモバイルでも CLI でも使える。
+グループ内で発生したお金の動きを記録し、その記録から「今、誰が誰にいくら送ればよいか」を導出するシステム。
 
 ## 考え方
 
-要件定義に専用コマンドは用意しない。**普通に会話して決め、`/sync-docs` で docs に落とす。**
+割り勘や立替が発生したとき、返金・キャンセル・現金で返した・アプリで送った……といった現実の出来事を一つひとつ管理し始めると、記録そのものが破綻する。
 
-そのぶん「**どこに何を書くか**」を厳格に決めてある。文書の役割が混ざると、人も AI も「どこを読めば正しいか」が分からなくなるため。
+**mmkn は現実の出来事を管理しない。** 保存するのは 2 種類の記録だけ。
 
-- `domain/` に**インフラ・ライブラリ・DB 構造を持ち込まない**
-- `adr/` に**ドメインのルールを定義しない**（参照はする）
-
-ルールの本体は `docs/RULES.md`。`/sync-docs` は書く前に、`/check-docs` は検査時に、必ずこれを読む。
-
-## 何が入っているか
-
-| | 中身 |
+| 記録 | 内容 |
 |---|---|
-| `docs/` | 要件・仕様・設計ドキュメントの骨格（中身は空。プレースホルダのみ） |
-| `docs/RULES.md` | **配置ルール。このテンプレートの中核** |
-| `.claude/skills/` | スラッシュコマンド 4 本 |
-| `.github/` | Issue テンプレート（feature / bug / design）と PR テンプレート |
-| `CLAUDE.md` | Claude Code に読ませるプロジェクト規約 |
-| `{{プロダクト名}}.code-workspace` | VS Code ワークスペース（root / docs の 2 ペイン構成） |
+| **Payment** | グループ外への支払いと、その金額を負担するメンバー |
+| **Transfer** | メンバー間のお金の移動 |
 
-## スラッシュコマンド
+そして、次のものは**保存せず、常に現在の記録から導出する**。
+
+```
+Payment ──┐
+          ├──→  通貨ごとのメンバーの差額  ──→  清算案
+Transfer ─┘
+```
+
+「精算が終わったかどうか」という状態を管理するのではなく、記録が正しければ結論が常に自動的に正しくなる状態をつくる。実際に送金したら Transfer を登録するだけで、次の清算案にはそれが反映されている。
+
+詳細は `docs/domain/settlement.md` を正とする。
+
+## ドキュメント
+
+**まず `docs/README.md`（目次と「どの事実がどこにあるか」）を読む。**
+
+| | 内容 |
+|---|---|
+| `docs/RULES.md` | **配置ルール。docs に何かを書く前に必ず読む** |
+| `docs/overview.md` | 何を・誰に・なぜ作るか |
+| `docs/features.md` | 何を作る／作らないか（持たないもの 19 件と理由） |
+| `docs/domain/` | どう動くか（技術に依存しない業務ルール） |
+| `docs/adr/` | どう作るか（技術的意思決定の記録） |
+| `docs/open-questions.md` | まだ決まっていないこと |
+
+ドメイン文書は 4 つ。
+
+| ファイル | 扱うもの |
+|---|---|
+| `docs/domain/group.md` | グループとメンバー、参加コード、表示名 |
+| `docs/domain/money.md` | 金額と通貨（整数 + 通貨、通貨をまたがない） |
+| `docs/domain/record.md` | Payment / Transfer、負担額の配分と端数、編集・削除 |
+| `docs/domain/settlement.md` | 差額の導出と清算案 |
+
+## 開発の進め方
+
+1 Issue = 1 ブランチ = 1 PR、squash merge。Issue・PR・コミットメッセージはすべて日本語。
+
+規約の本体は `CLAUDE.md`。スラッシュコマンドは 4 本。
 
 | コマンド | 用途 |
 |---|---|
-| `/sync-docs` | 会話で決まったことを docs/ に反映する。配置を判定し、必要なら ADR も作る |
-| `/check-docs` | docs/ の整合性を検査する。配置ルール違反を最優先で検出する |
-| `/create-issue <一文>` | 質問で詳細を掘り下げて GitHub Issue を起票する |
+| `/sync-docs` | 会話で決まったことを docs/ に反映する |
+| `/check-docs` | docs/ の整合性を検査する |
+| `/create-issue <一文>` | 質問で詳細を掘り下げて Issue を起票する |
 | `/implement-issue <番号>` | ブランチ作成 → 実装 → テスト → PR 作成 |
 
-## 使い始め方
+**仕様や技術方針を話し合ったら、その会話の終わりに `/sync-docs` を実行する。** docs に落ちていない決定は、次の会話では存在しないものとして扱われる。
 
-### 1. コピーして初期化
+このプロジェクトの土台になっている雛形の説明は `TEMPLATE.md` を参照。
 
-```bash
-cp -R /path/to/ai-driven-dev-template /path/to/my-project
-cd /path/to/my-project
-rm README.md          # このファイル（テンプレートの説明）は不要
-git init
-git remote add origin git@github.com:<owner>/<repo>.git
-```
+## 現状
 
-GitHub リポジトリ名はどのファイルにもハードコードされていない。スキルが `git remote get-url origin` から解決する。
+要件定義の段階。ドメインモデルが `docs/domain/` に固まったところで、実装はまだない。
 
-### 2. 会話を始める
-
-```
-作りたいのは〜〜なアプリです。要件を詰めたいので質問してください。
-```
-
-一区切りついたら `/sync-docs`。以降も同じ繰り返し。
-
-### 3. プレースホルダ
-
-`{{プロダクト名}}` `{{一行説明}}` は最初の `/sync-docs` で一括置換され、`{{プロダクト名}}.code-workspace` もリネームされる。
-`docs/domain/_template.md` と `docs/adr/_template.md` は**雛形なので置換しない**（コピー元として使う）。
-
-## VS Code ワークスペース
-
-`{{プロダクト名}}.code-workspace` を開くと、`root` と `docs` が別ペインに分かれる。docs を見ながらコードを触るための構成。
-
-コードのディレクトリを作ったら `folders` に足す（ファイル内にコメントで例を書いてある）。`settings` は Markdown 執筆向けの最小限（折り返し・行末スペースを消さない・検索除外）、`extensions` は mermaid プレビューのみ。スタック固有の設定は、決まってから足す。
-
-## 全体の流れ
-
-```
-  会話で決める  ──→  /sync-docs  ──→  docs/ に反映
-       ↑                                   │
-       │                                   ↓
-       └──────────────────────  /check-docs で整合を検査
-
-  docs が固まったら
-       ↓
-  /create-issue  ──→  /implement-issue  ──→  PR
-```
-
-書き溜まる順序の目安は `overview.md` → `features.md` → `domain/*.md` → `adr/*.md` → Issue。
-
-## docs の構成
-
-```
-docs/
-├── README.md          目次・一次情報の所在
-├── RULES.md           配置ルール（書く前に読む）
-├── overview.md        何を・誰に・なぜ作るか
-├── features.md        何を作る／作らないか
-├── open-questions.md  未確定論点
-├── domain/            どう動くか（技術非依存）
-└── adr/               どう作るか（技術的決定）
-```
-
-用語集・データモデル・非機能要件などは、必要になったら足す。足したら `docs/README.md` の構成ツリーを更新する。
-
-## 前提
-
-- 日本語で書く（Issue・PR・コミット・docs すべて）。
-- GitHub 操作は GitHub MCP ツール、または `gh` CLI。
-- 1 Issue = 1 ブランチ = 1 PR、squash merge。
+技術スタックは未定（`docs/open-questions.md` #5）。そのため `docs/adr/` はまだ空。
