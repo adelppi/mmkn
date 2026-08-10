@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Finderのカスタムフォルダアイコン(実体は "Icon\r" で終わるファイル名)専用のパターン。
+# 大文字小文字を区別しないファイルシステムでは単なる "Icon" だと `icon` という名前のディレクトリまで
+# 誤って除外してしまうため、`?` で1文字分の制御文字要件を必須にする。
+Icon?
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs & temp
+*.log
+tmp/
+.tmp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies / build artifacts
+node_modules/
+dist/
+build/
+
+# Claude Code (個人設定のみ除外。settings.json と skills は共有する)
+.claude/settings.local.json

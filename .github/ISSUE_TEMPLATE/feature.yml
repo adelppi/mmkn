@@ -1,0 +1,41 @@
+name: 機能実装
+description: features.md の機能を実装する
+title: "[feat] "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何を作るか。1〜3行で
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: 関連ドキュメント
+      description: 対応する docs/domain/・adr/・features.md の該当箇所。仕様の正はここ。Issue 本文に仕様を書き切らない
+      placeholder: |
+        - docs/domain/xxx.md
+        - docs/adr/0003-xxx.md
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ条件
+      description: この Issue が「完了」と言える条件をチェックボックスで列挙する
+      placeholder: |
+        - [ ] …できる
+        - [ ] …のとき…になる
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: スコープ外
+      description: この Issue ではやらないこと(あれば)
+  - type: textarea
+    id: notes
+    attributes:
+      label: 補足

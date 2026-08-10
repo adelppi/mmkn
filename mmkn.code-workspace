@@ -1,0 +1,37 @@
+{
+  // このファイルは JSONC（コメント可）。
+  //
+  // name … エディタのサイドバーに出る表示名
+  // path … ワークスペースファイルからの相対パス
+  "folders": [
+    {
+      "name": "root",
+      "path": "."
+    },
+    {
+      "name": "docs",
+      "path": "./docs"
+    }
+    // コードのディレクトリを作ったら追加する：
+    // { "name": "app", "path": "./app" }
+  ],
+  "settings": {
+    "[markdown]": {
+      "editor.wordWrap": "on",
+      // Markdown は行末の半角スペース2つが改行を意味するため、自動削除しない
+      "files.trimTrailingWhitespace": false
+    },
+    "files.insertFinalNewline": true,
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      // docs/ の mermaid 図をプレビューで表示するため
+      "bierner.markdown-mermaid"
+    ]
+  }
+}
