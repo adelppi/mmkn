@@ -30,10 +30,11 @@ docs/
 │   └── settlement.md      … 差額と清算案
 └── adr/                   … 技術的意思決定の記録
     ├── _template.md       … ADR の雛形
-    └── XXXX-{{英語スラッグ}}.md
+    ├── 0001-settlement-greedy.md … 清算案を貪欲法で求める
+    └── 0002-invite-code.md       … 参加コードを cuid2 で生成する
 ```
 
-<!-- adr/ はまだ 1 件もない。技術スタックが決まっていないため（open-questions.md #5）。 -->
+<!-- 技術スタックそのものは未確定（open-questions.md #2）。0001・0002 はスタックに依存しない決定。 -->
 
 必要になったら文書を足してよい（用語集・データモデル・非機能要件など）。**足したらこのツリーと下の表を更新する。**
 
@@ -55,15 +56,21 @@ docs/
 |---|---|
 | 持つ機能／持たない機能とその理由 | `features.md` |
 | プロダクトのビジョン・コアループ | `overview.md` |
-| Group と Member の定義、参加コード、表示名 | `domain/group.md` |
-| グループ作成・参加・表示名変更の振る舞い | `domain/group.md` |
+| ターゲット、プラットフォーム・対応地域・収益・開発体制 | `overview.md` |
+| User / Group / Member の定義、参加コード、表示名 | `domain/group.md` |
+| グループ作成・参加・表示名変更・設定変更の振る舞い | `domain/group.md` |
 | 金額の表し方（整数 + 通貨）、通貨をまたがないこと | `domain/money.md` |
+| 扱う通貨の範囲（ISO 4217）と金額の上限 | `domain/money.md` |
 | Payment / Transfer の定義と属性 | `domain/record.md` |
 | 負担額の均等配分と端数の寄せ方 | `domain/record.md` |
+| 発生日の扱い（未来の日付を許すこと） | `domain/record.md` |
+| 記録の並び順 | `domain/record.md` |
 | 登録者の扱い（権限に使わないこと） | `domain/record.md` |
 | 記録の編集・削除、削除履歴を持たないこと | `domain/record.md` |
 | 差額の導出ルールと性質 | `domain/settlement.md` |
 | 清算案の導出ルール、保存しないこと | `domain/settlement.md` |
+| 清算案の送金の組み合わせの求め方 | `adr/0001-settlement-greedy.md` |
+| 参加コードの形式と生成方法 | `adr/0002-invite-code.md` |
 | まだ決まっていないこと | `open-questions.md` |
 
 ## ステータス印
