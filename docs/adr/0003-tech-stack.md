@@ -1,7 +1,7 @@
 # ADR-0003: 技術スタックを Next.js + Supabase + Discord HTTP Interactions にする
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`, `adr/0012-login.md`, `adr/0014-logging.md`, `adr/0015-backup.md`
 
 ## コンテキスト
 
@@ -24,8 +24,11 @@
 | Web の実行モデル | Server Actions | 後述 |
 | Discord | HTTP Interactions（常駐 Bot を持たない） | `adr/0006-discord-http-interactions.md` |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
-| 認証 | Supabase Auth | `adr/0007-external-account-linking.md` |
-| 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` |
+| 認証 | Supabase Auth | `adr/0012-login.md`（ログイン）／`adr/0007-external-account-linking.md`（外部アカウント連携） |
+| 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
+| UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
+| テスト | Vitest / Playwright / Storybook | `adr/0010-testing.md` |
+| CI・リリース | GitHub Actions | `adr/0011-ci-and-release.md` |
 
 ### Web の実行モデル
 
@@ -40,16 +43,30 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 - **ファイルシステムは読み取り専用。** ファイルへの永続化はローカルでしか動かない
 - **プロセス内メモリに状態を保持しない。** モジュールスコープのキャッシュを含む。リクエストをまたいで必要な状態はすべて DB に置く
 
+**この制約が禁じているのは「リクエストをまたいで意味を持つ状態」である。** 次の 2 つは対象外とする。
+
+| 対象外 | 理由 |
+|---|---|
+| DB のコネクションプール | 業務上の意味を持たず、失われても次のリクエストで作り直されるだけ |
+| リクエスト内で完結する取得の重複排除 | 同一リクエストの中で閉じ、リクエストをまたがない（`adr/0009`） |
+
+**応答を返したあとに処理を続ける手段（`waitUntil` 相当）を使う。** `adr/0006` の「メッセージで応答する Interaction は一律に deferred response を返し、本文は follow-up で送る」は、応答を返した時点で実行が終わる形では成立しない。deferred を返したうえで同じ実行の中で処理を継続し、follow-up を送る。
+
 ### 環境変数の区分
 
-環境変数は**用途で 2 種類に分け、置き場所も分ける**。
+環境変数は**用途で 3 種類に分け、置き場所も分ける**。
 
-| 種別 | 例 | 置き場所 |
+| 種別 | 読む主体 | 置き場所 |
 |---|---|---|
-| アプリが実行時に読む | DB 接続文字列、Discord の署名検証用公開鍵 | ホスティング環境 |
-| 運用スクリプトだけが読む | Discord の Bot Token・Application ID | ローカルのみ |
+| アプリが実行時に読む | デプロイされたアプリ | ホスティング環境 |
+| リリースの自動処理が読む | CI（`adr/0011`） | CI の秘密情報 |
+| 手元の作業だけが読む | 開発サーバー・診断コマンド | ローカルのみ |
 
-後者をホスティング環境に設定しても何も起きないため、「設定したのに動かない」という切り分けの難しい状態になる（PoC で実際に起きた）。**環境変数のテンプレートをこの区分で構造化しておく。**
+**どの値がどの種別かの一覧は `docs/operations.md` を正とする。** ここが決めるのは区分そのものと、区分を分ける理由だけである。値は実装が進むにつれ増えるため、増えるたびにこの ADR を書き換える状態を作らない。
+
+**種別を取り違えても、その場では何も起きない。** ホスティング環境に置くべき値をローカルにしか置かなければ本番でだけ動かず、リリースの自動処理が読む値をホスティング環境に置いても無視される。どちらも「設定したのに動かない」という切り分けの難しい形で出る（PoC で実際に起きた）。**環境変数のテンプレートをこの区分で構造化しておく。**
+
+なお DB 接続文字列は 1 つ目と 2 つ目の両方に現れる。**アプリの実行時とマイグレーションの適用時で、同じ接続設定が使えるとは限らない**（アプリ側は Supavisor の transaction mode を前提としており、そこでは prepared statement が使えない。`adr/0005`）。同じ値で足りるかは着手時に確かめる（`docs/operations.md`）。
 
 ## 結果
 
@@ -59,6 +76,7 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
   - DB と認証が同一プラットフォームに載るため、個人開発で管理する対象が減る
 - 留意点：
   - Supabase を採用しても、DB を信頼境界にはしない（`adr/0005`）
+  - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`docs/operations.md`）
   - Discord のスラッシュコマンドの登録はデプロイと別作業になる（`adr/0006`）
   - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも Web の導線が要る（`adr/0007`）
   - **Discord はクライアントの 1 つにすぎない。** Slack や CLI を足せる状態を保つのは `adr/0004` の責務であり、このスタック選定はそれを妨げない
