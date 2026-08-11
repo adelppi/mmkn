@@ -36,10 +36,12 @@ docs/
     ├── 0004-layers-and-dependencies.md      … 層の分け方と依存方向の機械検査
     ├── 0005-data-access-and-authorization.md … データアクセス経路と認可の置き場所
     ├── 0006-discord-http-interactions.md    … Discord クライアントの接続方式と実装要件
-    └── 0007-external-account-linking.md     … 外部アカウントの連携方式
+    ├── 0007-external-account-linking.md     … 外部アカウントの連携方式
+    ├── 0008-layer-internals.md              … 各層の内部構造と実装の型
+    └── 0009-web-ui.md                       … Web の UI 構成と UI ライブラリ
 ```
 
-<!-- 0003 がスタック全体の親。0004〜0007 は 0003 を前提とする個別決定。0001・0002 はスタックに依存しない決定。 -->
+<!-- 0003 がスタック全体の親。0004〜0009 は 0003 を前提とする個別決定。0008 は 0004 の内側を、0009 は 0008 を前提に Web の画面を埋める。0001・0002 はスタックに依存しない決定。 -->
 
 必要になったら文書を足してよい（用語集・データモデル・非機能要件など）。**足したらこのツリーと下の表を更新する。**
 
@@ -83,9 +85,11 @@ docs/
 | 参加コードの形式と生成方法 | `adr/0002-invite-code.md` |
 | 技術スタック、サーバーレスの制約、環境変数の区分 | `adr/0003-tech-stack.md` |
 | 層の責務と依存の向き、ディレクトリ構造、依存方向の検査、テストの組み立て方 | `adr/0004-layers-and-dependencies.md` |
-| データアクセス経路、ORM、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式 | `adr/0005-data-access-and-authorization.md` |
-| Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性・コンポーネント・上限と運用 | `adr/0006-discord-http-interactions.md` |
+| データアクセス経路、ORM、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式とバージョンの置き場 | `adr/0005-data-access-and-authorization.md` |
+| Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性の宣言単位・コンポーネント・上限と運用 | `adr/0006-discord-http-interactions.md` |
 | 外部アカウント連携の実現方式とスコープ・トークンの扱い | `adr/0007-external-account-linking.md` |
+| 各層の内部構造、Controller と Presenter の役割、ユースケースの入出力と失敗の表し方、永続化の単位、識別子の生成、合成ルート、層ごとの import 規則 | `adr/0008-layer-internals.md` |
+| Web の画面構成（Container/Presentational）、ビューモデルの制約、UI ライブラリ、フォームの実装方式、クライアント側の入力検査の範囲 | `adr/0009-web-ui.md` |
 | まだ決まっていないこと | `open-questions.md` |
 
 ## ステータス印

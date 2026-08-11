@@ -1,7 +1,7 @@
 # ADR-0003: 技術スタックを Next.js + Supabase + Discord HTTP Interactions にする
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`
 
 ## コンテキスト
 
@@ -25,7 +25,8 @@
 | Discord | HTTP Interactions（常駐 Bot を持たない） | `adr/0006-discord-http-interactions.md` |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
 | 認証 | Supabase Auth | `adr/0007-external-account-linking.md` |
-| 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` |
+| 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
+| UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
 
 ### Web の実行モデル
 
@@ -39,6 +40,15 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 
 - **ファイルシステムは読み取り専用。** ファイルへの永続化はローカルでしか動かない
 - **プロセス内メモリに状態を保持しない。** モジュールスコープのキャッシュを含む。リクエストをまたいで必要な状態はすべて DB に置く
+
+**この制約が禁じているのは「リクエストをまたいで意味を持つ状態」である。** 次の 2 つは対象外とする。
+
+| 対象外 | 理由 |
+|---|---|
+| DB のコネクションプール | 業務上の意味を持たず、失われても次のリクエストで作り直されるだけ |
+| リクエスト内で完結する取得の重複排除 | 同一リクエストの中で閉じ、リクエストをまたがない（`adr/0009`） |
+
+**応答を返したあとに処理を続ける手段（`waitUntil` 相当）を使う。** `adr/0006` の「すべての Interaction で一律に deferred response を返し、本文は follow-up で送る」は、応答を返した時点で実行が終わる形では成立しない。deferred を返したうえで同じ実行の中で処理を継続し、follow-up を送る。
 
 ### 環境変数の区分
 
@@ -59,6 +69,7 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
   - DB と認証が同一プラットフォームに載るため、個人開発で管理する対象が減る
 - 留意点：
   - Supabase を採用しても、DB を信頼境界にはしない（`adr/0005`）
+  - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`open-questions.md`）
   - Discord のスラッシュコマンドの登録はデプロイと別作業になる（`adr/0006`）
   - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも Web の導線が要る（`adr/0007`）
   - **Discord はクライアントの 1 つにすぎない。** Slack や CLI を足せる状態を保つのは `adr/0004` の責務であり、このスタック選定はそれを妨げない

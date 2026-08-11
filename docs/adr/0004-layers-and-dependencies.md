@@ -1,7 +1,7 @@
 # ADR-0004: 層を単一パッケージ内で分け、依存方向を CI で機械検査する
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/domain/settlement.md`, `adr/0003-tech-stack.md`
+- 関連: `docs/overview.md`, `docs/domain/settlement.md`, `adr/0003-tech-stack.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`
 
 ## コンテキスト
 
@@ -54,13 +54,15 @@ src/
 │   └─ settlement/   ← docs/domain/settlement.md
 ├─ usecase/          … domain のみ
 │   └─ port/         … インターフェース定義
-├─ adapter/          … discord/  web/
-└─ infra/            … db/  auth/  discord/
+├─ adapter/          … discord/  web/  shared/
+└─ infra/            … db/  auth/  discord/  system/
 ```
 
 - 層を先に切るのは、**依存検査のルールがパスでそのまま書ける**ため（`src/domain/**` は `src/**` を import しない、など）。機能を先に切ると、機能を足すたびに検査設定を直すことになる
 - `domain/` の分割を文書に揃えるのは、**ルールの正（`docs/domain/`）と実装が 1 対 1 で追える**ようにするため。文書を足したらディレクトリを足す
-- `adapter/` と `infra/` の直下はクライアント・技術ごとに切る。ここが**クライアントを足したときに増える唯一の場所**になる
+- `adapter/` と `infra/` の直下はクライアント・技術ごとに切る。ここが**クライアントを足したときに増える唯一の場所**になる。`adapter/shared/` だけはクライアント固有でないものを置く例外とする
+
+**各層の内側をどう構成するかは `adr/0008-layer-internals.md` を、`app/` 配下の Web の画面構成は `adr/0009-web-ui.md` を正とする。** ここには再掲しない。
 
 ### 依存方向の機械検査
 
@@ -68,6 +70,10 @@ src/
 
 1. 内側の層が外側の層を参照していないこと
 2. 層ごとの禁止モジュール（フレームワーク・ランタイム API など）を含まないこと
+
+2 について、**アダプタ層はフレームワークもランタイム API も禁止する。** 「フレームワーク非依存」は言葉での約束ではなく検査で守る。ドメイン層でランタイム API まで禁止することは、識別子の生成をドメインの外に出す根拠にもなっている（`adr/0008`）。
+
+**層ごとの具体的な許可・禁止の一覧は `adr/0008-layer-internals.md` を正とする。**
 
 **検査は既製のツールで宣言的に定義し、検査ロジック自体を自作しない。** 具体的には `dependency-cruiser` を使う。上の 2 つを 1 つの設定で表現でき、CI から実行できることが選定の条件であり、同条件を満たす他のツールへの差し替えはこの ADR の再検討にあたらない。
 
