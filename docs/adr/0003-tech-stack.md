@@ -1,7 +1,7 @@
 # ADR-0003: 技術スタックを Next.js + Supabase + Discord HTTP Interactions にする
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`
 
 ## コンテキスト
 
@@ -27,6 +27,8 @@
 | 認証 | Supabase Auth | `adr/0007-external-account-linking.md` |
 | 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
 | UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
+| テスト | Vitest / Playwright / Storybook | `adr/0010-testing.md` |
+| CI・リリース | GitHub Actions | `adr/0011-ci-and-release.md` |
 
 ### Web の実行モデル
 
@@ -52,14 +54,17 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 
 ### 環境変数の区分
 
-環境変数は**用途で 2 種類に分け、置き場所も分ける**。
+環境変数は**用途で 3 種類に分け、置き場所も分ける**。
 
 | 種別 | 例 | 置き場所 |
 |---|---|---|
 | アプリが実行時に読む | DB 接続文字列、Discord の署名検証用公開鍵 | ホスティング環境 |
-| 運用スクリプトだけが読む | Discord の Bot Token・Application ID | ローカルのみ |
+| リリースの自動処理が読む | DB 接続文字列（マイグレーション適用）、Discord の Bot Token・Application ID | CI の秘密情報（`adr/0011`） |
+| 手元の作業だけが読む | ローカル DB の接続文字列、診断コマンドが使う値 | ローカルのみ |
 
-後者をホスティング環境に設定しても何も起きないため、「設定したのに動かない」という切り分けの難しい状態になる（PoC で実際に起きた）。**環境変数のテンプレートをこの区分で構造化しておく。**
+**種別を取り違えても、その場では何も起きない。** ホスティング環境に置くべき値をローカルにしか置かなければ本番でだけ動かず、リリースの自動処理が読む値をホスティング環境に置いても無視される。どちらも「設定したのに動かない」という切り分けの難しい形で出る（PoC で実際に起きた）。**環境変数のテンプレートをこの区分で構造化しておく。**
+
+なお DB 接続文字列は 1 つ目と 2 つ目の両方に現れる。**アプリの実行時とマイグレーションの適用時で、同じ接続設定が使えるとは限らない**（アプリ側は Supavisor の transaction mode を前提としており、そこでは prepared statement が使えない。`adr/0005`）。同じ値で足りるかは着手時に確かめる（`docs/operations.md`）。
 
 ## 結果
 
@@ -69,7 +74,7 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
   - DB と認証が同一プラットフォームに載るため、個人開発で管理する対象が減る
 - 留意点：
   - Supabase を採用しても、DB を信頼境界にはしない（`adr/0005`）
-  - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`open-questions.md`）
+  - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`docs/operations.md`）
   - Discord のスラッシュコマンドの登録はデプロイと別作業になる（`adr/0006`）
   - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも Web の導線が要る（`adr/0007`）
   - **Discord はクライアントの 1 つにすぎない。** Slack や CLI を足せる状態を保つのは `adr/0004` の責務であり、このスタック選定はそれを妨げない

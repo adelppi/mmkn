@@ -1,7 +1,7 @@
 # ADR-0009: Web の UI を Container/Presentational で分け、shadcn/ui を使う
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `docs/domain/record.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0008-layer-internals.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `docs/domain/record.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0008-layer-internals.md`, `adr/0010-testing.md`
 
 ## コンテキスト
 
@@ -72,6 +72,8 @@ app/(web)/groups/[id]/
     ├─ presentation.tsx
     └─ presentation.stories.tsx
 ```
+
+`presentation.stories.tsx` の位置づけ（Storybook を持つこと、それをテストと見なすか）は `adr/0010-testing.md` を正とする。
 
 `adr/0008` の検査ルールに、`app/` 配下のパス単位のルールを加える。
 

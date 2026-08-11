@@ -1,7 +1,7 @@
 # ADR-0004: 層を単一パッケージ内で分け、依存方向を CI で機械検査する
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/domain/settlement.md`, `adr/0003-tech-stack.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`
+- 関連: `docs/overview.md`, `docs/domain/settlement.md`, `adr/0003-tech-stack.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`
 
 ## コンテキスト
 
@@ -42,27 +42,13 @@ PoC ではこの構成で 6 種類の変更（クライアント追加・表示�
 
 境界の強制は次項の機械検査が担う。パッケージ境界にすると Next.js / Vercel でのビルド構成とパッケージ間参照の設定を個人開発で保守し続けることになり、得られる保証の差に見合わない。
 
-**トップレベルを層で切り、`domain/` の直下を `docs/domain/` の分割に対応させる。**
+構造については、次の 3 つの規則だけをここで定める。
 
-```
-app/                 … Next.js（UI・エンドポイント・合成ルート）
-src/
-├─ domain/           … 依存なし
-│   ├─ group/        ← docs/domain/group.md
-│   ├─ money/        ← docs/domain/money.md
-│   ├─ record/       ← docs/domain/record.md
-│   └─ settlement/   ← docs/domain/settlement.md
-├─ usecase/          … domain のみ
-│   └─ port/         … インターフェース定義
-├─ adapter/          … discord/  web/  shared/
-└─ infra/            … db/  auth/  discord/  system/
-```
+1. **トップレベルを層で切る。** 機能で切らない。依存検査のルールがパスでそのまま書けるため（`src/domain/**` は `src/**` を import しない、など）。機能を先に切ると、機能を足すたびに検査設定を直すことになる
+2. **`src/domain/` の直下を `docs/domain/` の分割に対応させる。** ルールの正（`docs/domain/`）と実装が 1 対 1 で追える状態を保つ。文書を足したらディレクトリを足す
+3. **クライアントごとに増える場所を `adapter/` と `infra/` の直下に限る。** ここ以外はクライアントが増えても増えない。クライアント固有でないものを置く例外は `adapter/shared/` だけ
 
-- 層を先に切るのは、**依存検査のルールがパスでそのまま書ける**ため（`src/domain/**` は `src/**` を import しない、など）。機能を先に切ると、機能を足すたびに検査設定を直すことになる
-- `domain/` の分割を文書に揃えるのは、**ルールの正（`docs/domain/`）と実装が 1 対 1 で追える**ようにするため。文書を足したらディレクトリを足す
-- `adapter/` と `infra/` の直下はクライアント・技術ごとに切る。ここが**クライアントを足したときに増える唯一の場所**になる。`adapter/shared/` だけはクライアント固有でないものを置く例外とする
-
-**各層の内側をどう構成するかは `adr/0008-layer-internals.md` を、`app/` 配下の Web の画面構成は `adr/0009-web-ui.md` を正とする。** ここには再掲しない。
+**ディレクトリ構造そのものは `adr/0008-layer-internals.md` を正とする。** 上の 3 規則を満たす具体的なツリーはあちらにあり、ここには再掲しない。`app/` 配下の Web の画面構成は `adr/0009-web-ui.md` を正とする。
 
 ### 依存方向の機械検査
 
@@ -79,11 +65,12 @@ src/
 
 ### テスト
 
-層の分離が守られていれば、内側は外部依存なしでテストできる。この性質を前提に組む。
+層の分離が守られていれば、内側は外部依存なしでテストできる。**この性質を前提にテストを組む**というのが、この ADR が要求する唯一のことである。
 
 - ドメイン・ユースケースの単体テストは、実 DB・実 HTTP を使わずポートの偽実装で回す
 - **クライアントをまたいだ整合**（Web と Discord が同じユースケースを通ること）をテストで固定する。「機能に差を設けない」を守る主たる手段はこれ
-- 起動中のサーバーに対する E2E で、署名付きリクエストと OAuth の往復を通す
+
+**どのツールで何をどこまでテストするかは `adr/0010-testing.md` を正とする。** ここには再掲しない。
 
 ## 結果
 

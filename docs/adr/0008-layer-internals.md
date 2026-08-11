@@ -1,7 +1,7 @@
 # ADR-0008: 各層の内部構造と実装の型を定める
 
 - ステータス: 採用 [確定]
-- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`
+- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`
 
 ## コンテキスト
 
@@ -114,7 +114,9 @@ export function wire() {
 
 ### ディレクトリ構造
 
-`adr/0004` のツリーを、この ADR で定めた内訳まで展開したものを正とする。
+**このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアントごとに増える場所を `adapter/`・`infra/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
+
+テストファイルは対象の隣に置くため、ここには現れない（`adr/0010`）。
 
 ```
 app/
@@ -191,7 +193,7 @@ src/
   - **集約をまたぐ書き込みが必要になった時点で、この形は足りなくなる。** 現在の機能一覧（`features.md`）にはそのような操作が無いが、出てきたらこの ADR を見直す
   - `Result` を返す以上、呼び出し側は毎回分岐を書く。小さなユースケースでは冗長に見えるが、それが分岐漏れを型で落とす対価である
   - 層をまたぐ変換の記述量は増える。`adr/0004` が既に受け入れているコストと同種のもの
-  - **`docs/domain/` の分割を変えたら `src/domain/` も追随させる**（`adr/0004`）。この ADR のツリーも同時に直す
+  - **`docs/domain/` の分割を変えたら `src/domain/` も追随させる**（`adr/0004`）。ツリーの正はこの ADR にしか無いため、直す場所は 1 か所で済む
 
 ## 検討した代替案
 
