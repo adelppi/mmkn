@@ -1,7 +1,7 @@
 # ADR-0011: CI とリリースを GitHub Actions に集約し、Preview デプロイを持たない
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0010-testing.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0010-testing.md`, `adr/0013-currency-data.md`, `adr/0014-logging.md`
 
 ## コンテキスト
 
@@ -55,6 +55,16 @@ CI もリリースも GitHub Actions で走らせる。Vercel の Git 連携に�
 - **マイグレーションが失敗したらデプロイしない。** 逆順にすると、新しいコードが存在しない列を前提に動く時間が生まれる
 - **コマンド登録が失敗してもデプロイは巻き戻さない。** Discord 側が古いコマンド定義のまま動くだけで、Web は正常に動く。検知は診断コマンドで行う（`docs/operations.md`）
 
+### 定期実行するもの
+
+| 内容 | 周期 | 出どころ |
+|---|---|---|
+| 通貨表の生成と、差分があれば PR の作成 | 週次 | `adr/0013` |
+
+- **PR や main の経路には入れない。** 生成器は外部の公表データを取りに行くため、ここに混ぜるとネットワークの状態でリリースの可否が変わる
+- **自動でマージしない。** 差分は必ず人のレビューを通る。通貨の一覧と桁数は金額の解釈そのものを決めるため、機械的に当てない（`adr/0013`）
+- 取得に失敗した場合はこのジョブが失敗するだけで、アプリは既にコミットされた表で動き続ける
+
 ### マイグレーションは前方のみ
 
 **戻すためのマイグレーションを持たない。** 代わりに、**既存のデータを壊す変更は 2 回のリリースに分ける。**
@@ -99,6 +109,7 @@ Preview 環境が本来効くのは、レビュアーに動くものを見せる
   - **Preview が無いため、マージ前にブラウザで確認する手段は手元の開発サーバーだけになる**
   - **前方のみのマイグレーションは、壊す変更を 2 リリースに割る規律を要求する。** 1 回で済ませたくなる場面が必ず来る
   - リリースが 4 段階に分かれるため、途中で失敗したときにどこまで進んだかを確かめる必要がある（`docs/operations.md`）
+  - **定期実行の失敗と、そこから出た PR は通知されない**（`adr/0014` のとおり監視サービスを持たない）。GitHub 上で見に行くまで分からない
 
 ## 検討した代替案
 

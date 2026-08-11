@@ -46,7 +46,7 @@ docs/
     ├── 0010-testing.md                      … テストの道具・種別・範囲
     ├── 0011-ci-and-release.md               … CI とリリースの構成と順序
     ├── 0012-login.md                        … ログイン方式（メール + パスワード）
-    ├── 0013-currency-data.md                … 通貨の一覧と最小単位の持ち方
+    ├── 0013-currency-data.md                … 通貨の一覧と最小単位の持ち方と追随
     ├── 0014-logging.md                      … ログの方針と、出さないもの
     └── 0015-backup.md                       … バックアップと、復旧できない範囲
 ```
@@ -89,6 +89,7 @@ docs/
 | 発生日の扱い（タイムゾーンを持たず、入力された日付をそのまま保持すること） | `domain/record.md` |
 | 金額の表し方（整数 + 通貨）、通貨をまたがないこと | `domain/money.md` |
 | 扱う通貨の範囲（ISO 4217）と金額の上限 | `domain/money.md` |
+| 廃止された通貨の扱い（記録がある限り現行と同じに扱うこと、入力候補に出す範囲） | `domain/money.md` |
 | Payment / Transfer の定義と属性 | `domain/record.md` |
 | 負担額の均等配分と端数の寄せ方 | `domain/record.md` |
 | 発生日の扱い（未来の日付を許すこと） | `domain/record.md` |
@@ -106,14 +107,14 @@ docs/
 | 技術スタック、サーバーレスの制約、環境変数の区分 | `adr/0003-tech-stack.md` |
 | 層の責務と依存の向き、ディレクトリ構造、依存方向の検査、テストの組み立て方 | `adr/0004-layers-and-dependencies.md` |
 | データアクセス経路、ORM、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式とバージョンの置き場 | `adr/0005-data-access-and-authorization.md` |
-| Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性の宣言単位・コンポーネント・上限と運用 | `adr/0006-discord-http-interactions.md` |
+| Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性の宣言単位・コンポーネント・モーダルと入力導線・上限と運用 | `adr/0006-discord-http-interactions.md` |
 | 外部アカウント連携の実現方式とスコープ・トークンの扱い | `adr/0007-external-account-linking.md` |
 | 各層の内部構造、Controller と Presenter の役割、ユースケースの入出力と失敗の表し方、永続化の単位、識別子の生成、合成ルート、層ごとの import 規則 | `adr/0008-layer-internals.md` |
 | Web の画面構成（Container/Presentational）、ビューモデルの制約、UI ライブラリ、フォームの実装方式、クライアント側の入力検査の範囲 | `adr/0009-web-ui.md` |
 | テストの道具・種別と置き場、クライアント間整合の確かめ方、実 DB を使う範囲、E2E の境界、カバレッジの方針 | `adr/0010-testing.md` |
-| CI とリリースの構成・順序、Preview を持たないこと、マイグレーションが前方のみであること、秘密情報の置き場 | `adr/0011-ci-and-release.md` |
+| CI とリリースの構成・順序、定期実行するもの、Preview を持たないこと、マイグレーションが前方のみであること、秘密情報の置き場 | `adr/0011-ci-and-release.md` |
 | ログイン識別子をメールとすること、認証手段、メール確認とパスワード再設定 | `adr/0012-login.md` |
-| 通貨の一覧と最小単位の出どころ（自前の表）、改定への追随 | `adr/0013-currency-data.md` |
+| 通貨の一覧と最小単位の出どころ（公表データから生成した表）、改定への追随のさせ方、表での廃止の表し方 | `adr/0013-currency-data.md` |
 | ログに必ず出すもの・絶対に出さないもの、出す場所、障害の気づき方 | `adr/0014-logging.md` |
 | バックアップの方針、復旧できない範囲 | `adr/0015-backup.md` |
 | 概念とコード上の名前の対応、命名の規約 | `glossary.md` |

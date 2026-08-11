@@ -1,7 +1,7 @@
 # ADR-0008: 各層の内部構造と実装の型を定める
 
 - ステータス: 採用 [確定]
-- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0014-logging.md`
+- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `docs/domain/money.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0013-currency-data.md`, `adr/0014-logging.md`
 
 ## コンテキスト
 
@@ -148,6 +148,7 @@ src/
 │   ├─ id.ts                      … branded ID と比較。負担額の配分の順序が使う
 │   ├─ result.ts                  … Result 型
 │   ├─ group/  money/  record/  settlement/    ← docs/domain/ と 1 対 1
+│   │      money/ には通貨表の生成物を含む（手で編集しない。adr/0013）
 ├─ usecase/                       … domain のみ
 │   ├─ usecase.ts                 … UseCase<I, O, E>
 │   ├─ port/
@@ -161,9 +162,9 @@ src/
 │   ├─ discord/
 │   │   ├─ router.ts              … Interaction 種別で分岐
 │   │   ├─ context.ts             … 外部 ID → User、場 → Group。解決できなければ案内を返す
-│   │   ├─ command-definitions.ts … コマンド宣言（adr/0006）
-│   │   ├─ controller/command/  controller/component/
-│   │   └─ presenter/
+│   │   ├─ definitions.ts         … コマンド・部品・モーダルの宣言と可視性（adr/0006）
+│   │   ├─ controller/command/  controller/component/  controller/modal/
+│   │   └─ presenter/             … モーダルの組み立てもここ（永続化に問い合わせない。adr/0006）
 │   ├─ web/
 │   │   ├─ controller/
 │   │   └─ presenter/
@@ -178,6 +179,9 @@ src/
 tests/                            … 層をまたぐテストのみ（adr/0010）
 ├─ client-parity/                 … Web と Discord の結果が一致すること
 └─ e2e/                           … Playwright
+
+scripts/                          … アプリが読み込まない道具
+└─ generate-currency-table.ts     … 公表データ → src/domain/money/ の生成物（adr/0013）
 ```
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
@@ -196,8 +200,11 @@ tests/                            … 層をまたぐテストのみ（adr/0010�
 | `src/adapter/**` | `src/domain/**`・`src/usecase/**` | `next/*`・`node:*`・ORM・認証基盤の SDK（型のみのパッケージは除く） |
 | `src/infra/**` | `src/domain/**`・`src/usecase/**`・`src/infra/**` | `next/*` |
 | `app/**` | 制限なし | — |
+| `scripts/**` | 制限なし | — |
 
 加えて、`src/usecase/**` から `src/adapter/**`・`src/infra/**` への参照を**逆向きとして明示的に禁止する**。`app/` 配下のパス単位のルールは `adr/0009` を正とする。
+
+**`scripts/**` を制限なしとするのは、アプリが読み込まない場所だからである。** 生成器はネットワークとパーサに依存するが（`adr/0013`）、その依存が `src/domain/**` に流れ込まないことは「生成物がプレーンな TypeScript のリテラルであること」で担保される。**逆に `src/**` から `scripts/**` への参照は禁止する。**
 
 ## 結果
 
