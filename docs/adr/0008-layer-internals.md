@@ -1,7 +1,7 @@
 # ADR-0008: 各層の内部構造と実装の型を定める
 
 - ステータス: 採用 [確定]
-- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`
+- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0014-logging.md`
 
 ## コンテキスト
 
@@ -82,6 +82,10 @@ const payment = Payment.create({ id: ids.paymentId(), /* … */ })
 
 **ファクトリメソッド（`Payment.create` など）は持つ。** そこがドメインの不変条件を守る唯一の場所であり、この決定はそれを外に出すものではない。
 
+**`IdGenerator` が返す ID は、参加コードと同じ性質（乱数由来・他の ID から推測できない）を満たす値とする。連番にしない。** `domain/group.md`「前提条件を満たさなかったとき」が、「存在しない」と「Member でない」を区別する前提として Group の識別子に推測不能性を要求しているため。生成方法は `adr/0002-invite-code.md` と同じもの（cuid2）を使い、参加コードと ID で別の生成器を持たない。
+
+**登録日時は `Clock` ポートから受け取る。** `domain/record.md`「記録の並び」が登録日時を属性として要求しており、時刻の取得もランタイムへの依存であるため、ID と同じくポート越しにする。編集では取り直さない。
+
 ### ドメインの基底クラス
 
 **ドメインのエンティティに基底クラスを置かない。**
@@ -108,6 +112,14 @@ export function wire() {
 
 コネクションプールはモジュールスコープに置く。この線引きは `adr/0003` を正とする。
 
+### セッションの読み取り
+
+**現在の `UserId` の解決は `infra/auth` に置き、cookie へのアクセス手段はアプリ層から注入する。**
+
+cookie の読み取りはフレームワーク（`next/headers`）に依存するため、`infra/auth` に直接持たせると、下の検査ルールが `src/infra/**` に課している「`next/*` 禁止」に触れる。`app/_lib/session.ts` が読み取り手段を渡し、`infra/auth` はそれを使って `UserId` を返す。
+
+ユースケースは `UserId` を入力で受け取るだけで、セッションの存在を知らない（`adr/0004` の「ユースケースは対象を常にアプリの ID で受け取る」と同じ形）。
+
 ### Discord のペイロード型
 
 **`discord-api-types` を使い、Interaction の型を自前で定義しない。** 型のみでランタイム依存を持たないため、アダプタ層のフレームワーク非依存を壊さない。
@@ -116,7 +128,7 @@ export function wire() {
 
 **このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアントごとに増える場所を `adapter/`・`infra/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
 
-テストファイルは対象の隣に置くため、ここには現れない（`adr/0010`）。
+**大半のテストファイルは対象の隣に置くため、ツリーには現れない。** 層をまたぐテストだけがトップレベルの `tests/` に出る（どちらに置くかの基準は `adr/0010` を正とする）。
 
 ```
 app/
@@ -160,7 +172,12 @@ src/
     ├─ db/                        … client / schema / migrations / mapper / repository
     ├─ auth/                      … client / session / external-account
     ├─ discord/                   … signature / client
+    ├─ log/                       … 構造化ログの出力（adr/0014）
     └─ system/                    … clock / id / invite-code
+
+tests/                            … 層をまたぐテストのみ（adr/0010）
+├─ client-parity/                 … Web と Discord の結果が一致すること
+└─ e2e/                           … Playwright
 ```
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする

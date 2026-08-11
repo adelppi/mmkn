@@ -71,9 +71,10 @@ Transfer ─┘
 **要件定義と設計が固まり、実装の直前。** コードはまだ 1 行もない。
 
 - ドメインモデルは `docs/domain/` の 4 文書に確定済み
-- 技術的意思決定は ADR 11 本（`docs/adr/0001`〜`0011`）
+- 技術的意思決定は ADR 15 本（`docs/adr/0001`〜`0015`）
 - 未確定の論点はゼロ（`docs/open-questions.md`）
+- v1 は機能一覧の 13 機能すべて。段階リリースをしない（`docs/features.md`）
 
 技術スタックは TypeScript / Next.js / Vercel / Supabase、Discord は常駐 Bot を持たず HTTP Interactions（`docs/adr/0003-tech-stack.md`）。
 
-実装に着手したら、まず `docs/operations.md`「実装着手時に必ず確かめること」を通す。
+**実装に着手したら、まず `docs/operations.md`「実装着手時に必ず確かめること」の 8 項目を通す。** 決定済みだが前提が外れると影響が大きく、確認が安いものを集めてある。

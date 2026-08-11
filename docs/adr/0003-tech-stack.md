@@ -1,7 +1,7 @@
 # ADR-0003: 技術スタックを Next.js + Supabase + Discord HTTP Interactions にする
 
 - ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`, `adr/0012-login.md`, `adr/0014-logging.md`, `adr/0015-backup.md`
 
 ## コンテキスト
 
@@ -24,7 +24,7 @@
 | Web の実行モデル | Server Actions | 後述 |
 | Discord | HTTP Interactions（常駐 Bot を持たない） | `adr/0006-discord-http-interactions.md` |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
-| 認証 | Supabase Auth | `adr/0007-external-account-linking.md` |
+| 認証 | Supabase Auth | `adr/0012-login.md`（ログイン）／`adr/0007-external-account-linking.md`（外部アカウント連携） |
 | 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
 | UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
 | テスト | Vitest / Playwright / Storybook | `adr/0010-testing.md` |
@@ -56,11 +56,13 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 
 環境変数は**用途で 3 種類に分け、置き場所も分ける**。
 
-| 種別 | 例 | 置き場所 |
+| 種別 | 読む主体 | 置き場所 |
 |---|---|---|
-| アプリが実行時に読む | DB 接続文字列、Discord の署名検証用公開鍵 | ホスティング環境 |
-| リリースの自動処理が読む | DB 接続文字列（マイグレーション適用）、Discord の Bot Token・Application ID | CI の秘密情報（`adr/0011`） |
-| 手元の作業だけが読む | ローカル DB の接続文字列、診断コマンドが使う値 | ローカルのみ |
+| アプリが実行時に読む | デプロイされたアプリ | ホスティング環境 |
+| リリースの自動処理が読む | CI（`adr/0011`） | CI の秘密情報 |
+| 手元の作業だけが読む | 開発サーバー・診断コマンド | ローカルのみ |
+
+**どの値がどの種別かの一覧は `docs/operations.md` を正とする。** ここが決めるのは区分そのものと、区分を分ける理由だけである。値は実装が進むにつれ増えるため、増えるたびにこの ADR を書き換える状態を作らない。
 
 **種別を取り違えても、その場では何も起きない。** ホスティング環境に置くべき値をローカルにしか置かなければ本番でだけ動かず、リリースの自動処理が読む値をホスティング環境に置いても無視される。どちらも「設定したのに動かない」という切り分けの難しい形で出る（PoC で実際に起きた）。**環境変数のテンプレートをこの区分で構造化しておく。**
 

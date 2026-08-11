@@ -12,6 +12,7 @@
 |---|---|---|
 | ユーザー | `User` | `domain/group.md` |
 | ユーザーの名前 | `name` | `domain/group.md` |
+| ログイン識別子 | `email` | `domain/group.md`（メールとしたのは `adr/0012`） |
 | グループ | `Group` | `domain/group.md` |
 | メンバー | `Member` | `domain/group.md` |
 | 表示名 | `displayName` | `domain/group.md` |
@@ -36,7 +37,9 @@
 | 受け手 | `recipient` | `domain/record.md` |
 | 内容 | `description` | `domain/record.md` |
 | 発生日 | `occurredOn` | `domain/record.md` |
+| 登録日時 | `recordedAt` | `domain/record.md` |
 | 登録者 | `recordedBy` | `domain/record.md` |
+| 配分順序（Member の変わらない同一性による決定的な順序） | `memberOrder` | `domain/record.md`「負担額の配分」 |
 
 ## 金額
 
@@ -45,6 +48,7 @@
 | 金額 | `amount` | `domain/money.md` |
 | 通貨 | `currency` | `domain/money.md` |
 | 最小単位 | `minorUnit` | `domain/money.md` |
+| 通貨表（通貨と最小単位の対応） | `currencyTable` | `domain/money.md`（持ち方は `adr/0013`） |
 
 ## 差額と清算
 
@@ -61,15 +65,19 @@
 | 日本語 | コード上の名前 | 一次情報 |
 |---|---|---|
 | 版（楽観ロック） | `version` | `adr/0005` |
+| ユースケースの結果 | `Result` | `adr/0008` |
 | 合成ルート | `wire()` | `adr/0008` |
 | ビューモデル | `<名前>View` | `adr/0009` |
+| 相関 ID（ログ） | `correlationId` | `adr/0014` |
 
 ## 名前の付け方
 
 - **識別子は branded type にする**（`src/domain/id.ts`）。`GroupId` と `MemberId` を取り違えられない状態を型で作る（`adr/0008`）
 - **集約の名前がそのままリポジトリの名前になる。** `Group` → `GroupRepository`（`adr/0008`）
 - **`docs/domain/*.md` のファイル名と `src/domain/` のディレクトリ名を一致させる**（`adr/0004`）
-- **紛らわしい対を混ぜない。** 特に次の 3 組は、ドメイン文書が明示的に「別のもの」と書いている
+- **紛らわしい対を混ぜない。** 特に次の 5 組は、ドメイン文書が明示的に「別のもの」と書いている
   - `payer`（支払者）と `recordedBy`（登録者）… `domain/record.md`
   - `Member`（グループ内の立場）と `User`（人そのもの）… `domain/group.md`
   - `settlementTransfer`（清算案が示す送金）と `Transfer`（記録された送金）… `domain/settlement.md`
+  - `occurredOn`（発生日・時刻を持たない）と `recordedAt`（登録日時・時点）… `domain/record.md`
+  - `name`（User の名前）と `displayName`（Group 内の表示名）と `email`（ログイン識別子）… `domain/group.md`
