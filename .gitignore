@@ -33,6 +33,14 @@ tmp/
 node_modules/
 dist/
 build/
+/.next/
+/out/
+/coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
 
 # Claude Code (個人設定のみ除外。settings.json と skills は共有する)
 .claude/settings.local.json
