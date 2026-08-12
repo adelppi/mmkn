@@ -31,7 +31,7 @@ docs/
 │   ├── group.md           … グループとメンバー
 │   ├── money.md           … 金額と通貨
 │   ├── record.md          … 記録（支払いと送金）
-│   └── settlement.md      … 差額と清算案
+│   └── settlement.md      … 収支と清算案
 └── adr/                   … 技術的意思決定の記録
     ├── _template.md       … ADR の雛形
     ├── 0001-settlement-greedy.md … 清算案を貪欲法で求める
@@ -98,10 +98,10 @@ docs/
 | 登録者の扱い（権限に使わないこと） | `domain/record.md` |
 | 記録の編集・削除、削除履歴を持たないこと | `domain/record.md` |
 | 同じ記録に同時に手が入ったときに起きること | `domain/record.md` |
-| 差額の導出ルールと性質 | `domain/settlement.md` |
+| 収支の導出ルールと性質 | `domain/settlement.md` |
 | 清算案の導出ルール、保存しないこと | `domain/settlement.md` |
 | 清算案の送金を記録する振る舞い（金額を登録時点で導出し直すこと、案に無ければ登録しないこと） | `domain/settlement.md` |
-| 部分送金の扱い（通常の送金登録で行い、残額は差額から出ること） | `domain/settlement.md` |
+| 部分送金の扱い（通常の送金登録で行い、残額は収支から出ること） | `domain/settlement.md` |
 | 清算案の送金の組み合わせの求め方 | `adr/0001-settlement-greedy.md` |
 | 参加コードの形式と生成方法 | `adr/0002-invite-code.md` |
 | 技術スタック、サーバーレスの制約、環境変数の区分 | `adr/0003-tech-stack.md` |

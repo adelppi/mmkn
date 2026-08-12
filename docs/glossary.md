@@ -52,11 +52,11 @@
 | 最小単位 | `minorUnit` | `domain/money.md` |
 | 通貨表（通貨と最小単位の対応） | `currencyTable` | `domain/money.md`（持ち方は `adr/0013`） |
 
-## 差額と清算
+## 収支と清算
 
 | 日本語 | コード上の名前 | 一次情報 |
 |---|---|---|
-| 差額 | `balance` | `domain/settlement.md` |
+| 収支 | `balance` | `domain/settlement.md` |
 | 清算案 | `settlement` | `domain/settlement.md` |
 | 清算案の送金 | `settlementTransfer` | `domain/settlement.md` |
 

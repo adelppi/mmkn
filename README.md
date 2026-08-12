@@ -17,7 +17,7 @@
 
 ```
 Payment ──┐
-          ├──→  通貨ごとのメンバーの差額  ──→  清算案
+          ├──→  通貨ごとのメンバーの収支  ──→  清算案
 Transfer ─┘
 ```
 
@@ -47,7 +47,7 @@ Transfer ─┘
 | `docs/domain/group.md` | グループとメンバー、参加コード、表示名 |
 | `docs/domain/money.md` | 金額と通貨（整数 + 通貨、通貨をまたがない） |
 | `docs/domain/record.md` | Payment / Transfer、負担額の配分と端数、編集・削除 |
-| `docs/domain/settlement.md` | 差額の導出と清算案 |
+| `docs/domain/settlement.md` | 収支の導出と清算案 |
 
 ## 開発の進め方
 
