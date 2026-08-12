@@ -44,3 +44,5 @@ next-env.d.ts
 
 # Claude Code (個人設定のみ除外。settings.json と skills は共有する)
 .claude/settings.local.json
+# MCP サーバーの設定。接続先の外部プロジェクトに紐づくため手元だけで持つ
+.mcp.json
