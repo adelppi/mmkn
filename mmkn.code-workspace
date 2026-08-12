@@ -9,11 +9,20 @@
       "path": "."
     },
     {
+      // Next.js のアプリ層（画面・エンドポイント・合成ルート）
+      "name": "app",
+      "path": "./app"
+    },
+    {
+      // ドメイン / ユースケース / アダプタ / インフラ。構造の正は docs/adr/0008-layer-internals.md
+      "name": "src",
+      "path": "./src"
+    },
+    {
       "name": "docs",
       "path": "./docs"
     }
-    // コードのディレクトリを作ったら追加する：
-    // { "name": "app", "path": "./app" }
+    // tests/ と scripts/ はまだ中身が無いため root から辿る。実体ができたら同じ形で追加する
   ],
   "settings": {
     "[markdown]": {
@@ -22,16 +31,28 @@
       "files.trimTrailingWhitespace": false
     },
     "files.insertFinalNewline": true,
+    // エディタの型検査を npm run typecheck と同じ TypeScript で行う（版のずれを防ぐ）
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
     "search.exclude": {
       "**/node_modules": true,
       "**/dist": true,
-      "**/build": true
+      "**/build": true,
+      "**/.next": true,
+      "**/coverage": true,
+      "**/package-lock.json": true
     }
   },
   "extensions": {
     "recommendations": [
       // docs/ の mermaid 図をプレビューで表示するため
-      "bierner.markdown-mermaid"
+      "bierner.markdown-mermaid",
+      // npm run lint と同じ規則をエディタ上で見るため
+      "dbaeumer.vscode-eslint",
+      // Tailwind CSS のクラス名補完（adr/0009）
+      "bradlc.vscode-tailwindcss",
+      // 単体テストをエディタから個別に回すため（adr/0010）
+      "vitest.explorer"
     ]
   }
 }
