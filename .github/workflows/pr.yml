@@ -1,0 +1,24 @@
+# PR で回す検査。
+#
+# 何をどの順で走らせるかと、その理由の正は `docs/adr/0011-ci-and-release.md`「PR で回すもの」。
+# あちらが挙げるもののうち、まだ対象が存在しないもの（永続化テスト・クライアント間整合のテスト・
+# Storybook のビルド）は、対象が生まれた時点でここに足す。
+name: PR
+
+on:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - run: npm run check:deps
