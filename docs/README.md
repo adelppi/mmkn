@@ -109,13 +109,13 @@ docs/
 | 参加コードの形式と生成方法 | `adr/0002-invite-code.md` |
 | 技術スタック、サーバーレスの制約、環境変数の区分 | `adr/0003-tech-stack.md` |
 | 層の責務と依存の向き、ディレクトリ構造、依存方向の検査、テストの組み立て方 | `adr/0004-layers-and-dependencies.md` |
-| データアクセス経路、ORM、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式とバージョンの置き場 | `adr/0005-data-access-and-authorization.md` |
+| データアクセス経路、ORM とドライバ、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式とバージョンの置き場 | `adr/0005-data-access-and-authorization.md` |
 | Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性の宣言単位・コンポーネント・モーダルと入力導線・上限と運用 | `adr/0006-discord-http-interactions.md` |
 | 外部アカウント連携の実現方式とスコープ・トークンの扱い | `adr/0007-external-account-linking.md` |
 | 各層の内部構造、Controller と Presenter の役割、ユースケースの入出力と失敗の表し方、永続化の単位、識別子の生成、合成ルート、層ごとの import 規則 | `adr/0008-layer-internals.md` |
 | Web の画面構成（Container/Presentational）、ビューモデルの制約、UI ライブラリ、フォームの実装方式、クライアント側の入力検査の範囲 | `adr/0009-web-ui.md` |
 | テストの道具・種別と置き場、クライアント間整合の確かめ方、実 DB を使う範囲、E2E の境界、カバレッジの方針 | `adr/0010-testing.md` |
-| CI とリリースの構成・順序、定期実行を持たないこと、Preview を持たないこと、マイグレーションが前方のみであること、秘密情報の置き場 | `adr/0011-ci-and-release.md` |
+| CI とリリースの構成・順序、定期実行を持たないこと、Preview を持たないこと、マイグレーションが前方のみであること、**適用に使う接続設定**、秘密情報の置き場 | `adr/0011-ci-and-release.md` |
 | ログインを Google に委ねること、識別子に何を使うか、プロバイダを増やさない理由 | `adr/0012-login.md` |
 | 通貨の一覧と最小単位の出どころ（直接コミットした表）、改定に追随する仕組みを持たない決定とその見直しの契機、表での廃止の表し方 | `adr/0016-currency-table-committed.md` |
 | ログに必ず出すもの・絶対に出さないもの、出す場所、障害の気づき方 | `adr/0014-logging.md` |
