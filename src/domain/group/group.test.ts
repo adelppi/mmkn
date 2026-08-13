@@ -109,6 +109,21 @@ describe('Group', () => {
     it('既定通貨は渡されたものをそのまま持つ', () => {
       expect(groupOf({ defaultCurrency: 'USD' }).defaultCurrency).toBe('USD')
     })
+
+    it('扱えない通貨コードは既定通貨にできない', () => {
+      // 既定通貨は入力の初期値でしかないが、通貨表に無いコードは受け付けない
+      // （`docs/domain/money.md`「最小単位を持たない通貨コードは扱わない」）。
+      const group = Group.create({
+        id: toGroupId('g1'),
+        name: '沖縄旅行',
+        defaultCurrency: 'XAU',
+        inviteCode: 'invite-1',
+        creator: taro,
+        creatorMemberId: toMemberId('m1'),
+      })
+
+      expect(group).toEqual({ ok: false, error: { kind: 'currencyUnsupported' } })
+    })
   })
 
   describe('グループ設定を変更する', () => {
@@ -167,6 +182,13 @@ describe('Group', () => {
       expect(Group.changeSettings(groupOf(), { actor: undefined, name: '北海道旅行' })).toEqual({
         ok: false,
         error: { kind: 'notAuthenticated' },
+      })
+    })
+
+    it('扱えない通貨コードには変更できない', () => {
+      expect(Group.changeSettings(groupOf(), { actor: taro.id, defaultCurrency: 'ZZZ' })).toEqual({
+        ok: false,
+        error: { kind: 'currencyUnsupported' },
       })
     })
 

@@ -1,4 +1,5 @@
 import { idEquals, type GroupId, type MemberId, type UserId } from '../id'
+import { currency, type Currency, type CurrencyUnsupported } from '../money/currency'
 import { err, ok, type Result } from '../result'
 import { requireMember, type MemberAccessDenied, type NotMember } from './access'
 import { Member, type DisplayNameInvalid } from './member'
@@ -16,10 +17,10 @@ export type Group = {
   /**
    * 金額を入力するときの初期値。**扱える通貨を制限しない**（`docs/domain/money.md`）。
    *
-   * **その通貨コードを扱えるかどうかは、ここではまだ確かめていない。**
-   * 判定には通貨表（`src/domain/money/`）が要るため、表が入った時点でここに検査を足す。
+   * 初期値でしかないが、**扱えない通貨コードは既定通貨にもできない**
+   * （`docs/domain/money.md`「最小単位を持たない通貨コードは扱わない」）。
    */
-  readonly defaultCurrency: string
+  readonly defaultCurrency: Currency
   /** 参加コード。作成時に受け取り、以後変更も再生成もしない（形式は `docs/adr/0002-invite-code.md`）。 */
   readonly inviteCode: string
   /** この Group の Member。**並びは意味を持たない**（Member はグループ内の順序を持たない）。 */
@@ -29,8 +30,8 @@ export type Group = {
 /** グループ名が制約を満たさなかったときの失敗。 */
 export type GroupNameInvalid = { kind: 'groupNameEmpty' } | { kind: 'groupNameTooLong' }
 
-export type CreateGroupFailure = GroupNameInvalid | DisplayNameInvalid
-export type ChangeSettingsFailure = MemberAccessDenied | GroupNameInvalid
+export type CreateGroupFailure = GroupNameInvalid | DisplayNameInvalid | CurrencyUnsupported
+export type ChangeSettingsFailure = MemberAccessDenied | GroupNameInvalid | CurrencyUnsupported
 export type JoinFailure = DisplayNameInvalid
 export type ChangeDisplayNameFailure = NotMember | DisplayNameInvalid
 
@@ -58,6 +59,9 @@ const create = (input: {
   const name = groupName(input.name)
   if (!name.ok) return name
 
+  const defaultCurrency = currency(input.defaultCurrency)
+  if (!defaultCurrency.ok) return defaultCurrency
+
   const creator = Member.create({
     id: input.creatorMemberId,
     groupId: input.id,
@@ -71,7 +75,7 @@ const create = (input: {
   return ok({
     id: input.id,
     name: name.value,
-    defaultCurrency: input.defaultCurrency,
+    defaultCurrency: defaultCurrency.value,
     inviteCode: input.inviteCode,
     // 作成者以外の Member は作らない。作成者に他と異なる立場は与えない。
     members: [creator.value],
@@ -94,10 +98,14 @@ const changeSettings = (
   const name = input.name === undefined ? ok(group.name) : groupName(input.name)
   if (!name.ok) return name
 
+  const defaultCurrency =
+    input.defaultCurrency === undefined ? ok(group.defaultCurrency) : currency(input.defaultCurrency)
+  if (!defaultCurrency.ok) return defaultCurrency
+
   return ok({
     ...group,
     name: name.value,
-    defaultCurrency: input.defaultCurrency ?? group.defaultCurrency,
+    defaultCurrency: defaultCurrency.value,
   })
 }
 
