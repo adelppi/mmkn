@@ -32,6 +32,7 @@
 | 日本語 | コード上の名前 | 一次情報 |
 |---|---|---|
 | 記録（支払いと送金の総称） | `record` | `domain/record.md` |
+| 支払いと送金をまとめた型 | `AnyRecord` | `domain/record.md`（`Record` が言語組み込みの型と衝突するため） |
 | 支払い | `Payment` | `domain/record.md` |
 | 送金 | `Transfer` | `domain/record.md` |
 | 支払者 | `payer` | `domain/record.md` |
@@ -41,6 +42,7 @@
 | 受け手 | `recipient` | `domain/record.md` |
 | 内容 | `description` | `domain/record.md` |
 | 発生日 | `occurredOn` | `domain/record.md` |
+| 日付（時刻もタイムゾーンも持たない） | `PlainDate` | `domain/record.md`「発生日」 |
 | 登録日時 | `recordedAt` | `domain/record.md` |
 | 登録者 | `recordedBy` | `domain/record.md` |
 | 配分順序 | `memberOrder` | `domain/record.md`「負担額の配分」 |
@@ -50,15 +52,19 @@
 | 日本語 | コード上の名前 | 一次情報 |
 |---|---|---|
 | 金額 | `amount` | `domain/money.md` |
+| 金額と通貨の組 | `Money` | `domain/money.md`「金額の表し方」 |
 | 通貨 | `currency` | `domain/money.md` |
 | 最小単位 | `minorUnit` | `domain/money.md` |
 | 通貨表（通貨と最小単位の対応） | `currencyTable` | `domain/money.md`（持ち方は `adr/0016`） |
+| 廃止された通貨に立てる印 | `withdrawn` | `domain/money.md`「廃止された通貨」 |
+| 入力候補に出す通貨 | `selectableCurrencies` | `domain/money.md`「廃止された通貨」 |
 
 ## 収支と清算
 
 | 日本語 | コード上の名前 | 一次情報 |
 |---|---|---|
 | 収支 | `balance` | `domain/settlement.md` |
+| 通貨ごとの収支 | `CurrencyBalances` | `domain/settlement.md`「収支」 |
 | 清算案 | `settlement` | `domain/settlement.md` |
 | 清算案の送金 | `settlementTransfer` | `domain/settlement.md` |
 
