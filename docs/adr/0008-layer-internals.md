@@ -1,7 +1,7 @@
 # ADR-0008: 各層の内部構造と実装の型を定める
 
 - ステータス: 採用 [確定]
-- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `docs/domain/money.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0013-currency-data.md`, `adr/0014-logging.md`
+- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `docs/domain/money.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0014-logging.md`, `adr/0016-currency-table-committed.md`
 
 ## コンテキスト
 
@@ -148,7 +148,7 @@ src/
 │   ├─ id.ts                      … branded ID と比較。負担額の配分の順序が使う
 │   ├─ result.ts                  … Result 型
 │   ├─ group/  money/  record/  settlement/    ← docs/domain/ と 1 対 1
-│   │      money/ には通貨表の生成物を含む（手で編集しない。adr/0013）
+│   │      money/ には通貨表を含む（人が直接編集する。adr/0016）
 ├─ usecase/                       … domain のみ
 │   ├─ usecase.ts                 … UseCase<I, O, E>
 │   ├─ port/
@@ -180,8 +180,7 @@ tests/                            … 層をまたぐテストのみ（adr/0010�
 ├─ client-parity/                 … Web と Discord の結果が一致すること
 └─ e2e/                           … Playwright
 
-scripts/                          … アプリが読み込まない道具
-└─ generate-currency-table.ts     … 公表データ → src/domain/money/ の生成物（adr/0013）
+scripts/                          … アプリが読み込まない道具（現在は空。枠だけを持つ）
 ```
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
@@ -204,7 +203,9 @@ scripts/                          … アプリが読み込まない道具
 
 加えて、`src/usecase/**` から `src/adapter/**`・`src/infra/**` への参照を**逆向きとして明示的に禁止する**。`app/` 配下のパス単位のルールは `adr/0009` を正とする。
 
-**`scripts/**` を制限なしとするのは、アプリが読み込まない場所だからである。** 生成器はネットワークとパーサに依存するが（`adr/0013`）、その依存が `src/domain/**` に流れ込まないことは「生成物がプレーンな TypeScript のリテラルであること」で担保される。**逆に `src/**` から `scripts/**` への参照は禁止する。**
+**`scripts/**` を制限なしとするのは、アプリが読み込まない場所だからである。** ここに置いた道具がどんな依存を持っても、`src/**` に流れ込まないことは**逆向きの参照を禁止すること**で担保する。**`src/**` から `scripts/**` への参照は禁止する。**
+
+**`scripts/` に現在の置き物は無い。** 唯一の想定だった通貨表の生成器は `adr/0016` が持たないと決めた。枠と検査のルールは、次に道具が必要になったときのために残す。
 
 ## 結果
 

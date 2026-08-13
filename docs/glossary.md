@@ -50,7 +50,7 @@
 | 金額 | `amount` | `domain/money.md` |
 | 通貨 | `currency` | `domain/money.md` |
 | 最小単位 | `minorUnit` | `domain/money.md` |
-| 通貨表（通貨と最小単位の対応） | `currencyTable` | `domain/money.md`（持ち方は `adr/0013`） |
+| 通貨表（通貨と最小単位の対応） | `currencyTable` | `domain/money.md`（持ち方は `adr/0016`） |
 
 ## 収支と清算
 
