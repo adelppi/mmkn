@@ -24,6 +24,8 @@
 | サービスの種別 | `service` | `domain/group.md`（ポートの形は `adr/0008`） |
 | 場 | `place` | `domain/group.md` |
 | 場と Group の対応 | `placeMapping` | `domain/group.md` |
+| 操作する User | `actor` | `domain/group.md`「前提条件を満たさなかったとき」 |
+| 前提条件を満たさなかった理由 | `GroupAccessDenied` | `domain/group.md`「前提条件を満たさなかったとき」 |
 
 ## 記録
 
