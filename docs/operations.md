@@ -70,10 +70,23 @@ npm ci        依存を入れる
 npm run dev   開発サーバーを起動する
 ```
 
-Postgres を使うものは、これに加えて次が要る（**まだ実体が無い**）。
+Postgres を使うものは、これに加えて次が要る。
 
-1. Postgres を起動する（Docker）
-2. マイグレーションを適用する
+```
+docker compose up -d --wait   Postgres を起動する（Healthy になるまで待つ）
+docker compose down           止める（データは残る）
+docker compose down -v        止めて、データも捨てる
+```
+
+定義は**リポジトリ直下の `docker-compose.yml`**。`127.0.0.1:5432` にだけ bind し、利用者名・パスワード・DB 名はいずれも `mmkn`。**手元専用であり秘密情報ではない**ため、接続文字列は `.env.local` に次の形で書ける。
+
+```
+DATABASE_URL=postgresql://mmkn:mmkn@127.0.0.1:5432/mmkn
+```
+
+2. マイグレーションを適用する（**まだ実体が無い**。当てるスキーマが無いため）
+
+**本番（Supabase）とメジャーバージョンを合わせてある。** ずれると、本番でだけ通らない SQL に手元で気づけない。本番のバージョンは診断（下記「診断」）で確認する。
 
 永続化テストと E2E は、この Postgres を使う（`adr/0010`）。**単体テストだけは何も起動せずに回る状態を保つ。**
 
