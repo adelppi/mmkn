@@ -1,0 +1,43 @@
+# 手元の Postgres — 開発サーバー・永続化テスト・E2E が使う（adr/0010）
+#
+# **単体テストはこれを起動せずに回る状態を保つ**（adr/0010 / docs/operations.md）。
+#
+# Supabase のローカル環境は使わない（adr/0010）。検証したいのは永続化の
+# 振る舞いであり、アプリは PostgREST を経由しないため（adr/0005）、
+# Supabase 固有の層を挟む必要がない。
+#
+# ここの利用者名・パスワードは**秘密情報ではない**。127.0.0.1 にだけ
+# bind した手元専用の DB であり、本番とは何の関係もない。
+# 本番の接続文字列をここに書かない。
+
+services:
+  db:
+    # 本番（Supabase）が 17.6 のため、メジャーを合わせる。
+    # ずれると本番でだけ通らない SQL に手元で気づけない。
+    image: postgres:17
+    container_name: mmkn-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mmkn
+      POSTGRES_PASSWORD: mmkn
+      POSTGRES_DB: mmkn
+      # 照合順序を固定する。ホストのロケールで並び順が変わると、
+      # 記録の並び（domain/record.md）がマシンごとに違って見える。
+      LANG: C.UTF-8
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      # 127.0.0.1 にだけ bind する。LAN に晒さない。
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - mmkn-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # `docker compose up -d --wait` が「起動した」と言う時点で
+      # 実際に接続を受けられる状態にする。
+      test: ["CMD-SHELL", "pg_isready -U mmkn -d mmkn"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  mmkn-db-data:
