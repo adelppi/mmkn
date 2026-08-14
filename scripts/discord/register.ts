@@ -18,8 +18,9 @@ import { commandDifferences, describeDifferences } from './shape'
  * npm run discord:register -- --force   差分が無くても登録し直す
  * ```
  *
- * **リリースの自動処理としてどう走らせるかは #25 で扱う**（`docs/adr/0011-ci-and-release.md`）。
- * このスクリプトはその中身であり、走らせ方はまだ持たない。
+ * **リリースの 4 段目としても、これがそのまま走る**（`.github/workflows/main.yml`）。
+ * **差分があるときだけ登録する判定はここにあり**、走らせ方の側は持たない
+ * （`docs/adr/0011-ci-and-release.md`「main へのマージ時に走らせるもの」）。
  */
 const main = async (): Promise<number> => {
   const forced = process.argv.includes('--force')

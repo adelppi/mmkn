@@ -49,3 +49,8 @@ next-env.d.ts
 
 # Storybook のビルド成果物（docs/adr/0010-testing.md）
 storybook-static/
+
+# E2E の実行結果（docs/adr/0010-testing.md）
+/test-results/
+/playwright-report/
+/.playwright-mcp/
