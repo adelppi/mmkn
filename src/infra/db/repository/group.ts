@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import type { Group } from '../../../domain/group/group'
 import type { Member } from '../../../domain/group/member'
-import type { GroupId } from '../../../domain/id'
+import type { GroupId, UserId } from '../../../domain/id'
 import type { CreateGroupOutcome, GroupRepository } from '../../../usecase/port/group-repository'
 import type { Database } from '../client'
 import { fromGroup, fromMember, toGroup } from '../mapper/group'
@@ -31,6 +31,31 @@ export const drizzleGroupRepository = (db: Database): GroupRepository => {
     async findByInviteCode(inviteCode: string) {
       const [row] = await db.select().from(groups).where(eq(groups.inviteCode, inviteCode)).limit(1)
       return load(row)
+    },
+
+    async listByUser(userId: UserId) {
+      // その User が Member である Group の識別子を先に引く。
+      const belongs = await db
+        .select({ groupId: members.groupId })
+        .from(members)
+        .where(eq(members.userId, userId))
+
+      const ids = belongs.map((row) => row.groupId)
+      if (ids.length === 0) return []
+
+      // **Group ごとに Member を引き直さない。** 該当する Group の Member をまとめて読み、
+      // Group の識別子で振り分ける（1 件ずつ読むと Group の数だけ問い合わせが増える）。
+      const [groupRows, memberRows] = await Promise.all([
+        db.select().from(groups).where(inArray(groups.id, ids)),
+        db.select().from(members).where(inArray(members.groupId, ids)),
+      ])
+
+      return groupRows.map((row) =>
+        toGroup(
+          row,
+          memberRows.filter((member) => member.groupId === row.id),
+        ),
+      )
     },
 
     async create(group: Group): Promise<CreateGroupOutcome> {

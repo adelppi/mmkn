@@ -65,6 +65,33 @@ describe('Group 集約の保存と読み出し', () => {
     expect(await repository().findByInviteCode('いない')).toBeUndefined()
   })
 
+  it('その User が Member である Group だけを、Member ごと読める', async () => {
+    const okinawa = groupOf(
+      [
+        { user: taro, memberId: 'm1' },
+        { user: jiro, memberId: 'm2' },
+      ],
+      { id: 'g1', name: '沖縄旅行', inviteCode: 'invite-1' },
+    )
+    const taiwan = groupOf([{ user: hanako, memberId: 'm3' }], {
+      id: 'g2',
+      name: '台湾旅行',
+      inviteCode: 'invite-2',
+    })
+    await repository().create(okinawa)
+    await repository().create(taiwan)
+
+    const mine = await repository().listByUser(taro.id)
+
+    expect(mine).toEqual([okinawa])
+  })
+
+  it('どの Group にも入っていない User には空が返る', async () => {
+    await repository().create(groupOf([{ user: taro, memberId: 'm1' }]))
+
+    expect(await repository().listByUser(hanako.id)).toEqual([])
+  })
+
   it('参加コードが既存のグループと重なったら、作成せずにその旨を返す', async () => {
     await repository().create(groupOf([{ user: taro, memberId: 'm1' }]))
 

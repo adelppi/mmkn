@@ -46,3 +46,6 @@ next-env.d.ts
 .claude/settings.local.json
 # MCP サーバーの設定。接続先の外部プロジェクトに紐づくため手元だけで持つ
 .mcp.json
+
+# Storybook のビルド成果物（docs/adr/0010-testing.md）
+storybook-static/

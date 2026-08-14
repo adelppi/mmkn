@@ -115,6 +115,16 @@ export const addPayment = (deps: Deps) =>
 
 初期状態も Presenter が持つ。これによりフォームの状態の正が「サーバーが返したビューモデル」1 つだけになる。
 
+**Server Action そのものは、ビューモデルとは別に Presentational へ渡す。** ビューモデルはシリアライズ可能な素の値だけで構成すると決めており（上記「Container/Presentational」）、関数はそこに入らない。入力を受ける Presentational の props は「ビューモデル + 操作の口」の形になる。
+
+```ts
+// src/adapter/web/presenter/form.ts
+export type FormAction<V> = (previous: V, data: FormData) => Promise<V>
+export type FormProps<V> = V & { readonly action: FormAction<V> }
+```
+
+**渡すのは `page.tsx` である。** 上の「配置と命名」の表が Container の import 先を `app/_lib/*`・`src/adapter/web/**`・同ディレクトリの `presentation.tsx` に限っており、`actions.ts` はそこに入らない。`page.tsx` は制限を持たない（`adr/0008`）ため、そこで受け取って Container へ props として流す。
+
 ### クライアント側の入力検査
 
 **クライアントで行う検査は、ブラウザ標準の入力属性（必須・型・上限・下限）にとどめる。業務ルールを書かない。**
@@ -122,6 +132,10 @@ export const addPayment = (deps: Deps) =>
 負担者の人数や、支払者と負担者の関係のような条件を書くと、`domain/record.md` と同じルールが 2 か所に存在することになる（`RULES.md` §7）。失敗はビューモデルとしてサーバーから戻るため、伝える手段は既にある。
 
 **入力属性に入れる値は `domain/` を正とし、この ADR にも実装にも数値を書かない。** 金額の上限は `domain/money.md`、グループ名・表示名の長さは `domain/group.md`、内容の長さは `domain/record.md` にある。ドメイン層が公開する定数をそのまま `maxlength` に渡す形にし、画面側で数値を打たない。
+
+**運ぶのはビューモデルである。** 上の「配置と命名」の表により Presentational はドメイン層を参照できないため、Presenter がドメイン層の定数を読み、入力属性の値としてビューモデルに載せる。これで「数値の正は `domain/` の 1 か所」と「Presentational は props だけを受け取る」の両方が同時に成り立つ。
+
+**通貨によって変わる値（金額の上限と刻み）は、選ばれている通貨についてのものになる。** 送信せずに通貨を切り替えると、ブラウザ側の上限は一時的にずれる。**判定の正はドメイン層 1 か所だけ**であり、ずれても結論は変わらない。ここでクライアント側に通貨ごとの表を持たせると、`domain/money.md` の通貨表が 2 か所に存在することになるため持たせない。
 
 ## 結果
 

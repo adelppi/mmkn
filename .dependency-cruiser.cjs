@@ -14,6 +14,14 @@
  * | proxy.ts        | 制限なし                                          | —                                                     |
  * | scripts/**      | 制限なし                                          | —                                                     |
  *
+ * `app/` 配下のパス単位のルールは `docs/adr/0009-web-ui.md`「配置と命名」の表を正とする。
+ *
+ * | パス                        | import してよい                                                        |
+ * |-----------------------------|------------------------------------------------------------------------|
+ * | app/**\/container.tsx       | app/_lib/*・src/adapter/web/**・同ディレクトリの presentation.tsx        |
+ * | app/**\/presentation.tsx    | React・src/adapter/web/presenter/** の型・app/_ui/**                     |
+ * | app/_ui/**                  | React と UI プリミティブのみ（層と合成ルートを参照しない）              |
+ *
  * 読み替えを 2 つだけ行っている。どちらも表を緩めるものではない。
  *
  * 1. 同じ層の中での import は、どの層でも許す。表は「どの層を参照してよいか」を挙げたもので、
@@ -85,6 +93,38 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/' },
       to: { path: '^scripts/' },
+    },
+
+    // ── app/ 配下のパス単位のルール（`adr/0009`「配置と命名」）───────────────
+    {
+      name: 'container-imports',
+      comment:
+        'Container が参照してよいのは app/_lib/*・src/adapter/web/**・同ディレクトリの presentation だけ（adr/0009）',
+      severity: 'error',
+      from: { path: 'container\\.tsx$' },
+      to: {
+        path: '^(src|app|scripts|tests)/',
+        pathNot: ['^app/_lib/[^/]+$', '^src/adapter/web/', '^app/_ui/', 'presentation\\.tsx$'],
+      },
+    },
+    {
+      name: 'presentation-imports',
+      comment:
+        'Presentational が参照してよいのは adapter/web/presenter の型と app/_ui だけ。ユースケースを呼べない（adr/0009）',
+      severity: 'error',
+      from: { path: 'presentation\\.tsx$' },
+      to: {
+        path: '^(src|app|scripts|tests)/',
+        pathNot: ['^src/adapter/web/presenter/', '^app/_ui/'],
+      },
+    },
+    {
+      name: 'ui-imports',
+      comment:
+        'UI の部品は層ではない。app/_ui から層（src/**）と合成ルート（app/_lib）を参照しない（adr/0009）',
+      severity: 'error',
+      from: { path: '^app/_ui/' },
+      to: { path: '^(src|app/_lib|scripts|tests)/' },
     },
 
     // ── 層ごとの禁止モジュール ──────────────────────────────────────────────

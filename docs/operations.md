@@ -19,7 +19,7 @@
 
 | 節 | 状態 |
 |---|---|
-| 手元の準備・テストの回し方 | 実体（開発サーバー・単体テスト・**永続化テスト**・**マイグレーションの適用**・lint / typecheck / 依存方向の検査）。E2E・Storybook・クライアント間整合はまだ一覧 |
+| 手元の準備・テストの回し方 | 実体（開発サーバー・単体テスト・**永続化テスト**・**Storybook**・マイグレーションの適用・lint / typecheck / 依存方向の検査）。E2E・クライアント間整合はまだ一覧 |
 | 環境変数・リリース・診断 | まだ「用意するもの」の一覧 |
 | 通貨表の更新 | 実体（`src/domain/money/currency-table.ts` がある。人が直接編集する） |
 
@@ -111,6 +111,7 @@ PR で回すものと同じものを、手元から単独で回せる（CI の�
 | 単体テスト | `npm run test:unit` |
 | 永続化テスト | `npm run test:db`（先に `docker compose up -d --wait`） |
 | 依存方向の検査 | `npm run check:deps` |
+| Storybook のビルド | `npm run build:storybook` |
 
 依存方向の検査の設定は `.dependency-cruiser.cjs` にあり、ルールの正は `adr/0008`「依存方向の機械検査のルール」。**検査が落ちたら、通すために設定を緩めない。** 直すのは import のほう。
 
@@ -122,9 +123,11 @@ PR で回すものと同じものを、手元から単独で回せる（CI の�
 | 永続化 | Postgres を起動してから | `npm run test:db` |
 | クライアント間整合 | Postgres を起動してから | まだ無い |
 | E2E（Playwright） | 手元では必要なときだけ。CI では main へのマージ時 | まだ無い |
-| Storybook | 手元で表示を確認するとき | まだ無い |
+| Storybook | 手元で表示を確認するとき | `npm run storybook`（CI は `npm run build:storybook`） |
 
 種別ごとの対象と置き場は `adr/0010` を正とする。単体テストは対象の隣（`*.test.ts`）に、**永続化テストも対象の隣（`*.db.test.ts`）**に置く。名前を分けてあるのは、`npm run test:unit` の対象から外して**単体テストが何も起動せずに回る状態を保つ**ためで、設定も別（`vitest.config.ts` と `vitest.config.db.ts`）。
+
+Storybook も対象の隣（`presentation.stories.tsx`）に置く（`adr/0009`「配置と命名」）。**スナップショット比較は持たない**ため、CI が確かめるのはビルドが通ることだけで、表示そのものは手元で目で見る（`adr/0010`「Storybook」）。設定は `.storybook/`。
 
 ## リリース
 
