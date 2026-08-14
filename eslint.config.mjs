@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Storybook のビルド成果物（docs/adr/0010-testing.md）。生成物であり検査の対象ではない。
+    "storybook-static/**",
   ]),
 ]);
 

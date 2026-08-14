@@ -221,6 +221,11 @@ export const fakeGroupRepository = (initial: readonly Group[] = []): FakeGroupRe
     findByInviteCode: async (inviteCode: string) =>
       read([...groups.values()].find((group) => group.inviteCode === inviteCode)),
 
+    listByUser: async (userId: UserId) =>
+      [...groups.values()]
+        .filter((group) => group.members.some((member) => idEquals(member.userId, userId)))
+        .flatMap((group) => read(group) ?? []),
+
     create: async (group: Group): Promise<CreateGroupOutcome> => {
       const taken = [...groups.values()].some((stored) => stored.inviteCode === group.inviteCode)
       if (taken) return { kind: 'inviteCodeTaken' }

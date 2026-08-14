@@ -1,29 +1,35 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next'
+import { IBM_Plex_Mono } from 'next/font/google'
+import './globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+/**
+ * 金額・通貨コード・件数に使う等幅書体（設計「金額」）。
+ *
+ * **日本語の書体は端末のものを使う**（`app/globals.css` の `--font-sans`）。
+ * 本文に使う日本語書体を読み込むと、字数の多さがそのまま転送量になる。
+ * 等幅で見せたいのは数字と通貨コードだけで、そこはラテン文字の範囲に収まる。
+ */
+const mono = IBM_Plex_Mono({
+  variable: '--font-mmkn-mono',
+  weight: ['300', '400'],
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
-  title: "mmkn",
-  description: "グループ内で発生したお金の動きを記録し、清算を導出する",
-};
+  title: 'mmkn',
+  description: 'グループ内で発生したお金の動きを記録し、清算を導出する',
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+/** スマホでの利用を前提とする（`docs/overview.md`）。 */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
+export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html
-      lang="ja"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="ja" className={`${mono.variable} h-full`}>
+      <body className="min-h-full">{children}</body>
     </html>
-  );
+  )
 }

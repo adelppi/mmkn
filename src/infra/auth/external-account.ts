@@ -39,7 +39,7 @@ import type { AuthClient } from './client'
  * 「**検証済みメールが一致する identity を自動統合する**」挙動を誘発しないためである。
  * ログイン手段の追加は、**必ず本人の明示的な操作でだけ成立させる**（`docs/adr/0012`「自動統合に頼らない」）。
  */
-const LOGIN_SERVICES = {
+export const LOGIN_SERVICES = {
   google: undefined,
   discord: 'identify',
 } as const
