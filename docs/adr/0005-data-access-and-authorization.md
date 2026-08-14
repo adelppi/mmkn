@@ -22,7 +22,7 @@ DB に Supabase Postgres を採用した（`adr/0003`）ため、選択肢とし
 | 変数 | 用途 |
 |---|---|
 | `DATABASE_URL` | サーバー側のデータアクセス（ORM が使う） |
-| `SUPABASE_URL` / anon key | 認証・セッション管理（`adr/0007`）。データアクセスには使わない |
+| `SUPABASE_URL` / anon key | 認証・セッション管理（`adr/0012`）。データアクセスには使わない |
 
 接続の要件:
 

@@ -24,7 +24,7 @@
 | Web の実行モデル | Server Actions | 後述 |
 | Discord | HTTP Interactions（常駐 Bot を持たない） | `adr/0006-discord-http-interactions.md` |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
-| 認証 | Supabase Auth | `adr/0012-login.md`（ログイン）／`adr/0007-external-account-linking.md`（外部アカウント連携） |
+| 認証 | Supabase Auth | `adr/0012-login.md`（ログインとログイン手段の追加） |
 | 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
 | UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
 | テスト | Vitest / Playwright / Storybook | `adr/0010-testing.md` |
@@ -78,13 +78,13 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
   - Supabase を採用しても、DB を信頼境界にはしない（`adr/0005`）
   - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`docs/operations.md`）
   - Discord のスラッシュコマンドの登録はデプロイと別作業になる（`adr/0006`）
-  - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも Web の導線が要る（`adr/0007`）
+  - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも mmkn のアカウント（名前）が要る。作る導線は Web が持つ（`adr/0012`）
   - **Discord はクライアントの 1 つにすぎない。** Slack や CLI を足せる状態を保つのは `adr/0004` の責務であり、このスタック選定はそれを妨げない
 
 ## 検討した代替案
 
 - **Web と Discord を別実装にする**：それぞれ最短で作れるが、「2 つの提供形態で機能に差を設けない」（`overview.md`）を人間の注意力だけで守り続けることになる。個人開発で維持できない。
 - **常駐 Bot（Gateway 接続）を別サーバーで動かす**：不採用の理由は `adr/0006-discord-http-interactions.md` を正とする。
-- **Neon + Auth.js**：DB としては問題ないが、認証が別建てになる。外部アカウントとアプリのアカウントの紐付け表を自前で持つことになり、`adr/0007` が要求するものを自分で実装・保守することになる。個人開発で持つ責務としては割に合わない。
+- **Neon + Auth.js**：DB としては問題ないが、認証が別建てになる。外部アカウントとアプリのアカウントの紐付け表を自前で持つことになり、`adr/0012` が認証基盤に委ねているもの（複数のログイン手段の管理）を自分で実装・保守することになる。個人開発で持つ責務としては割に合わない。
 - **バックエンドを別言語（Go / Kotlin 等）で建てる**：Web の UI と型を共有できず、個人開発で扱う言語が 2 つになる。ドメインの定義を 2 か所に持つ危険もある。
 - **Vercel 以外のホスティング（常駐プロセスを持てる環境）**：常駐 Bot を選ぶなら必要になるが、その選択をしないため利点がない。

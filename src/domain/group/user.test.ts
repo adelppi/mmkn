@@ -3,14 +3,14 @@ import { toUserId } from '../id'
 import { User } from './user'
 
 const create = (name: string) =>
-  User.create({ id: toUserId('u1'), name, loginIdentifier: 'google:1' })
+  User.create({ id: toUserId('u1'), name, loginIdentifier: 'auth-1' })
 
 describe('User', () => {
   describe('アカウントを作成する', () => {
     it('名前とログイン識別子を持つ User ができる', () => {
       expect(create('たろう')).toEqual({
         ok: true,
-        value: { id: toUserId('u1'), name: 'たろう', loginIdentifier: 'google:1' },
+        value: { id: toUserId('u1'), name: 'たろう', loginIdentifier: 'auth-1' },
       })
     })
 
@@ -32,7 +32,7 @@ describe('User', () => {
     it('ログイン識別子はそのまま持つ（名前とは別のもの）', () => {
       const user = create('たろう')
 
-      expect(user.ok && user.value.loginIdentifier).toBe('google:1')
+      expect(user.ok && user.value.loginIdentifier).toBe('auth-1')
     })
   })
 })

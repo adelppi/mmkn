@@ -1,4 +1,9 @@
 import type { Group } from '../../domain/group/group'
+import {
+  LoginMethod,
+  sameExternalAccount,
+  type ExternalAccount,
+} from '../../domain/group/login-method'
 import type { Member } from '../../domain/group/member'
 import type { Place, PlaceMapping } from '../../domain/group/place-mapping'
 import type { User } from '../../domain/group/user'
@@ -18,6 +23,10 @@ import type { Payment } from '../../domain/record/payment'
 import type { Transfer } from '../../domain/record/transfer'
 import type { Version, Versioned, VersionedDelete, VersionedWrite } from '../usecase'
 import type { Clock } from './clock'
+import type {
+  AddLoginMethodOutcome,
+  ExternalAccountRepository,
+} from './external-account-repository'
 import type { CreateGroupOutcome, GroupRepository } from './group-repository'
 import type { IdGenerator } from './id-generator'
 import type { InviteCodeGenerator } from './invite-code-generator'
@@ -105,6 +114,66 @@ export const fakeUserRepository = (initial: readonly User[] = []): FakeUserRepos
     },
 
     stored: () => [...users.values()],
+  }
+}
+
+/** ある User のログイン手段になっている外部アカウント。 */
+export type StoredLoginMethod = {
+  readonly userId: UserId
+  readonly account: ExternalAccount
+}
+
+export type FakeExternalAccountRepository = ExternalAccountRepository & {
+  readonly stored: () => readonly StoredLoginMethod[]
+}
+
+/**
+ * 本物の実装は認証基盤の側を読む（`docs/adr/0012-login.md`）。
+ * **ここが偽実装として守るのは、本物と同じ 2 つの断り方だけである。**
+ *
+ * - 既に**別の** User のログイン手段になっている外部アカウントは追加できない（移りもしない）
+ * - 1 人の User が、**同じサービス**のアカウントを 2 つ持つことはできない
+ *
+ * 後者の判定は**ドメイン層のものをそのまま呼ぶ**（`src/domain/group/login-method.ts`）。
+ * 偽実装が独自に書き直すと、本物と違う結論を出す余地ができる。
+ */
+export const fakeExternalAccountRepository = (
+  initial: readonly StoredLoginMethod[] = [],
+): FakeExternalAccountRepository => {
+  const methods: StoredLoginMethod[] = [...initial]
+
+  const ownedBy = (userId: UserId) =>
+    methods.filter((method) => idEquals(method.userId, userId)).map((method) => method.account)
+
+  return {
+    findUserId: async (account: ExternalAccount) =>
+      methods.find((method) => sameExternalAccount(method.account, account))?.userId,
+
+    listByUser: async (userId: UserId) => ownedBy(userId),
+
+    add: async (userId: UserId, account: ExternalAccount): Promise<AddLoginMethodOutcome> => {
+      const owner = methods.find((method) => sameExternalAccount(method.account, account))
+      // **移らない。** 他の User の入口を奪う経路を持たない。
+      if (owner !== undefined && !idEquals(owner.userId, userId)) {
+        return { kind: 'usedByAnotherUser' }
+      }
+
+      const allowed = LoginMethod.requireAddable(ownedBy(userId), account)
+      if (!allowed.ok) return allowed.error
+
+      if (owner === undefined) methods.push({ userId, account })
+      return { kind: 'added' }
+    },
+
+    remove: async (userId: UserId, account: ExternalAccount) => {
+      const index = methods.findIndex(
+        (method) =>
+          idEquals(method.userId, userId) && sameExternalAccount(method.account, account),
+      )
+      if (index >= 0) methods.splice(index, 1)
+    },
+
+    stored: () => [...methods],
   }
 }
 
