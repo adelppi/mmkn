@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { XIcon } from 'lucide-react'
 import { useActionState, useState } from 'react'
 
 import { Button } from '@/app/_ui/button'
@@ -9,8 +10,10 @@ import { Field } from '@/app/_ui/field'
 import { Input } from '@/app/_ui/input'
 import { AppBar, Empty, Notice, Screen } from '@/app/_ui/notice'
 import { Select } from '@/app/_ui/select'
+import { useUnreachableGuard } from '@/app/_ui/toast'
 import { DateInput } from '@/app/_ui/today'
 import type { FormProps } from '@/src/adapter/web/presenter/form'
+import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import type { RecordFormView } from '@/src/adapter/web/presenter/record'
 
 /**
@@ -22,8 +25,14 @@ import type { RecordFormView } from '@/src/adapter/web/presenter/record'
  * 支払者と負担者の関係も、送り手と受け手が別人であることも、金額の上限も、ここでは見ない。
  * **入力属性に渡す数値はビューモデルから来る**（正はドメイン層）。
  */
-export function RecordFormPresentation(props: FormProps<RecordFormView>) {
-  const [view, action, pending] = useActionState(props.action, props)
+export function RecordFormPresentation(
+  props: FormProps<RecordFormView> & {
+    /** 保存が届かなかったときに伝えること（`src/adapter/web/presenter/notice.ts`）。 */
+    readonly unreachable: NoticeView
+  },
+) {
+  const guarded = useUnreachableGuard(props.action, props.unreachable)
+  const [view, action, pending] = useActionState(guarded, props)
   const initialType = 'form' in props ? props.form.type : 'payment'
   const [type, setType] = useState<'payment' | 'transfer'>(initialType)
 
@@ -48,7 +57,8 @@ export function RecordFormPresentation(props: FormProps<RecordFormView>) {
     <Screen>
       <AppBar>
         <Link href={form.cancelHref} className="text-muted-foreground">
-          やめる
+          <XIcon className="size-4.5" />
+          <span className="sr-only">やめる</span>
         </Link>
         {editing ? (
           <span>記録を編集</span>
@@ -182,6 +192,7 @@ export function RecordFormPresentation(props: FormProps<RecordFormView>) {
           </>
         )}
 
+        {/* 日付の印は端末が持つものを使う（`input[type=date]` の選択ボタン）。 */}
         <Field label="発生日" htmlFor="occurredOn">
           <DateInput id="occurredOn" name="occurredOn" defaultValue={form.occurredOn} required />
         </Field>

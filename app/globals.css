@@ -100,6 +100,20 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /**
+   * 知らせを積む位置（設計「トースト」）。
+   *
+   * **下端に操作がある画面では、その上に積む**（設計 03 の「支払いを記録する」）。
+   * 押せるものを一時的に隠さないため、下端の操作の高さだけ持ち上げる。
+   */
+  .mmkn-toast-stack {
+    padding-bottom: 1.5rem;
+  }
+
+  body:has([data-bottom-bar]) .mmkn-toast-stack {
+    padding-bottom: 7rem;
+  }
+
   /** 金額と通貨コードは等幅で、桁を縦にそろえる（設計「金額」）。 */
   .tabular {
     font-family: var(--font-mono);

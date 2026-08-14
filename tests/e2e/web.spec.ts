@@ -89,8 +89,24 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
   await taro.page.getByLabel('内容（任意）').fill('宿代')
   await taro.page.getByRole('button', { name: '記録する' }).click()
 
-  await expect(taro.page).toHaveURL(/\/groups\/[^/]+$/)
+  // **済んだことが伝わる**（設計「トースト」）。押しっぱなしにも、何も起きないようにも見えない。
+  await expect(taro.page.getByRole('status').filter({ hasText: '支払いを記録しました' })).toBeVisible()
   await expect(taro.page.getByText('宿代')).toBeVisible()
+
+  // ── タブを切り替える（設計 03〜05）────────────────────────────────────────────
+  // **上端はタブで共有される**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
+  // 切り替えても同じグループ名がそこに在り続け、選択だけが移る。
+  const tab = (name: string) => taro.page.getByRole('link', { name, exact: true })
+
+  await tab('収支').click()
+  await expect(taro.page).toHaveURL(/\/balances$/)
+  await expect(tab('収支')).toHaveAttribute('aria-current', 'page')
+  await expect(taro.page.getByRole('link', { name: 'E2E 旅行' })).toBeVisible()
+
+  await tab('記録').click()
+  await expect(taro.page).toHaveURL(/\/groups\/[^/]+$/)
+  await expect(tab('記録')).toHaveAttribute('aria-current', 'page')
+  await expect(taro.page.getByRole('link', { name: 'E2E 旅行' })).toBeVisible()
 
   // ── 清算案を見る（`docs/features.md` #9）────────────────────────────────────
   // たろうが 1000 を払い、2 人で負担した。**じろう → たろう の 1 件になる。**
@@ -102,6 +118,11 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
   // **金額は入力しない。** 登録の時点で導出し直される（`docs/domain/settlement.md`）。
   await row.getByRole('button', { name: '送金した' }).click()
 
+  // **記録できたことは知らせで伝わる**（設計「トースト」）。額は登録の時点で導出し直したもの。
+  await expect(
+    jiro.page.getByRole('status').filter({ hasText: 'の送金を記録しました' }),
+  ).toBeVisible()
+
   // 記録された結果、送るお金が無くなる。
   await expect(jiro.page.getByText('送る必要のあるお金はありません')).toBeVisible()
 
@@ -109,6 +130,19 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
   // （`docs/domain/settlement.md`）。
   await goTo(jiro.page, groupUrl)
   await expect(jiro.page.getByText('じろう → たろう')).toBeVisible()
+
+  // ── 記録を削除する（`docs/features.md` #7）──────────────────────────────────
+  // **取り消しの導線を持たない**（`docs/domain/record.md`「削除」：削除履歴を残さない）。
+  await taro.page.getByText('宿代').click()
+  await taro.page.getByRole('button', { name: '削除する' }).first().click()
+  await taro.page.getByRole('dialog').getByRole('button', { name: '削除する' }).click()
+
+  const removed = taro.page.getByRole('status').filter({ hasText: '記録を削除しました' })
+  await expect(removed).toBeVisible()
+  await expect(removed.getByRole('button')).toHaveCount(0)
+  await expect(removed.getByRole('link')).toHaveCount(0)
+
+  await expect(taro.page.getByText('宿代')).toHaveCount(0)
 
   await taro.context.close()
   await jiro.context.close()

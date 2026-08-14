@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
+import { unreachableNotice } from '@/src/adapter/web/presenter/notice'
 import {
   initialSettlementTransferView,
   toSettlementTransferView,
@@ -24,6 +25,7 @@ const meta = {
     groupId: 'g1',
     action: async (previous) => previous,
     initial: initialSettlementTransferView(),
+    unreachable: unreachableNotice(),
   },
 } satisfies Meta<typeof SettlementListPresentation>
 

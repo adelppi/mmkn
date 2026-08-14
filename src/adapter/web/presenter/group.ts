@@ -219,10 +219,16 @@ export const toJoinView = (
 /** 記録・収支・精算の切り替え。**切り替えは画面の移動である。** */
 export type GroupTab = 'records' | 'balances' | 'settlement'
 
+/**
+ * タブ 1 つ分。
+ *
+ * **どれを見ているかは持たない**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
+ * 上端は 3 つのタブで共有され、切り替えのたびに作り直されない。作り直されないものは
+ * 「いまどこにいるか」を知り得ないため、選択状態は場所を見ている側（`app/_ui/tab-bar.tsx`）が決める。
+ */
 export type GroupTabView = {
   readonly href: string
   readonly label: string
-  readonly current: boolean
 }
 
 export type GroupHeaderView =
@@ -254,7 +260,6 @@ const tabHref = (tab: GroupTab, groupId: string): string =>
       : route.settlement(groupId)
 
 export const toGroupHeaderView = (
-  current: GroupTab,
   result: Result<ViewGroupOutput, ViewGroupError>,
 ): GroupHeaderView => {
   if (!result.ok) {
@@ -269,11 +274,7 @@ export const toGroupHeaderView = (
     groupsHref: route.groups(),
     settingsHref: route.settings(groupId),
     newRecordHref: route.newRecord(groupId),
-    tabs: TAB_LABELS.map(({ tab, label }) => ({
-      href: tabHref(tab, groupId),
-      label,
-      current: tab === current,
-    })),
+    tabs: TAB_LABELS.map(({ tab, label }) => ({ href: tabHref(tab, groupId), label })),
   }
 }
 

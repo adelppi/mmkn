@@ -188,34 +188,40 @@ describe('記録に現れた通貨', () => {
 describe('保存の結果', () => {
   const form = recordFormFields(group, [], { type: 'payment', recordId: 'p1', version: 3 })
 
-  it('保存できたら、そのグループへ戻る', () => {
-    const view = toRecordFormView(form, ok(undefined))
+  it('保存できたら、済んだことを付けてそのグループへ戻る', () => {
+    const view = toRecordFormView(form, ok(undefined), 'recordSaved')
 
-    expect(view.kind === 'saved' && view.redirectTo).toBe('/groups/g1')
+    expect(view.kind === 'saved' && view.redirectTo).toBe('/groups/g1?notice=recordSaved')
+  })
+
+  it('削除も同じ行き先で、済んだことだけが違う', () => {
+    const view = toRecordFormView(form, ok(undefined), 'recordDeleted')
+
+    expect(view.kind === 'saved' && view.redirectTo).toBe('/groups/g1?notice=recordDeleted')
   })
 
   it('入力の不備はフォームに戻る', () => {
-    const view = toRecordFormView(form, err({ kind: 'bearersEmpty' }))
+    const view = toRecordFormView(form, err({ kind: 'bearersEmpty' }), 'recordSaved')
 
     expect(view.kind).toBe('invalid')
     expect(view.kind === 'invalid' && view.message).toBe('負担する人を 1 人以上選んでください。')
   })
 
   it('金額の上限超過も、フォームに戻る', () => {
-    const view = toRecordFormView(form, err({ kind: 'amountTooLarge' }))
+    const view = toRecordFormView(form, err({ kind: 'amountTooLarge' }), 'recordSaved')
 
     expect(view.kind === 'invalid' && view.message).toContain('1 件の上限は')
   })
 
   it('同時に手が入っていたら、読み込み直す導線が出る', () => {
-    const view = toRecordFormView(form, err({ kind: 'versionConflict' }))
+    const view = toRecordFormView(form, err({ kind: 'versionConflict' }), 'recordSaved')
 
     expect(view.kind).toBe('conflict')
     expect(view.kind === 'conflict' && view.reloadHref).toBe('/groups/g1/records/p1')
   })
 
   it('Member でなければ、フォームには戻らない', () => {
-    const view = toRecordFormView(form, err({ kind: 'notMember' }))
+    const view = toRecordFormView(form, err({ kind: 'notMember' }), 'recordSaved')
 
     expect(view.kind).toBe('denied')
   })

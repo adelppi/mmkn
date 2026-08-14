@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
+import { unreachableNotice } from '@/src/adapter/web/presenter/notice'
 import {
   initialRecordFormView,
   recordFormFields,
@@ -18,7 +19,7 @@ import { RecordFormPresentation } from './presentation'
  */
 const meta = {
   component: RecordFormPresentation,
-  args: { action: async (previous) => previous },
+  args: { action: async (previous) => previous, unreachable: unreachableNotice() },
 } satisfies Meta<typeof RecordFormPresentation>
 
 export default meta
@@ -60,40 +61,40 @@ export const 編集: Story = { args: initialRecordFormView(editForm) }
 
 /** **負担する人は 1 人以上**（`docs/domain/record.md`「支払者と負担者」）。 */
 export const 負担する人がいない: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'bearersEmpty' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'bearersEmpty' }), 'paymentRecorded'),
 }
 
 /** 上限は 1 件ごとに見る（`docs/domain/money.md`「金額の上限」）。 */
 export const 金額が上限を超えた: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'amountTooLarge' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'amountTooLarge' }), 'paymentRecorded'),
 }
 
 export const 金額が入っていない: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'amountNotPositiveInteger' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'amountNotPositiveInteger' }), 'paymentRecorded'),
 }
 
 export const 扱えない通貨: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'currencyUnsupported' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'currencyUnsupported' }), 'paymentRecorded'),
 }
 
 export const 内容が長すぎる: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'descriptionTooLong' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'descriptionTooLong' }), 'paymentRecorded'),
 }
 
 export const 日付が読めない: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'dateInvalid' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'dateInvalid' }), 'paymentRecorded'),
 }
 
 /** 送り手と受け手は別の人（`docs/domain/record.md`「ルール」）。 */
 export const 送り手と受け手が同じ: Story = {
-  args: toRecordFormView(transferForm, err({ kind: 'sameSenderAndRecipient' })),
+  args: toRecordFormView(transferForm, err({ kind: 'sameSenderAndRecipient' }), 'paymentRecorded'),
 }
 
 /** **後から届いた変更は失敗する**（`docs/domain/record.md`「同じ記録に同時に手が入ったとき」）。 */
 export const 同時に編集された: Story = {
-  args: toRecordFormView(editForm, err({ kind: 'versionConflict' })),
+  args: toRecordFormView(editForm, err({ kind: 'versionConflict' }), 'paymentRecorded'),
 }
 
 export const メンバーでない: Story = {
-  args: toRecordFormView(paymentForm, err({ kind: 'notMember' })),
+  args: toRecordFormView(paymentForm, err({ kind: 'notMember' }), 'paymentRecorded'),
 }

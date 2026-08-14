@@ -42,7 +42,7 @@ docs/
     ├── 0006-discord-http-interactions.md    … Discord クライアントの接続方式と実装要件
     ├── 0007-external-account-linking.md     … **廃止**（0012 が置き換え）。外部アカウントを連携として別の役割に置く案
     ├── 0008-layer-internals.md              … 各層の内部構造と実装の型
-    ├── 0009-web-ui.md                       … Web の UI 構成と UI ライブラリ
+    ├── 0009-web-ui.md                       … Web の UI 構成・UI ライブラリ・上端の共有・トースト
     ├── 0010-testing.md                      … テストの道具・種別・範囲
     ├── 0011-ci-and-release.md               … CI とリリースの構成と順序
     ├── 0012-login.md                        … ログイン方式（外部サービスの OAuth・複数のログイン手段）
@@ -112,8 +112,8 @@ docs/
 | 層の責務と依存の向き、ディレクトリ構造、依存方向の検査、テストの組み立て方 | `adr/0004-layers-and-dependencies.md` |
 | データアクセス経路、ORM とドライバ、マイグレーション運用、認可の置き場所と RLS の扱い、競合対策の実現方式とバージョンの置き場 | `adr/0005-data-access-and-authorization.md` |
 | Discord の接続方式・3 秒制限の扱い・場の対応・表示・可視性の宣言単位・コンポーネント・モーダルと入力導線・上限と運用 | `adr/0006-discord-http-interactions.md` |
-| 各層の内部構造、Controller と Presenter の役割、ユースケースの入出力と失敗の表し方、永続化の単位、識別子の生成、合成ルート、層ごとの import 規則 | `adr/0008-layer-internals.md` |
-| Web の画面構成（Container/Presentational）、ビューモデルの制約、UI ライブラリ、フォームの実装方式、クライアント側の入力検査の範囲 | `adr/0009-web-ui.md` |
+| 各層の内部構造、Controller と Presenter の役割、ユースケースの入出力と失敗の表し方、永続化の単位、識別子の生成、合成ルート、層ごとの import 規則、**セッションの読み取りとどのリクエストで更新するか** | `adr/0008-layer-internals.md` |
+| Web の画面構成（Container/Presentational）、ビューモデルの制約、UI ライブラリ、フォームの実装方式、クライアント側の入力検査の範囲、**上端の共有と待ちの切り離し**、**トーストの置き場**、**リクエストをまたぐキャッシュを持たない決定**、**画面設計の所在** | `adr/0009-web-ui.md` |
 | テストの道具・種別と置き場、クライアント間整合の確かめ方、実 DB を使う範囲、E2E の境界、**E2E が使う認証基盤**、カバレッジの方針 | `adr/0010-testing.md` |
 | CI とリリースの構成・順序、定期実行を持たないこと、Preview を持たないこと、マイグレーションが前方のみであること、**適用に使う接続設定**、秘密情報の置き場 | `adr/0011-ci-and-release.md` |
 | ログインを外部サービスの OAuth に委ねること、ログイン手段を複数持てるようにすること、識別子に何を使うか、要求するスコープとトークンの扱い | `adr/0012-login.md` |

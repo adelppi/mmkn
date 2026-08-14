@@ -13,6 +13,7 @@ import { amountText, moneyText, type MoneyText } from '../../shared/money'
 import type { AmountFieldLimits, TextFieldLimits } from './form'
 import { toCurrencyOptions, type CurrencyOptionView } from './group'
 import { messageOf, type FailureTag } from './message'
+import type { NoticeTag } from './notice'
 import { route } from './route'
 
 /**
@@ -379,13 +380,17 @@ export const toEditRecordFormView = (
  *
  * **競合と、前提条件を満たさなかったときだけ別のタグにする。** 入力の不備はすべて `invalid` に
  * 集め、フォームに戻す。案内すべきことが違う（やり直す先が違う）ためである。
+ *
+ * **済んだことは行き先に載せる**（`done`）。成功すると画面は記録一覧へ移るため、
+ * 何が済んだかは遷移をまたいで伝える必要がある（`./notice.ts`）。
  */
 export const toRecordFormView = (
   form: RecordFormFields,
   result: Result<unknown, { readonly kind: FailureTag }>,
+  done: NoticeTag,
 ): RecordFormView => {
   if (result.ok) {
-    return { kind: 'saved', form, redirectTo: route.group(form.groupId) }
+    return { kind: 'saved', form, redirectTo: route.group(form.groupId, done) }
   }
 
   const kind = result.error.kind

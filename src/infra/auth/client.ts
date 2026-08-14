@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { authStubEnabled, createStubAuthClient } from './stub'
+import { authStubEnabled, createStubAuthClient, SESSION_COOKIE } from './stub'
 
 /**
  * 認証基盤への接続（`docs/adr/0003-tech-stack.md`「認証」・`docs/adr/0012-login.md`）。
@@ -52,3 +52,20 @@ export const createAuthClient = (cookies: CookieStore): AuthClient =>
           setAll: (cookiesToSet) => cookies.setAll(cookiesToSet),
         },
       })
+
+/**
+ * セッションの cookie を持っているか。**中身は見ない。**
+ *
+ * **これは認可の判定ではない。** 判定はドメイン層にあり、そこへ至る経路はユースケースだけである
+ * （`docs/adr/0005-data-access-and-authorization.md`）。ここが答えるのは
+ * 「更新するものがあるか」だけで、通す・通さないは決めない（`proxy.ts`）。
+ *
+ * **cookie の名前を知っているのはこの層だけである。** 認証基盤ごとに違うため、
+ * アプリ層に書くと基盤を替えたときに 2 か所を直すことになる。
+ */
+export const hasSessionCookie = (cookies: CookieStore): boolean =>
+  cookies
+    .getAll()
+    .some(({ name, value }) =>
+      value === '' ? false : authStubEnabled() ? name === SESSION_COOKIE : name.startsWith('sb-'),
+    )

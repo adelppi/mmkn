@@ -12,7 +12,7 @@ export function ViewerBalancePresentation(props: ViewerBalanceView) {
   if (props.kind !== 'ok' && props.kind !== 'even') return null
 
   return (
-    <section className="mx-4 mt-4 flex flex-col gap-3 rounded-lg bg-muted p-4">
+    <section className="mx-4 mt-4 flex shrink-0 flex-col gap-3 rounded-lg bg-muted p-4">
       <Eyebrow>あなたの収支</Eyebrow>
 
       {props.kind === 'even' ? (

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ChevronLeftIcon, PencilIcon, Trash2Icon } from 'lucide-react'
 import { useActionState } from 'react'
 
 import { Button } from '@/app/_ui/button'
@@ -17,7 +18,9 @@ import {
 import { Row } from '@/app/_ui/field'
 import { Money } from '@/app/_ui/money'
 import { AppBar, Empty, Notice, Screen } from '@/app/_ui/notice'
+import { useUnreachableGuard } from '@/app/_ui/toast'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
+import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import type { RecordDetailView, RecordFormView } from '@/src/adapter/web/presenter/record'
 
 /**
@@ -33,9 +36,11 @@ export function RecordDetailPresentation(
     readonly deleteAction: FormAction<RecordFormView>
     readonly deleteInitial: RecordFormView
     readonly editHref: string
+    readonly unreachable: NoticeView
   },
 ) {
-  const [deleted, remove, pending] = useActionState(props.deleteAction, props.deleteInitial)
+  const guarded = useUnreachableGuard(props.deleteAction, props.unreachable)
+  const [deleted, remove, pending] = useActionState(guarded, props.deleteInitial)
 
   if (props.kind !== 'ok') {
     return (
@@ -54,12 +59,13 @@ export function RecordDetailPresentation(
   return (
     <Screen>
       <AppBar>
-        <Link href={props.groupHref} className="flex items-center gap-2">
-          <span className="text-muted-foreground">←</span>
-          <span>{props.title}</span>
+        <Link href={props.groupHref} className="flex min-w-0 items-center gap-2">
+          <ChevronLeftIcon className="size-4.5 shrink-0 text-subtle" />
+          <span className="truncate">{props.title}</span>
         </Link>
-        <Link href={props.editHref} className="text-muted-foreground">
-          編集
+        <Link href={props.editHref} className="shrink-0 text-muted-foreground">
+          <PencilIcon className="size-4" />
+          <span className="sr-only">編集</span>
         </Link>
       </AppBar>
 
@@ -123,6 +129,7 @@ export function RecordDetailPresentation(
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="ghost" className="mt-auto font-normal text-destructive">
+              <Trash2Icon />
               削除する
             </Button>
           </DialogTrigger>
