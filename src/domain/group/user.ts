@@ -12,7 +12,10 @@ export type User = {
   /** mmkn 全体での名前。グループ内表示名の初期値に使う。 */
   readonly name: string
   /**
-   * ログインするときに User を指すもの。名前とは別のものであり、名前を変えても変わらない。
+   * ログインしたときに行き着く、その人を指すもの。名前とは別のものであり、名前を変えても変わらない。
+   *
+   * **ログイン手段（`login-method.ts`）とも別のもの。** ログイン手段は 1 つ以上あって後から増やせるが、
+   * **どれで入ってもここに行き着き、増やしても変わらない**（`docs/domain/group.md`「User の属性」）。
    * 何を識別子とするかは `docs/adr/0012-login.md` を正とする。
    */
   readonly loginIdentifier: string
@@ -38,7 +41,7 @@ const create = (input: {
  * User への操作（`docs/domain/group.md`「アカウントを作成する」）。
  *
  * ID は受け取るだけで、ここでは作らない（`docs/adr/0008-layer-internals.md`）。
- * 「同じログイン識別子の User が 2 つできない」は 1 人の User だけを見ても判定できないため、
+ * 「1 つの外部アカウントから 2 つの User ができない」は 1 人の User だけを見ても判定できないため、
  * ここでは扱わない（実現は `docs/adr/0005-data-access-and-authorization.md`「一意性・参照の整合」）。
  */
 export const User = { create }

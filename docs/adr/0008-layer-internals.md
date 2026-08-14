@@ -157,7 +157,7 @@ app/
 │   ├─ actions.ts                 … 'use server'。adapter/web/controller へ委譲
 │   └─ _containers/<name>/        … adr/0009
 ├─ api/discord/route.ts           … 署名検証 → defer → 応答後に継続 → follow-up
-└─ auth/callback/route.ts         … 外部アカウント連携のコールバック（adr/0007）
+└─ auth/callback/route.ts         … ログインとログイン手段の追加のコールバック（adr/0012）
 
 src/
 ├─ domain/                        … 依存なし
@@ -205,7 +205,7 @@ scripts/                          … アプリが読み込まない道具（現
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
 - `infra/db/mapper` を独立させ、ORM の推論型がリポジトリの外へ漏れない壁とする（`adr/0005`）
 - **テスト専用のものも、対象と同じ層に置く。** 偽実装はポートの隣（それが実装するもののそば）、前提データはユースケース層の直下、永続化テストの下ごしらえは `infra/db` の中に置く。層をまたがないため `tests/` には出さない（`adr/0010`）
-- 外部アカウントの参照は `infra/auth` に置く。認証基盤のスキーマ依存をそこだけに閉じるため（`adr/0007`）
+- ログイン手段（外部アカウント）の参照は `infra/auth` に置く。認証基盤のスキーマ依存をそこだけに閉じるため（`adr/0012`）
 - `adapter/shared` はクライアント固有でないものだけを置く。`adapter/` 直下がクライアントごとに増える場所であることは変わらない
 
 ### 依存方向の機械検査のルール

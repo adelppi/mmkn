@@ -23,8 +23,8 @@ import {
  * 値が妥当か）はドメイン層にしか置かない**（`docs/adr/0005`「ドメインにしか置かないものと、
  * DB にも置くものの線引き」）。
  *
- * **連携する外部アカウントのテーブルはここに無い。** 参照先は認証基盤の側であり、
- * `ExternalAccountRepository` の実装は `infra/auth` が持つ（`docs/adr/0007`）。
+ * **ログイン手段（外部アカウント）のテーブルはここに無い。** 参照先は認証基盤の側であり、
+ * `ExternalAccountRepository` の実装は `infra/auth` が持つ（`docs/adr/0012`）。
  */
 
 /**
@@ -50,7 +50,12 @@ export const users = pgTable(
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    /** **mmkn 全体で重複しない。** 同時実行でしか壊れないため、DB の制約でも担保する。 */
+    /**
+     * ログインしたときに行き着く、その人を指すもの（`docs/domain/group.md`「User の属性」）。
+     * 値が何かは `docs/adr/0012-login.md` を正とする。
+     *
+     * **mmkn 全体で重複しない。** 同時実行でしか壊れないため、DB の制約でも担保する。
+     */
     loginIdentifier: text('login_identifier').notNull(),
   },
   (t) => [unique('users_login_identifier_unique').on(t.loginIdentifier), denyAll('users')],

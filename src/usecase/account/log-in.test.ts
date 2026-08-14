@@ -15,7 +15,7 @@ describe('ログインする', () => {
   it('登録されていない識別子では失敗し、User は作られない', async () => {
     const users = fakeUserRepository([taro])
 
-    const result = await logIn({ users })({ loginIdentifier: 'google:知らない人' })
+    const result = await logIn({ users })({ loginIdentifier: 'auth-知らない人' })
 
     expect(result).toEqual({ ok: false, error: { kind: 'accountNotFound' } })
     expect(users.stored()).toEqual([taro])

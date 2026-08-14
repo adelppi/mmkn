@@ -95,7 +95,7 @@ describe('記録の並び', () => {
       const user = User.create({
         id: toUserId('u1'),
         name: 'たろう',
-        loginIdentifier: 'google:u1',
+        loginIdentifier: 'auth-u1',
       })
       if (!user.ok) throw new Error('前提の User を作れなかった')
       return user.value
@@ -105,7 +105,7 @@ describe('記録の並び', () => {
       const user = User.create({
         id: toUserId('u2'),
         name: 'じろう',
-        loginIdentifier: 'google:u2',
+        loginIdentifier: 'auth-u2',
       })
       if (!user.ok) throw new Error('前提の User を作れなかった')
       return user.value

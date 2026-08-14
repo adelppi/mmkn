@@ -6,12 +6,13 @@ import type { UseCase } from '../usecase'
 /**
  * ログインする（`docs/domain/group.md`「ログインする」・`docs/features.md` #11）。
  *
- * 前提条件は「**示された識別子の User が存在し、本人であることが確かめられること**」。
- * 後半は認証基盤が済ませたうえでここへ届く（`docs/adr/0012-login.md`）ため、
- * ここが確かめるのは前半（その識別子の User が mmkn にいるか）だけになる。
+ * 前提条件は「**示された外部アカウントをログイン手段とする User が存在し、本人であることが
+ * 確かめられること**」。後半と「どのログイン手段がどの User に行き着くか」の解決は認証基盤が
+ * 済ませたうえでここへ届く（`docs/adr/0012-login.md`）ため、**ここが確かめるのは
+ * その識別子の User が mmkn にいるかだけ**になる。
  *
- * **User は作られない。** 登録されていない識別子でログインしようとしても、新しい User はできない。
- * アカウントの作成は `create-account.ts` の責務であり、名前の入力を伴う別の操作である。
+ * **User は作られず、ログイン手段も増えない。** アカウントの作成は `create-account.ts` の、
+ * ログイン手段の追加は `add-login-method.ts` の責務である。
  */
 
 export type LogInInput = {
@@ -21,7 +22,7 @@ export type LogInInput = {
 /**
  * 失敗。
  *
- * `accountNotFound` は「本人であることは確かめられたが、その識別子の User がまだいない」を指す。
+ * `accountNotFound` は「本人であることは確かめられたが、その人の User がまだいない」を指す。
  * **未ログインとは別のもの**で、案内すべきことも違う（ログインではなくアカウントの作成へ導く）。
  */
 export type LogInError = { readonly kind: 'accountNotFound' }

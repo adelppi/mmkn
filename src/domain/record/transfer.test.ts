@@ -5,7 +5,7 @@ import { toGroupId, toMemberId, toTransferId, toUserId } from '../id'
 import { Transfer } from './transfer'
 
 const userOf = (id: string, name: string) => {
-  const user = User.create({ id: toUserId(id), name, loginIdentifier: `google:${id}` })
+  const user = User.create({ id: toUserId(id), name, loginIdentifier: `auth-${id}` })
   if (!user.ok) throw new Error('前提の User を作れなかった')
   return user.value
 }

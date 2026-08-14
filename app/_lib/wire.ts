@@ -11,11 +11,11 @@ import { logged } from '@/src/infra/log/usecase-log'
 import { systemClock } from '@/src/infra/system/clock'
 import { cuid2IdGenerator } from '@/src/infra/system/id'
 import { cuid2InviteCodeGenerator } from '@/src/infra/system/invite-code'
+import { addLoginMethod } from '@/src/usecase/account/add-login-method'
 import { createAccount } from '@/src/usecase/account/create-account'
-import { linkExternalAccount } from '@/src/usecase/account/link-external-account'
 import { logIn } from '@/src/usecase/account/log-in'
 import { logOut } from '@/src/usecase/account/log-out'
-import { unlinkExternalAccount } from '@/src/usecase/account/unlink-external-account'
+import { removeLoginMethod } from '@/src/usecase/account/remove-login-method'
 import { assignPlace } from '@/src/usecase/group/assign-place'
 import { changeDisplayName } from '@/src/usecase/group/change-display-name'
 import { changeGroupSettings } from '@/src/usecase/group/change-group-settings'
@@ -58,7 +58,7 @@ export function wire(context: LogContext, auth: AuthClient) {
     payments: drizzlePaymentRepository(db),
     transfers: drizzleTransferRepository(db),
     placeMappings: drizzlePlaceMappingRepository(db),
-    // **連携する外部アカウントだけは mmkn の DB に無い。** 実体は認証基盤の側にある（`adr/0007`）。
+    // **ログイン手段だけは mmkn の DB に無い。** 実体は認証基盤の側にある（`adr/0012`）。
     externalAccounts: supabaseExternalAccountRepository({ sql: sqlClient(), client: auth, users }),
     ids: cuid2IdGenerator,
     clock: systemClock,
@@ -66,12 +66,12 @@ export function wire(context: LogContext, auth: AuthClient) {
   }
 
   return {
-    // アカウントと外部アカウント（`docs/features.md` #11・#12）
+    // アカウントとログイン手段（`docs/features.md` #11・#12）
     createAccount: logged(context, 'createAccount', createAccount(deps)),
     logIn: logged(context, 'logIn', logIn(deps)),
     logOut: logged(context, 'logOut', logOut(deps)),
-    linkExternalAccount: logged(context, 'linkExternalAccount', linkExternalAccount(deps)),
-    unlinkExternalAccount: logged(context, 'unlinkExternalAccount', unlinkExternalAccount(deps)),
+    addLoginMethod: logged(context, 'addLoginMethod', addLoginMethod(deps)),
+    removeLoginMethod: logged(context, 'removeLoginMethod', removeLoginMethod(deps)),
 
     // グループとメンバー（`docs/features.md` #1〜#4・#13）
     createGroup: logged(context, 'createGroup', createGroup(deps)),

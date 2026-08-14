@@ -1,4 +1,9 @@
 import type { Group } from '../../domain/group/group'
+import {
+  LoginMethod,
+  sameExternalAccount,
+  type ExternalAccount,
+} from '../../domain/group/login-method'
 import type { Member } from '../../domain/group/member'
 import type { Place, PlaceMapping } from '../../domain/group/place-mapping'
 import type { User } from '../../domain/group/user'
@@ -19,9 +24,8 @@ import type { Transfer } from '../../domain/record/transfer'
 import type { Version, Versioned, VersionedDelete, VersionedWrite } from '../usecase'
 import type { Clock } from './clock'
 import type {
-  ExternalAccount,
+  AddLoginMethodOutcome,
   ExternalAccountRepository,
-  LinkExternalAccountOutcome,
 } from './external-account-repository'
 import type { CreateGroupOutcome, GroupRepository } from './group-repository'
 import type { IdGenerator } from './id-generator'
@@ -113,68 +117,63 @@ export const fakeUserRepository = (initial: readonly User[] = []): FakeUserRepos
   }
 }
 
-/** 連携されている外部アカウントと、その連携先の User。 */
-export type StoredLink = {
+/** ある User のログイン手段になっている外部アカウント。 */
+export type StoredLoginMethod = {
   readonly userId: UserId
   readonly account: ExternalAccount
 }
 
 export type FakeExternalAccountRepository = ExternalAccountRepository & {
-  readonly stored: () => readonly StoredLink[]
+  readonly stored: () => readonly StoredLoginMethod[]
 }
 
 /**
- * 本物の実装は認証基盤の側を読む（`docs/adr/0007-external-account-linking.md`）。
+ * 本物の実装は認証基盤の側を読む（`docs/adr/0012-login.md`）。
  * **ここが偽実装として守るのは、本物と同じ 2 つの断り方だけである。**
  *
- * - 既に**別の** User に連携されている外部アカウントは連携できない（連携先も移らない）
- * - 1 人の User が、**同じサービス**のアカウントを 2 つ連携することはできない
+ * - 既に**別の** User のログイン手段になっている外部アカウントは追加できない（移りもしない）
+ * - 1 人の User が、**同じサービス**のアカウントを 2 つ持つことはできない
  *
- * **ログインに使う外部アカウントはここに現れない**（`docs/domain/group.md`「User と外部アカウント」）。
+ * 後者の判定は**ドメイン層のものをそのまま呼ぶ**（`src/domain/group/login-method.ts`）。
+ * 偽実装が独自に書き直すと、本物と違う結論を出す余地ができる。
  */
 export const fakeExternalAccountRepository = (
-  initial: readonly StoredLink[] = [],
+  initial: readonly StoredLoginMethod[] = [],
 ): FakeExternalAccountRepository => {
-  const links: StoredLink[] = [...initial]
+  const methods: StoredLoginMethod[] = [...initial]
 
-  const sameAccount = (a: ExternalAccount, b: ExternalAccount) =>
-    a.service === b.service && a.id === b.id
+  const ownedBy = (userId: UserId) =>
+    methods.filter((method) => idEquals(method.userId, userId)).map((method) => method.account)
 
   return {
     findUserId: async (account: ExternalAccount) =>
-      links.find((link) => sameAccount(link.account, account))?.userId,
+      methods.find((method) => sameExternalAccount(method.account, account))?.userId,
 
-    listByUser: async (userId: UserId) =>
-      links.filter((link) => idEquals(link.userId, userId)).map((link) => link.account),
+    listByUser: async (userId: UserId) => ownedBy(userId),
 
-    link: async (userId: UserId, account: ExternalAccount): Promise<LinkExternalAccountOutcome> => {
-      const owner = links.find((link) => sameAccount(link.account, account))
-      // **連携先は移らない。** 他の User の連携を奪う経路を持たない。
+    add: async (userId: UserId, account: ExternalAccount): Promise<AddLoginMethodOutcome> => {
+      const owner = methods.find((method) => sameExternalAccount(method.account, account))
+      // **移らない。** 他の User の入口を奪う経路を持たない。
       if (owner !== undefined && !idEquals(owner.userId, userId)) {
-        return { kind: 'linkedToAnotherUser' }
+        return { kind: 'usedByAnotherUser' }
       }
 
-      // 既に同じ対応が記録されていれば、増えるものは無い。**繰り返しても結果が変わらない**
-      // （`docs/domain/group.md`「グループに参加する」が二重の参加に対して採っているのと同じ形）。
-      if (owner !== undefined) return { kind: 'linked' }
+      const allowed = LoginMethod.requireAddable(ownedBy(userId), account)
+      if (!allowed.ok) return allowed.error
 
-      const occupied = links.some(
-        (link) => idEquals(link.userId, userId) && link.account.service === account.service,
-      )
-      if (occupied) return { kind: 'serviceAlreadyLinked' }
-
-      links.push({ userId, account })
-      return { kind: 'linked' }
+      if (owner === undefined) methods.push({ userId, account })
+      return { kind: 'added' }
     },
 
-    unlink: async (userId: UserId, service: string) => {
-      const index = links.findIndex(
-        (link) => idEquals(link.userId, userId) && link.account.service === service,
+    remove: async (userId: UserId, account: ExternalAccount) => {
+      const index = methods.findIndex(
+        (method) =>
+          idEquals(method.userId, userId) && sameExternalAccount(method.account, account),
       )
-      if (index >= 0) links.splice(index, 1)
+      if (index >= 0) methods.splice(index, 1)
     },
 
-    stored: () => [...links],
+    stored: () => [...methods],
   }
 }
 

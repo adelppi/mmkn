@@ -13,7 +13,7 @@ import type { UseCase } from '../usecase'
  * 呼び出し側は、これが成功したときにセッションを終わらせる（`app/_lib/session.ts`）。
  *
  * **ログアウトは退会ではない**（`docs/features.md`「mmkn が持たないもの」）。
- * User も、Group・Member・記録も、連携している外部アカウントも、何一つ変わらない。
+ * User も、Group・Member・記録も、ログイン手段も、何一つ変わらない。次も同じように入れる。
  */
 
 export type LogOutInput = {

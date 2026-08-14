@@ -1,7 +1,8 @@
+import type { ExternalAccount } from '../../domain/group/login-method'
 import type { UserId } from '../../domain/id'
-import type { ExternalAccount } from '../../usecase/port/external-account-repository'
 import type { UserRepository } from '../../usecase/port/user-repository'
 import type { AuthClient } from './client'
+import type { LoginService } from './external-account'
 
 /**
  * セッションの読み取りと、ログインの往復（`docs/adr/0008-layer-internals.md`「セッションの読み取り」・
@@ -15,47 +16,36 @@ import type { AuthClient } from './client'
  */
 
 /**
- * ログインに使う外部サービス。**Google 1 つに絞る**（`docs/adr/0012`「プロバイダを増やさない理由」）。
+ * 認証基盤の user から、mmkn のログイン識別子を取り出す。
  *
- * **これは連携ではない。** 連携している外部アカウントの一覧には現れず、解除もできない
- * （`docs/domain/group.md`「User と外部アカウント」）。
- */
-export const LOGIN_PROVIDER = 'google'
-
-/**
- * 認証基盤が持つ identity から、mmkn のログイン識別子を取り出す。
+ * **識別子は認証基盤が持つ user の識別子**（`docs/adr/0012`「provider が返す ID を識別子に
+ * しない理由」）。ログイン手段を増やしても変わらないため、`docs/domain/group.md` が
+ * 「どのログイン手段で入っても行き着く先は同じ」と定めているものにそのまま対応する。
  *
- * **識別子は Google が返す一意な ID（OpenID Connect の `sub`）。メールアドレスは使わない**
- * （`docs/adr/0012`「メールアドレスを識別子にしない理由」）。認証基盤は identity の `id` に
- * その値を持つ。
+ * **provider が返す ID もメールアドレスも識別子に使わない。**
  */
-const loginIdentifierOf = (identities: readonly { provider: string; id: string }[]) =>
-  identities.find((identity) => identity.provider === LOGIN_PROVIDER)?.id
+const loginIdentifierOf = (user: { id: string }): string => user.id
 
-/** 連携している外部アカウント。**ログインに使うものは含めない。** */
-const linkedAccountsOf = (
+/** その user が持つログイン手段。**認証基盤の identity がそのままログイン手段にあたる。** */
+const loginMethodsOf = (
   identities: readonly { provider: string; id: string }[],
 ): readonly ExternalAccount[] =>
-  identities
-    .filter((identity) => identity.provider !== LOGIN_PROVIDER)
-    .map((identity) => ({ service: identity.provider, id: identity.id }))
+  identities.map((identity) => ({ service: identity.provider, id: identity.id }))
 
 /** 本人であることが確かめられた識別子。ログインしていなければ `undefined`。 */
-export const currentLoginIdentifier = async (
-  client: AuthClient,
-): Promise<string | undefined> => {
+export const currentLoginIdentifier = async (client: AuthClient): Promise<string | undefined> => {
   // `getUser()` は認証基盤に問い合わせて検証する。cookie の中身をそのまま信じない。
   const { data, error } = await client.auth.getUser()
   if (error !== null || data.user === null) return undefined
 
-  return loginIdentifierOf(data.user.identities ?? [])
+  return loginIdentifierOf(data.user)
 }
 
 /**
- * 現在の `UserId`。ログインしていない、またはその識別子の User がまだいなければ `undefined`。
+ * 現在の `UserId`。ログインしていない、またはその人の User がまだいなければ `undefined`。
  *
  * **識別子から `UserId` への変換は入口で閉じる**（`docs/adr/0004-layers-and-dependencies.md`）。
- * 内側へ流すのは `UserId` だけで、ログイン識別子は流さない。
+ * 内側へ流すのは `UserId` だけで、ログイン識別子もログイン手段も流さない。
  */
 export const currentUserId = async (
   client: AuthClient,
@@ -71,12 +61,17 @@ export const currentUserId = async (
 /**
  * ログインの往復を始める。返した URL へ送り出す。
  *
+ * **どのサービスでも入口は同じ形**（`docs/domain/group.md`「User と外部アカウント」）。
  * ブラウザではなくサーバーで開始するため、**認証基盤の URL と anon key がブラウザに露出しない**
  * （`.env.example`）。
  */
-export const startLogin = async (client: AuthClient, redirectTo: string): Promise<string> => {
+export const startLogin = async (
+  client: AuthClient,
+  service: LoginService,
+  redirectTo: string,
+): Promise<string> => {
   const { data, error } = await client.auth.signInWithOAuth({
-    provider: LOGIN_PROVIDER,
+    provider: service,
     options: { redirectTo, skipBrowserRedirect: true },
   })
   if (error !== null) throw error
@@ -85,34 +80,29 @@ export const startLogin = async (client: AuthClient, redirectTo: string): Promis
 }
 
 /**
- * 認可画面から戻ってきた往復を完了させる。**ログインと連携の両方がここを通る。**
+ * 認可画面から戻ってきた往復を完了させる。**ログインとログイン手段の追加の両方がここを通る。**
  *
- * `rejected` は認証基盤が往復を受け付けなかったことを表す。**連携先が既に別の User のときも
- * ここで断られる**（`docs/adr/0007-external-account-linking.md`。実際にそうなるかは
+ * `rejected` は認証基盤が往復を受け付けなかったことを表す。**追加しようとした外部アカウントが
+ * 既に別の User のものであるときも、ここで断られる**（`docs/adr/0012`。実際にそうなるかは
  * `docs/operations.md`「実装着手時に必ず確かめること」の手動確認の対象）。
  */
 export type CompletedOAuth =
   | {
       readonly kind: 'completed'
-      readonly loginIdentifier: string | undefined
-      readonly linked: readonly ExternalAccount[]
+      readonly loginIdentifier: string
+      readonly loginMethods: readonly ExternalAccount[]
     }
   | { readonly kind: 'rejected'; readonly code: string | undefined }
 
-export const completeOAuth = async (
-  client: AuthClient,
-  code: string,
-): Promise<CompletedOAuth> => {
+export const completeOAuth = async (client: AuthClient, code: string): Promise<CompletedOAuth> => {
   const { data, error } = await client.auth.exchangeCodeForSession(code)
   // **失敗の中身は持ち出さない。** 機械が読む区分だけを返す（`docs/adr/0014-logging.md`）。
   if (error !== null || data.user === null) return { kind: 'rejected', code: error?.code }
 
-  const identities = data.user.identities ?? []
-
   return {
     kind: 'completed',
-    loginIdentifier: loginIdentifierOf(identities),
-    linked: linkedAccountsOf(identities),
+    loginIdentifier: loginIdentifierOf(data.user),
+    loginMethods: loginMethodsOf(data.user.identities ?? []),
   }
 }
 
@@ -121,7 +111,7 @@ export const completeOAuth = async (
  *
  * **これはログアウトの一部でしかない。** 前提条件（ログインしていること）の判定は
  * ユースケース側にある（`src/usecase/account/log-out.ts`）。**退会ではないため、
- * User も記録も連携も何一つ消えない**（`docs/features.md`「mmkn が持たないもの」）。
+ * User も記録もログイン手段も何一つ消えない**（`docs/features.md`「mmkn が持たないもの」）。
  */
 export const endSession = async (client: AuthClient): Promise<void> => {
   const { error } = await client.auth.signOut()
