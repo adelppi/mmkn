@@ -29,6 +29,7 @@ import type {
 import type { UseCase, Versioned } from '../../../usecase/usecase'
 import { parseAmount } from '../../shared/money'
 import { field, fields } from '../presenter/form'
+import type { NoticeTag } from '../presenter/notice'
 import {
   emptyRecordForm,
   toRecordFormView,
@@ -65,8 +66,26 @@ const baseFormOf = (previous: RecordFormView, data: FormData): RecordFormFields 
         field(data, 'type') === 'transfer' ? 'transfer' : 'payment',
       )
 
+/**
+ * どの記録への操作かを、送られてきた入力から取る。
+ *
+ * **画面が隠しの入力として送っているのは、直前の状態が識別子を持たない場合があるためである。**
+ * 記録の詳細（設計 08）の削除は、フォームの状態としては空の形から始まる。そこから
+ * 引き継げるのは選択肢だけで、**どの記録を消すのかは送られてきたものにしか無い。**
+ *
+ * **送られてこなければ、直前の状態を使う。** 登録では識別子そのものが存在しない。
+ */
+const identifiedForm = (base: RecordFormFields, data: FormData): RecordFormFields => {
+  const or = (name: 'groupId' | 'recordId' | 'version') => {
+    const sent = field(data, name)
+    return sent === '' ? base[name] : sent
+  }
+
+  return { ...base, groupId: or('groupId'), recordId: or('recordId'), version: or('version') }
+}
+
 const submittedForm = (previous: RecordFormView, data: FormData): RecordFormFields =>
-  withSubmitted(baseFormOf(previous, data), {
+  withSubmitted(identifiedForm(baseFormOf(previous, data), data), {
     type: field(data, 'type') === 'transfer' ? 'transfer' : 'payment',
     amount: field(data, 'amount'),
     currency: field(data, 'currency'),
@@ -92,6 +111,18 @@ const amountOf = (form: RecordFormFields): number => {
 }
 
 const versionOf = (form: RecordFormFields): number => Number(form.version)
+
+/**
+ * 保存が済んだときに伝えること（`src/adapter/web/presenter/notice.ts`）。
+ *
+ * **登録と編集を分ける。** 初めて記録したのか、既にあるものを直したのかで、伝えたいことが違う。
+ */
+const savedNotice = (form: RecordFormFields): NoticeTag =>
+  form.recordId !== ''
+    ? 'recordSaved'
+    : form.type === 'payment'
+      ? 'paymentRecorded'
+      : 'transferRecorded'
 
 /**
  * 記録を保存する。**登録か編集かは、フォームが記録の識別子を持っているかで決まる。**
@@ -123,6 +154,7 @@ export const saveRecord =
               payment: toPaymentId(form.recordId),
               version: versionOf(form),
             }),
+        savedNotice(form),
       )
     }
 
@@ -142,6 +174,7 @@ export const saveRecord =
             transfer: toTransferId(form.recordId),
             version: versionOf(form),
           }),
+      savedNotice(form),
     )
   }
 
@@ -165,5 +198,6 @@ export const deleteRecord =
       form.type === 'payment'
         ? await deps.deletePayment({ ...target, payment: toPaymentId(form.recordId) })
         : await deps.deleteTransfer({ ...target, transfer: toTransferId(form.recordId) }),
+      'recordDeleted',
     )
   }

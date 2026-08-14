@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PlusIcon, SettingsIcon, UsersIcon } from 'lucide-react'
 
 import { Button } from '@/app/_ui/button'
 import { Money } from '@/app/_ui/money'
@@ -35,7 +36,8 @@ export function GroupListPresentation(props: GroupListView) {
       <AppBar>
         <span className="tabular tracking-[0.2em]">mmkn</span>
         <Link href={props.accountHref} className="text-muted-foreground">
-          アカウント
+          <SettingsIcon className="size-4" />
+          <span className="sr-only">アカウント</span>
         </Link>
       </AppBar>
 
@@ -55,7 +57,8 @@ export function GroupListPresentation(props: GroupListView) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm">{group.name}</span>
-                  <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
+                  <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
+                    <UsersIcon className="size-3" />
                     <span className="tabular">{group.memberCount}</span> 人
                   </span>
                 </div>
@@ -81,9 +84,12 @@ export function GroupListPresentation(props: GroupListView) {
         </ul>
       )}
 
-      <div className="p-4 pb-7">
+      <div data-bottom-bar className="p-4 pb-7">
         <Button asChild className="h-11 w-full font-normal">
-          <Link href={props.newGroupHref}>グループを作成</Link>
+          <Link href={props.newGroupHref}>
+            <PlusIcon />
+            グループを作成
+          </Link>
         </Button>
       </div>
     </Screen>

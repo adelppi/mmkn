@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 
 import { Screen } from '@/app/_ui/notice'
+import { unreachableNotice } from '@/src/adapter/web/presenter/notice'
 import { saveRecordAction } from './actions'
 import { RecordFormContainer } from './_containers/record-form/container'
 
@@ -9,7 +10,11 @@ export default async function NewRecordPage({ params }: PageProps<'/groups/[id]/
 
   return (
     <Suspense fallback={<Screen className="animate-pulse" />}>
-      <RecordFormContainer groupId={id} action={saveRecordAction} />
+      <RecordFormContainer
+        groupId={id}
+        action={saveRecordAction}
+        unreachable={unreachableNotice()}
+      />
     </Suspense>
   )
 }

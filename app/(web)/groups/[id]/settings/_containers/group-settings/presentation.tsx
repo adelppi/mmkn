@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ChevronLeftIcon, ShareIcon } from 'lucide-react'
 import { useActionState } from 'react'
 
 import { Button } from '@/app/_ui/button'
@@ -56,7 +57,7 @@ export function GroupSettingsPresentation(
     <Screen>
       <AppBar>
         <Link href={props.groupHref} className="flex items-center gap-2">
-          <span className="text-muted-foreground">←</span>
+          <ChevronLeftIcon className="size-4.5 text-subtle" />
           <span>グループ設定</span>
         </Link>
       </AppBar>
@@ -138,8 +139,11 @@ export function GroupSettingsPresentation(
             {props.members.map((member) => member.displayName).join(' ・ ')}
           </Row>
           <Row label="招待リンク">
-            <span className="tabular break-all text-xs text-muted-foreground">
-              {props.inviteUrl}
+            <span className="flex items-start justify-end gap-2">
+              <ShareIcon className="mt-0.5 size-3.5 shrink-0 text-subtle" />
+              <span className="tabular break-all text-xs text-muted-foreground">
+                {props.inviteUrl}
+              </span>
             </span>
           </Row>
         </section>

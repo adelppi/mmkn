@@ -43,7 +43,7 @@ export function AppBar({ className, ...props }: React.ComponentProps<'header'>) 
   return (
     <header
       className={cn(
-        'flex items-center justify-between gap-3 border-b border-border px-4 py-4 text-sm',
+        'flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4 text-sm',
         className,
       )}
       {...props}

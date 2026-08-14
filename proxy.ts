@@ -1,4 +1,4 @@
-import { createAuthClient } from '@/src/infra/auth/client'
+import { createAuthClient, hasSessionCookie, type CookieStore } from '@/src/infra/auth/client'
 import { currentLoginIdentifier } from '@/src/infra/auth/session'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -13,25 +13,45 @@ import { NextResponse, type NextRequest } from 'next/server'
  * **ここは認可を判定しない。** 判定はドメイン層にあり（`docs/adr/0005`）、そこへ至る経路は
  * ユースケースだけである。ここが持つのはトークンの更新だけで、通す・通さないは決めない。
  *
+ * **更新するものが無いリクエストでは、認証基盤に問い合わせない**（同「どのリクエストで更新するか」）。
+ * 素通しする 2 つは、どちらも「保存すべき新しいトークンが生まれない」ことが理由である。
+ *
  * ファイル名が `middleware` ではなく `proxy` なのは、Next.js 16 で前者が非推奨になったため。
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request })
 
-  const client = createAuthClient({
+  // **先読みでは更新しない。** 画面を先に取りにいくだけの往復であり、そこで新しいトークンを
+  // 発行しても、利用者の手元に残る保証がない（応答の cookie が使われるとは限らない）。
+  // 実際の遷移と操作は先読みではないため、更新の機会はそちらで訪れる。
+  if (request.headers.get('next-router-prefetch') !== null) return response
+
+  const cookies: CookieStore = {
     getAll: () => request.cookies.getAll().map(({ name, value }) => ({ name, value })),
     setAll: (list) => {
       for (const { name, value, options } of list) response.cookies.set(name, value, options)
     },
-  })
+  }
+
+  // **セッションを持たない人は更新するものを持たない。** ログイン前の画面まで
+  // 認証基盤への往復を挟むと、何も起きない待ち時間だけが増える。
+  if (!hasSessionCookie(cookies)) return response
 
   // 値を使うためではなく、**更新を起こして書き戻すために呼ぶ。**
-  await currentLoginIdentifier(client)
+  await currentLoginIdentifier(createAuthClient(cookies))
 
   return response
 }
 
 export const config = {
-  /** 静的ファイルは通さない（セッションを持たないため、更新するものが無い）。 */
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  /**
+   * 通さないもの。
+   *
+   * - 静的ファイル・Next.js の内部 … セッションを持たないため、更新するものが無い
+   * - `api/` … Discord の署名付きエンドポイント（`docs/adr/0006`）。cookie を持たない
+   * - `auth/` … ログインの往復の戻り先。**そこは Route Handler が自分で cookie を書ける**
+   */
+  matcher: [
+    '/((?!api/|auth/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

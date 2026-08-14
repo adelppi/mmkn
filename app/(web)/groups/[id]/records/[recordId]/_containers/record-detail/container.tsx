@@ -1,5 +1,6 @@
 import { readRecords } from '@/app/_lib/read'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
+import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import {
   emptyRecordForm,
   initialRecordFormView,
@@ -19,10 +20,12 @@ export async function RecordDetailContainer({
   groupId,
   recordId,
   deleteAction,
+  unreachable,
 }: {
   readonly groupId: string
   readonly recordId: string
   readonly deleteAction: FormAction<RecordFormView>
+  readonly unreachable: NoticeView
 }) {
   return (
     <RecordDetailPresentation
@@ -30,6 +33,7 @@ export async function RecordDetailContainer({
       deleteAction={deleteAction}
       deleteInitial={initialRecordFormView(emptyRecordForm(groupId, 'payment'))}
       editHref={`${route.record(groupId, recordId)}/edit`}
+      unreachable={unreachable}
     />
   )
 }

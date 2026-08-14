@@ -29,7 +29,7 @@ import type { AuthClient, CookieStore } from './client'
  */
 
 /** ログイン済みであることを表す cookie。**値がそのままログイン識別子になる。** */
-const SESSION_COOKIE = 'mmkn-e2e-session'
+export const SESSION_COOKIE = 'mmkn-e2e-session'
 
 /**
  * 次のログインで、誰としてログインするか。**テストが先に置く。**

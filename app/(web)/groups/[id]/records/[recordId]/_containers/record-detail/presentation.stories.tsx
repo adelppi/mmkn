@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
+import { unreachableNotice } from '@/src/adapter/web/presenter/notice'
 import {
   emptyRecordForm,
   initialRecordFormView,
@@ -28,6 +29,7 @@ const meta = {
     deleteAction: async (previous) => previous,
     deleteInitial: initialRecordFormView(emptyRecordForm('g1', 'payment')),
     editHref: '/groups/g1/records/p1/edit',
+    unreachable: unreachableNotice(),
   },
 } satisfies Meta<typeof RecordDetailPresentation>
 
@@ -108,6 +110,7 @@ export const 削除が競合した: Story = {
     deleteInitial: toRecordFormView(
       recordFormFields(group, [], { type: 'payment', recordId: 'p1', version: 1 }),
       err({ kind: 'versionConflict' }),
+      'recordDeleted',
     ),
   },
 }

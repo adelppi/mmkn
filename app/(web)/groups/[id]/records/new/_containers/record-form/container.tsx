@@ -1,5 +1,6 @@
 import { readRecords } from '@/app/_lib/read'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
+import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import {
   toEditRecordFormView,
   toNewRecordFormView,
@@ -24,16 +25,18 @@ export async function RecordFormContainer({
   groupId,
   recordId,
   action,
+  unreachable,
 }: {
   readonly groupId: string
   /** 渡すと編集になる。**操作者が見ていた版も、ここから入る。** */
   readonly recordId?: string
   readonly action: FormAction<RecordFormView>
+  readonly unreachable: NoticeView
 }) {
   const listed = await readRecords(groupId)
 
   const view =
     recordId === undefined ? toNewRecordFormView(listed) : toEditRecordFormView(recordId, listed)
 
-  return <RecordFormPresentation {...view} action={action} />
+  return <RecordFormPresentation {...view} action={action} unreachable={unreachable} />
 }

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 
+import { ToastProvider } from '@/app/_ui/toast'
+
 /**
  * 金額・通貨コード・件数に使う等幅書体（設計「金額」）。
  *
@@ -29,7 +31,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="ja" className={`${mono.variable} h-full`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {/* 済んだことの知らせは画面をまたぐ（設計「トースト」・`docs/adr/0009-web-ui.md`）。 */}
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   )
 }

@@ -249,3 +249,125 @@ describe('記録を削除する', () => {
     )
   })
 })
+
+/**
+ * 済んだことは行き先に載る（`src/adapter/web/presenter/notice.ts`）。
+ *
+ * **保存できると画面は記録一覧へ移る。** 何が済んだかはそこまで運ぶ必要があるため、
+ * 操作の違いは行き先に現れる。
+ */
+describe('済んだことの伝わり方', () => {
+  const redirectOf = (view: { kind: string }) =>
+    'redirectTo' in view ? (view as { redirectTo: string }).redirectTo : undefined
+
+  it('支払いの登録と送金の登録で、伝わることが違う', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+    const base = form({ type: 'payment', amount: '1000', currency: 'JPY', payer: 'm1' })
+
+    const payment = await saveRecord(deps)(newPaymentForm(), base)
+    const transfer = await saveRecord(deps)(
+      newPaymentForm(),
+      form({ type: 'transfer', amount: '1000', currency: 'JPY', sender: 'm1', recipient: 'm2' }),
+    )
+
+    expect(redirectOf(payment)).toBe('/groups/g1?notice=paymentRecorded')
+    expect(redirectOf(transfer)).toBe('/groups/g1?notice=transferRecorded')
+  })
+
+  it('編集は、登録とは別のことが伝わる', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+    const editing = initialRecordFormView(
+      recordFormFields(group, [], { type: 'payment', recordId: 'p1', version: 1 }),
+    )
+
+    const view = await saveRecord(deps)(
+      editing,
+      form({
+        type: 'payment',
+        amount: '1000',
+        currency: 'JPY',
+        payer: 'm1',
+        bearers: ['m1'],
+        occurredOn: '2026-08-08',
+      }),
+    )
+
+    expect(redirectOf(view)).toBe('/groups/g1?notice=recordSaved')
+  })
+
+  it('削除は削除として伝わる', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+    const editing = initialRecordFormView(
+      recordFormFields(group, [], { type: 'payment', recordId: 'p1', version: 1 }),
+    )
+
+    const view = await deleteRecord(deps)(
+      editing,
+      form({ type: 'payment', groupId: 'g1', recordId: 'p1', version: '1' }),
+    )
+
+    expect(redirectOf(view)).toBe('/groups/g1?notice=recordDeleted')
+  })
+})
+
+/**
+ * どの記録への操作かの決まり方。
+ *
+ * **記録の詳細からの削除は、フォームの状態に識別子を持たない**（設計 08）。
+ * 直前の状態から引き継げるのは選択肢だけで、対象は送られてきた入力にしか無い。
+ */
+describe('操作の対象', () => {
+  it('直前の状態が識別子を持たなくても、送られてきた記録を削除する', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+
+    await deleteRecord(deps)(
+      newPaymentForm(),
+      form({ type: 'payment', groupId: 'g1', recordId: 'p9', version: '4' }),
+    )
+
+    expect(deps.deletePayment).toHaveBeenCalledWith({
+      actor: taro.id,
+      group: toGroupId('g1'),
+      payment: toPaymentId('p9'),
+      version: 4,
+    })
+  })
+
+  it('送金も同じ経路で削除できる', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+
+    await deleteRecord(deps)(
+      newPaymentForm(),
+      form({ type: 'transfer', groupId: 'g1', recordId: 't9', version: '2' }),
+    )
+
+    expect(deps.deleteTransfer).toHaveBeenCalledWith({
+      actor: taro.id,
+      group: toGroupId('g1'),
+      transfer: toTransferId('t9'),
+      version: 2,
+    })
+  })
+
+  it('識別子が送られてこない登録は、登録のままである', async () => {
+    const deps = { ...stubs(), actor: taro.id }
+
+    await saveRecord(deps)(
+      newPaymentForm(),
+      form({
+        type: 'payment',
+        groupId: 'g1',
+        recordId: '',
+        version: '',
+        amount: '1000',
+        currency: 'JPY',
+        payer: 'm1',
+        bearers: ['m1'],
+        occurredOn: '2026-08-08',
+      }),
+    )
+
+    expect(deps.registerPayment).toHaveBeenCalled()
+    expect(deps.editPayment).not.toHaveBeenCalled()
+  })
+})

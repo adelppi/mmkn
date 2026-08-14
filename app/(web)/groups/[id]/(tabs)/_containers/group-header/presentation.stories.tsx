@@ -10,6 +10,9 @@ import { GroupHeaderPresentation } from './presentation'
  *
  * **前提条件を満たさなかった 3 区別**（未ログイン／見つからない／Member でない）を並べる
  * （`docs/domain/group.md`「前提条件を満たさなかったとき」）。
+ *
+ * **どのタブを選んでいるかはここに出ない。** 選択はいまの場所から決まるため
+ * （`app/_ui/tab-bar.tsx`）、props だけでは再現できない。
  */
 const meta = {
   component: GroupHeaderPresentation,
@@ -29,26 +32,18 @@ const group = groupOf(
 const viewer = group.members[0]
 if (viewer === undefined) throw new Error('前提の Member が無い')
 
-export const 記録タブ: Story = {
-  args: toGroupHeaderView('records', ok({ group, viewer })),
-}
-
-export const 収支タブ: Story = {
-  args: toGroupHeaderView('balances', ok({ group, viewer })),
-}
-
-export const 精算タブ: Story = {
-  args: toGroupHeaderView('settlement', ok({ group, viewer })),
+export const 上端: Story = {
+  args: toGroupHeaderView(ok({ group, viewer })),
 }
 
 export const 未ログイン: Story = {
-  args: toGroupHeaderView('records', err({ kind: 'notAuthenticated' })),
+  args: toGroupHeaderView(err({ kind: 'notAuthenticated' })),
 }
 
 export const 見つからない: Story = {
-  args: toGroupHeaderView('records', err({ kind: 'notFound' })),
+  args: toGroupHeaderView(err({ kind: 'notFound' })),
 }
 
 export const メンバーでない: Story = {
-  args: toGroupHeaderView('records', err({ kind: 'notMember' })),
+  args: toGroupHeaderView(err({ kind: 'notMember' })),
 }

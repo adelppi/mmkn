@@ -1,5 +1,8 @@
+'use client'
+
 import * as React from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 import { cn } from '@/app/_ui/utils'
 
@@ -8,29 +11,57 @@ import { cn } from '@/app/_ui/utils'
  *
  * **切り替えは画面の移動である。** どこを見ているかがそのまま場所になるため、
  * 状態ではなくリンクで表す。
+ *
+ * **どれを選んでいるかは、いまの場所から決める。** タブは 3 つの画面で共有される上端にあり
+ * （`docs/adr/0009-web-ui.md`「上端を共有する」）、切り替えても作り直されない。作り直されない
+ * ものはサーバーの側で「いまどこか」を知り得ないため、ここで見る。**押した直後に選択が変わる**
+ * のも同じ理由で、内容が届くのを待たない。
  */
 export function TabBar({
   tabs,
   className,
 }: {
-  readonly tabs: readonly { readonly href: string; readonly label: string; readonly current: boolean }[]
+  readonly tabs: readonly { readonly href: string; readonly label: string }[]
   readonly className?: string
 }) {
+  const pathname = usePathname()
+
   return (
-    <nav className={cn('mx-4 mt-4 flex gap-[3px] rounded-lg bg-muted p-[3px]', className)}>
-      {tabs.map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          aria-current={tab.current ? 'page' : undefined}
-          className={cn(
-            'flex-1 rounded-md py-2 text-center text-sm transition-colors',
-            tab.current ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <nav className={cn('mx-4 mt-4 flex shrink-0 gap-[3px] rounded-lg bg-muted p-[3px]', className)}>
+      {tabs.map((tab) => {
+        const current = tab.href === pathname
+
+        return (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            aria-current={current ? 'page' : undefined}
+            className={cn(
+              'flex-1 rounded-md py-2 text-center text-sm transition-colors',
+              current ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
+            )}
+          >
+            {tab.label}
+          </Link>
+        )
+      })}
     </nav>
   )
+}
+
+/**
+ * その場所にいるときだけ出す。
+ *
+ * 上端に置かれていて、**タブによって出たり消えたりするもの**のために要る（設計 03 の
+ * 「あなたの収支」はタブの上にあり、収支・精算では出ない）。上端は切り替えても作り直されない
+ * ため、出し分けもここで行う。**取得はしない。** 中身は既に取れているものを、出すか出さないかだけ。
+ */
+export function OnlyAt({
+  href,
+  children,
+}: {
+  readonly href: string
+  readonly children: React.ReactNode
+}) {
+  return usePathname() === href ? <>{children}</> : null
 }

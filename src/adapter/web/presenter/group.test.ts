@@ -6,6 +6,7 @@ import { groupOf, hanako, jiro, taro } from '../../../usecase/fixture'
 import {
   initialCreateGroupView,
   toCurrencyOptions,
+  toGroupHeaderView,
   toGroupListView,
   toGroupSettingsView,
   toInviteView,
@@ -68,6 +69,40 @@ describe('グループ一覧', () => {
     const view = toGroupListView(err({ kind: 'notAuthenticated' }))
 
     expect(view.kind).toBe('notAuthenticated')
+  })
+})
+
+describe('グループの上端', () => {
+  const viewer = group.members[0]
+  if (viewer === undefined) throw new Error('前提の Member が無い')
+
+  it('3 つのタブが行き先として並ぶ', () => {
+    const view = toGroupHeaderView(ok({ group, viewer }))
+
+    expect(view.kind === 'ok' && view.tabs).toEqual([
+      { href: '/groups/g1', label: '記録' },
+      { href: '/groups/g1/balances', label: '収支' },
+      { href: '/groups/g1/settlement', label: '精算' },
+    ])
+  })
+
+  /**
+   * **どれを選んでいるかは持たない。** 上端は 3 つのタブで共有され、切り替えても
+   * 作り直されない（`docs/adr/0009-web-ui.md`「上端を共有する」）。
+   */
+  it('どのタブを見ているかは、上端の取得に入らない', () => {
+    const view = toGroupHeaderView(ok({ group, viewer }))
+    const keys = view.kind === 'ok' ? view.tabs.flatMap((tab) => Object.keys(tab)) : []
+
+    expect(keys).not.toContain('current')
+  })
+
+  /** 3 区別（`docs/domain/group.md`「前提条件を満たさなかったとき」）。 */
+  it('Member でなければ、タブごと出ない', () => {
+    const view = toGroupHeaderView(err({ kind: 'notMember' }))
+
+    expect(view.kind).toBe('notMember')
+    expect('tabs' in view).toBe(false)
   })
 })
 

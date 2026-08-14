@@ -1,5 +1,6 @@
 import { readSettlement } from '@/app/_lib/read'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
+import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import {
   initialSettlementTransferView,
   toSettlementView,
@@ -16,9 +17,11 @@ import { SettlementListPresentation } from './presentation'
 export async function SettlementListContainer({
   groupId,
   action,
+  unreachable,
 }: {
   readonly groupId: string
   readonly action: FormAction<SettlementTransferView>
+  readonly unreachable: NoticeView
 }) {
   return (
     <SettlementListPresentation
@@ -26,6 +29,7 @@ export async function SettlementListContainer({
       groupId={groupId}
       action={action}
       initial={initialSettlementTransferView()}
+      unreachable={unreachable}
     />
   )
 }
