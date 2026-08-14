@@ -278,16 +278,16 @@ describe('同じシナリオを Web と Discord の両方から流す', () => {
   })
 
   it('負担額の配分が同じ', () => {
-    // **並びは配分順序（識別子による決定的な順序）であり、入力した順ではない**
-    // （`docs/domain/record.md`「負担額の配分」）。ここで見るのは配分の中身のほう。
-    const sorted = (projection: Projection) =>
-      [...(projection.payments[0]?.shares ?? [])].sort()
-
-    expect(sorted(web)).toEqual([
+    // 並びは表示名で正規化されている（`harness.ts`）。**配分順序そのものは、識別子が run ごとに
+    // 違う以上、2 つの run の間では比べられない**（`docs/domain/record.md`「負担額の配分」）。
+    //
+    // **金額を負担者の人数で割り切れる値にしてあるのはこのためである。** 端数が出る額にすると、
+    // 1 最小単位を受け取る負担者が識別子で決まり、run ごとに変わり得る。
+    expect(web.payments[0]?.shares).toEqual([
       [JIRO, 5_000],
       [TARO, 5_000],
     ])
-    expect(sorted(discord)).toEqual(sorted(web))
+    expect(discord.payments[0]?.shares).toEqual(web.payments[0]?.shares)
   })
 
   it('清算案の送金を記録したあと、収支はどちらも 0 になる', () => {

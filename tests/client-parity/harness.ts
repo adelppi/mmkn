@@ -146,7 +146,15 @@ export const disconnect = async (db: TestDatabase): Promise<void> => {
  *
  * **識別子と登録日時は含めない。** どちらも run ごとに必ず違い、比べても
  * 「入口が違えば結果も違う」以上のことを言わない。**比べるのは意味のほうである。**
+ *
+ * **識別子で決まる並びも含めない。** 負担額の配分も収支も清算案も、Member の
+ * 「変わらない同一性による決定的な順序」で並ぶ（`docs/domain/record.md`「負担額の配分」）。
+ * その識別子は run ごとに違う値になるため、**並びは 2 つの run の間では比べられない。**
+ * 「同じ集合からは常に同じ配分になる」ことは `src/domain/record/share.ts` の単体テストが持つ。
+ * ここは表示名で並べ直してから比べる。
  */
+const byFirst = <T extends readonly [string, ...unknown[]]>(a: T, b: T): number =>
+  a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0
 export type Projection = {
   readonly group: { readonly name: string; readonly defaultCurrency: string }
   readonly members: readonly string[]
@@ -204,7 +212,9 @@ export const projectionOf = async (
       currency: record.money.currency,
       occurredOn: record.occurredOn,
       description: record.description,
-      shares: Payment.shares(record).map((share) => [name(share.bearer), share.amount] as const),
+      shares: Payment.shares(record)
+        .map((share) => [name(share.bearer), share.amount] as const)
+        .sort(byFirst),
     })),
     transfers: transfers.map(({ record }) => ({
       sender: name(record.sender),
@@ -215,13 +225,17 @@ export const projectionOf = async (
     })),
     balances: settlement.value.balances.map(({ currency, balances }) => ({
       currency,
-      rows: balances.map((balance) => [name(balance.member), balance.amount] as const),
+      rows: balances
+        .map((balance) => [name(balance.member), balance.amount] as const)
+        .sort(byFirst),
     })),
     settlements: settlement.value.settlements.map((it) => ({
       currency: it.currency,
-      transfers: it.transfers.map(
-        (transfer) => [name(transfer.sender), name(transfer.recipient), transfer.amount] as const,
-      ),
+      transfers: it.transfers
+        .map(
+          (transfer) => [name(transfer.sender), name(transfer.recipient), transfer.amount] as const,
+        )
+        .sort(byFirst),
     })),
   }
 }
