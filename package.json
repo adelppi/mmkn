@@ -10,12 +10,14 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:unit": "vitest run",
     "test:db": "vitest run --config vitest.config.db.ts",
-    "check:deps": "depcruise app src scripts tests",
+    "check:deps": "depcruise app proxy.ts src scripts tests",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.0",
     "postgres": "^3.4.9",

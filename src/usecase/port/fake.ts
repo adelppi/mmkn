@@ -18,6 +18,11 @@ import type { Payment } from '../../domain/record/payment'
 import type { Transfer } from '../../domain/record/transfer'
 import type { Version, Versioned, VersionedDelete, VersionedWrite } from '../usecase'
 import type { Clock } from './clock'
+import type {
+  ExternalAccount,
+  ExternalAccountRepository,
+  LinkExternalAccountOutcome,
+} from './external-account-repository'
 import type { CreateGroupOutcome, GroupRepository } from './group-repository'
 import type { IdGenerator } from './id-generator'
 import type { InviteCodeGenerator } from './invite-code-generator'
@@ -105,6 +110,71 @@ export const fakeUserRepository = (initial: readonly User[] = []): FakeUserRepos
     },
 
     stored: () => [...users.values()],
+  }
+}
+
+/** 連携されている外部アカウントと、その連携先の User。 */
+export type StoredLink = {
+  readonly userId: UserId
+  readonly account: ExternalAccount
+}
+
+export type FakeExternalAccountRepository = ExternalAccountRepository & {
+  readonly stored: () => readonly StoredLink[]
+}
+
+/**
+ * 本物の実装は認証基盤の側を読む（`docs/adr/0007-external-account-linking.md`）。
+ * **ここが偽実装として守るのは、本物と同じ 2 つの断り方だけである。**
+ *
+ * - 既に**別の** User に連携されている外部アカウントは連携できない（連携先も移らない）
+ * - 1 人の User が、**同じサービス**のアカウントを 2 つ連携することはできない
+ *
+ * **ログインに使う外部アカウントはここに現れない**（`docs/domain/group.md`「User と外部アカウント」）。
+ */
+export const fakeExternalAccountRepository = (
+  initial: readonly StoredLink[] = [],
+): FakeExternalAccountRepository => {
+  const links: StoredLink[] = [...initial]
+
+  const sameAccount = (a: ExternalAccount, b: ExternalAccount) =>
+    a.service === b.service && a.id === b.id
+
+  return {
+    findUserId: async (account: ExternalAccount) =>
+      links.find((link) => sameAccount(link.account, account))?.userId,
+
+    listByUser: async (userId: UserId) =>
+      links.filter((link) => idEquals(link.userId, userId)).map((link) => link.account),
+
+    link: async (userId: UserId, account: ExternalAccount): Promise<LinkExternalAccountOutcome> => {
+      const owner = links.find((link) => sameAccount(link.account, account))
+      // **連携先は移らない。** 他の User の連携を奪う経路を持たない。
+      if (owner !== undefined && !idEquals(owner.userId, userId)) {
+        return { kind: 'linkedToAnotherUser' }
+      }
+
+      // 既に同じ対応が記録されていれば、増えるものは無い。**繰り返しても結果が変わらない**
+      // （`docs/domain/group.md`「グループに参加する」が二重の参加に対して採っているのと同じ形）。
+      if (owner !== undefined) return { kind: 'linked' }
+
+      const occupied = links.some(
+        (link) => idEquals(link.userId, userId) && link.account.service === account.service,
+      )
+      if (occupied) return { kind: 'serviceAlreadyLinked' }
+
+      links.push({ userId, account })
+      return { kind: 'linked' }
+    },
+
+    unlink: async (userId: UserId, service: string) => {
+      const index = links.findIndex(
+        (link) => idEquals(link.userId, userId) && link.account.service === service,
+      )
+      if (index >= 0) links.splice(index, 1)
+    },
+
+    stored: () => [...links],
   }
 }
 

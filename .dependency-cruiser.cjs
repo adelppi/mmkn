@@ -11,6 +11,7 @@
  * | src/adapter/**  | src/domain/**・src/usecase/**                    | next/*・node:*・ORM・認証基盤の SDK（型のみは除く）   |
  * | src/infra/**    | src/domain/**・src/usecase/**・src/infra/**      | next/*                                                |
  * | app/**          | 制限なし                                          | —                                                     |
+ * | proxy.ts        | 制限なし                                          | —                                                     |
  * | scripts/**      | 制限なし                                          | —                                                     |
  *
  * 読み替えを 2 つだけ行っている。どちらも表を緩めるものではない。
@@ -68,7 +69,7 @@ module.exports = {
       from: { path: '^src/infra/' },
       to: { path: '^(src|app|scripts|tests)/', pathNot: '^src/(domain|usecase|infra)/' },
     },
-    // app/** と scripts/** は制限なし。参照の向きの規則を持たない（表の 5・6 行目）。
+    // app/**・proxy.ts・scripts/** は制限なし。参照の向きの規則を持たない（表の 5〜7 行目）。
 
     // ── 逆向きの明示的な禁止（`adr/0008`）─────────────────────────────────
     {
