@@ -101,12 +101,18 @@ const payment = Payment.create({ id: ids.paymentId(), /* … */ })
 **依存の組み立ては `app/_lib/wire.ts` の `wire()` に置き、リクエストごとに呼ぶ。DI コンテナのライブラリは使わない。**
 
 ```ts
-export function wire() {
-  const groups = new DrizzleGroupRepository(pool)
-  // …
-  return { registerPayment: registerPayment({ payments, groups, ids, clock }) /* … */ }
+export function wire(context: LogContext) {
+  const deps = { groups: drizzleGroupRepository(db), payments: /* … */, ids, clock }
+  return {
+    registerPayment: logged(context, 'registerPayment', registerPayment(deps)),
+    // …
+  }
 }
 ```
+
+**ポート実装も「関数を返す関数」で組む。** ユースケースに基底クラスを置かない（上記）のと同じ理由で、ここだけクラスにする利点が無い。
+
+**ログで包むのはここ**（`adr/0014`）。相関 ID は 1 リクエストで一貫するため、`wire()` が受け取る。
 
 `container` という名前を使わないのは、`adr/0009` の Container Component と衝突するため。
 
@@ -150,13 +156,15 @@ src/
 │   ├─ group/  money/  record/  settlement/    ← docs/domain/ と 1 対 1
 │   │      money/ には通貨表を含む（人が直接編集する。adr/0016）
 ├─ usecase/                       … domain のみ
-│   ├─ usecase.ts                 … UseCase<I, O, E>
+│   ├─ usecase.ts                 … UseCase<I, O, E>。楽観ロックの版もここ（adr/0005）
+│   ├─ fixture.ts                 … テストが使う前提データ（テスト専用）
 │   ├─ port/
 │   │   ├─ group-repository.ts / payment-repository.ts / transfer-repository.ts
 │   │   ├─ user-repository.ts
 │   │   ├─ external-account-repository.ts   … (サービス種別, 外部 ID) → User
 │   │   ├─ place-mapping-repository.ts      … (サービス種別, 場の識別子) → Group
-│   │   └─ id-generator.ts / clock.ts / invite-code-generator.ts
+│   │   ├─ id-generator.ts / clock.ts / invite-code-generator.ts
+│   │   └─ fake.ts                … ポートの偽実装（テスト専用。adr/0010）
 │   └─ group/  record/  settlement/  account/
 ├─ adapter/
 │   ├─ discord/
@@ -171,6 +179,7 @@ src/
 │   └─ shared/                    … 通貨の表示整形。最小単位は domain/money が正
 └─ infra/
     ├─ db/                        … client / schema / migrations / mapper / repository
+    │                                加えて test-support（永続化テストの下ごしらえ。テスト専用）
     ├─ auth/                      … client / session / external-account
     ├─ discord/                   … signature / client
     ├─ log/                       … 構造化ログの出力（adr/0014）
@@ -185,6 +194,7 @@ scripts/                          … アプリが読み込まない道具（現
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
 - `infra/db/mapper` を独立させ、ORM の推論型がリポジトリの外へ漏れない壁とする（`adr/0005`）
+- **テスト専用のものも、対象と同じ層に置く。** 偽実装はポートの隣（それが実装するもののそば）、前提データはユースケース層の直下、永続化テストの下ごしらえは `infra/db` の中に置く。層をまたがないため `tests/` には出さない（`adr/0010`）
 - 外部アカウントの参照は `infra/auth` に置く。認証基盤のスキーマ依存をそこだけに閉じるため（`adr/0007`）
 - `adapter/shared` はクライアント固有でないものだけを置く。`adapter/` 直下がクライアントごとに増える場所であることは変わらない
 

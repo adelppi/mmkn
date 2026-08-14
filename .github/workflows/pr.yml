@@ -1,7 +1,7 @@
 # PR で回す検査。
 #
 # 何をどの順で走らせるかと、その理由の正は `docs/adr/0011-ci-and-release.md`「PR で回すもの」。
-# あちらが挙げるもののうち、まだ対象が存在しないもの（永続化テスト・クライアント間整合のテスト・
+# あちらが挙げるもののうち、まだ対象が存在しないもの（クライアント間整合のテスト・
 # Storybook のビルド）は、対象が生まれた時点でここに足す。
 name: PR
 
@@ -11,6 +11,24 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    services:
+      # 使い捨ての Postgres（`docs/adr/0011`）。本番 DB には向けない。
+      # メジャーは docker-compose.yml と揃える（ずれると手元で気づけない差が出る）。
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mmkn
+          POSTGRES_PASSWORD: mmkn
+          POSTGRES_DB: mmkn
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mmkn -d mmkn"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -21,4 +39,9 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit
+      - run: npm run test:db
+        env:
+          # 使い捨ての Postgres を指す。永続化テストは接続先がループバックでなければ落ちる
+          # （`src/infra/db/test-support.ts`）。
+          DATABASE_URL: postgresql://mmkn:mmkn@127.0.0.1:5432/mmkn
       - run: npm run check:deps
