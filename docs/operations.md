@@ -19,8 +19,9 @@
 
 | 節 | 状態 |
 |---|---|
-| 手元の準備・テストの回し方 | 実体（開発サーバー・単体テスト・**永続化テスト**・**Storybook**・マイグレーションの適用・lint / typecheck / 依存方向の検査）。E2E・クライアント間整合はまだ一覧 |
-| 環境変数・リリース・診断 | まだ「用意するもの」の一覧 |
+| 手元の準備・テストの回し方 | 実体（開発サーバー・単体テスト・**永続化テスト**・**クライアント間整合**・**Storybook**・マイグレーションの適用・lint / typecheck / 依存方向の検査）。E2E はまだ一覧 |
+| Discord のコマンド登録と診断 | 実体（`npm run discord:register` / `npm run discord:diagnose`） |
+| 環境変数・リリース | まだ「用意するもの」の一覧 |
 | 通貨表の更新 | 実体（`src/domain/money/currency-table.ts` がある。人が直接編集する） |
 
 ## 環境変数
@@ -110,6 +111,7 @@ PR で回すものと同じものを、手元から単独で回せる（CI の�
 | 型検査 | `npm run typecheck` |
 | 単体テスト | `npm run test:unit` |
 | 永続化テスト | `npm run test:db`（先に `docker compose up -d --wait`） |
+| クライアント間整合 | `npm run test:parity`（同上） |
 | 依存方向の検査 | `npm run check:deps` |
 | Storybook のビルド | `npm run build:storybook` |
 
@@ -121,13 +123,15 @@ PR で回すものと同じものを、手元から単独で回せる（CI の�
 |---|---|---|
 | 単体テスト | 手元で随時。外部依存なし | `npm run test:unit` |
 | 永続化 | Postgres を起動してから | `npm run test:db` |
-| クライアント間整合 | Postgres を起動してから | まだ無い |
+| クライアント間整合 | Postgres を起動してから | `npm run test:parity` |
 | E2E（Playwright） | 手元では必要なときだけ。CI では main へのマージ時 | まだ無い |
 | Storybook | 手元で表示を確認するとき | `npm run storybook`（CI は `npm run build:storybook`） |
 
 種別ごとの対象と置き場は `adr/0010` を正とする。単体テストは対象の隣（`*.test.ts`）に、**永続化テストも対象の隣（`*.db.test.ts`）**に置く。名前を分けてあるのは、`npm run test:unit` の対象から外して**単体テストが何も起動せずに回る状態を保つ**ためで、設定も別（`vitest.config.ts` と `vitest.config.db.ts`）。
 
 Storybook も対象の隣（`presentation.stories.tsx`）に置く（`adr/0009`「配置と命名」）。**スナップショット比較は持たない**ため、CI が確かめるのはビルドが通ることだけで、表示そのものは手元で目で見る（`adr/0010`「Storybook」）。設定は `.storybook/`。
+
+クライアント間整合だけは `tests/client-parity/` に置く。**`adapter/web` と `adapter/discord` の両方を import するため、対象が 1 つの層に定まらない**（`adr/0010`）。設定も別（`vitest.config.parity.ts`）で、永続化テストと同じくローカル Postgres を使う。**run のたびに DB の中身を空にする。**
 
 ## リリース
 
@@ -150,13 +154,28 @@ main にマージすると、GitHub Actions が 4 段階で走る。**何をど�
 
 設定が正しいかを自力で確かめる手段。**テストは偽実装と手元の Postgres で回るため、本番の設定が正しいかは別に確かめる必要がある**（`adr/0005`・`adr/0006`）。
 
-| 診断 | 見るもの |
-|---|---|
-| DB 疎通 | 本番 DB に接続できるか。Supavisor の transaction mode で prepared statement の無効化が効いているか |
-| マイグレーション適用状況 | コミット済みの SQL のうち、どこまで本番に当たっているか |
-| RLS の網羅 | 全テーブルで RLS が有効か。**テーブルを追加したときの付け忘れがここで出る**（`adr/0005`） |
-| Discord コマンドの差分 | ソース上の宣言と、Discord に登録されている定義の差 |
-| Discord エンドポイント疎通 | 署名付きリクエストに正しく応答するか。署名不正に 401 を返すか |
+| 診断 | 見るもの | コマンド |
+|---|---|---|
+| DB 疎通 | 本番 DB に接続できるか。Supavisor の transaction mode で prepared statement の無効化が効いているか | まだ無い |
+| マイグレーション適用状況 | コミット済みの SQL のうち、どこまで本番に当たっているか | まだ無い |
+| RLS の網羅 | 全テーブルで RLS が有効か。**テーブルを追加したときの付け忘れがここで出る**（`adr/0005`） | `npm run test:db`（`src/infra/db/schema.db.test.ts`） |
+| Discord コマンドの登録状況と差分 | 何が登録されているか。ソース上の宣言との差 | `npm run discord:diagnose` |
+| Discord エンドポイント疎通 | 届くか。**署名不正に 401 を返すか** | `npm run discord:diagnose -- <URL>` |
+
+### Discord
+
+```
+npm run discord:diagnose                          登録状況と、宣言との差分
+npm run discord:diagnose https://mmkn.example     加えてエンドポイントの疎通
+npm run discord:register                          差分があれば登録する
+npm run discord:register -- --force               差分が無くても登録し直す
+```
+
+- 読むのは `DISCORD_APPLICATION_ID` と `DISCORD_BOT_TOKEN`（`.env.local`）。**この 2 つはホスティング環境に置かない**（上記「環境変数」）
+- **登録する内容の正はソース上の宣言**（`src/adapter/discord/definitions.ts`）。診断も登録も同じ宣言を読むため、宣言を直せば両方に効く（`adr/0006`）
+- **グローバル登録は反映まで最大 1 時間かかる**（`adr/0006`）。「登録した」と出たあと、すぐにクライアントへ出ないのは正常
+- 疎通で確かめられるのは**署名不正に 401 を返すこと**までである。正しい署名を作るには Discord 側の秘密鍵が要り、こちらには無い。**正しい署名での往復は E2E が見る**（`adr/0010`「E2E の範囲」）
+- **差分があるのに登録が失敗したら、Discord 側は古い定義のまま動く。** Web は正常であり、巻き戻しは要らない（`adr/0011`）
 
 ### ログを見るとき
 
@@ -206,6 +225,29 @@ main にマージすると、GitHub Actions が 4 段階で走る。**何をど�
 | 認可画面をまたぐログイン手段の追加が実際に成立するか（自動化しないため手動） | ログイン手段を増やせない | `adr/0012`・`adr/0010` |
 
 **残っている 5 行はいずれも、外部サービスの管理画面での作業（Vercel のプロジェクト・Discord のアプリケーション・Google の OAuth クライアント）が済んでいないと確かめられない。**
+
+### 確かめ方（Discord の 2 件）
+
+**どちらも実物の往復が要る。** 手元のテストでは代わりにならない（テストは偽実装と手元の Postgres で回る）。
+
+**① 認証基盤が保存する Discord のユーザー ID と、スラッシュコマンドで届くユーザー ID が同一か**
+
+1. Web から Discord でログインする（またはログイン手段として追加する）
+2. 認証基盤の `auth.identities` で、その人の `provider = 'discord'` の行の `provider_id` を控える
+3. Discord で `/mmkn balance` を実行する（対応づけの済んだチャンネルで）
+4. **案内ではなく収支が返れば同一である。** 「mmkn のアカウントが必要です」と返れば同一ではない
+   - ホスティング環境のログで `usecase: "resolveActor"` の `outcome` を見れば、どこで分かれたかが分かる（`adr/0014`）
+5. **外れていた場合の影響は「Discord 側が丸ごと動かない」。** 外部アカウントの読み方（`src/adapter/discord/context.ts` の `DISCORD_SERVICE` と、Interaction のどこからユーザー ID を取るか）を見直す
+
+**② ホスティング環境で、応答を返したあとの処理継続が Discord の follow-up に間に合うか**
+
+1. デプロイした環境で `npm run discord:diagnose <URL>` を通す（署名不正に 401 が返ること）
+2. Discord で `/mmkn balance` を実行する
+3. **「考え中」が結果に変われば間に合っている。** 「アプリケーションが応答しませんでした」のまま止まれば間に合っていない
+4. ログに `usecase: "viewSettlement"` の行が出ているかを見る
+   - **行が出ていて表示が変わらない** … follow-up の送信が届いていない（応答後の処理継続が途中で切られている）
+   - **行も出ていない** … deferred の後で実行が終わっている
+5. **外れていた場合の影響は「一律 deferred が成立しない」**（`adr/0003`・`adr/0006`）。ADR の前提そのものが崩れるため、接続方式の見直しになる
 
 ### 確認が済んだもの
 

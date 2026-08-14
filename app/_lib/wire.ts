@@ -16,6 +16,7 @@ import { createAccount } from '@/src/usecase/account/create-account'
 import { logIn } from '@/src/usecase/account/log-in'
 import { logOut } from '@/src/usecase/account/log-out'
 import { removeLoginMethod } from '@/src/usecase/account/remove-login-method'
+import { resolveActor } from '@/src/usecase/account/resolve-actor'
 import { viewAccount } from '@/src/usecase/account/view-account'
 import { assignPlace } from '@/src/usecase/group/assign-place'
 import { changeDisplayName } from '@/src/usecase/group/change-display-name'
@@ -24,6 +25,7 @@ import { createGroup } from '@/src/usecase/group/create-group'
 import { joinGroup } from '@/src/usecase/group/join-group'
 import { listGroups } from '@/src/usecase/group/list-groups'
 import { releasePlace } from '@/src/usecase/group/release-place'
+import { resolvePlace } from '@/src/usecase/group/resolve-place'
 import { viewGroup } from '@/src/usecase/group/view-group'
 import { viewInvite } from '@/src/usecase/group/view-invite'
 import { deletePayment } from '@/src/usecase/record/delete-payment'
@@ -85,6 +87,11 @@ export function wire(context: LogContext, auth: AuthClient) {
     changeDisplayName: logged(context, 'changeDisplayName', changeDisplayName(deps)),
     assignPlace: logged(context, 'assignPlace', assignPlace(deps)),
     releasePlace: logged(context, 'releasePlace', releasePlace(deps)),
+
+    // 外部サービスから届いた操作の、主と対象の解決（`docs/adr/0006-discord-http-interactions.md`）。
+    // **ここを通すのは、ユースケースを通さないデータアクセス経路を作らないため**（`docs/adr/0005`）。
+    resolveActor: logged(context, 'resolveActor', resolveActor(deps)),
+    resolvePlace: logged(context, 'resolvePlace', resolvePlace(deps)),
     listGroups: logged(context, 'listGroups', listGroups(deps)),
     viewGroup: logged(context, 'viewGroup', viewGroup(deps)),
     viewInvite: logged(context, 'viewInvite', viewInvite(deps)),

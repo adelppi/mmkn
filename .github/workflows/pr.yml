@@ -1,8 +1,7 @@
 # PR で回す検査。
 #
 # 何をどの順で走らせるかと、その理由の正は `docs/adr/0011-ci-and-release.md`「PR で回すもの」。
-# あちらが挙げるもののうち、まだ対象が存在しないもの（クライアント間整合のテスト）は、
-# 対象が生まれた時点でここに足す。
+# あちらが挙げるものはすべてここにある（E2E だけは PR で回さない）。
 name: PR
 
 on:
@@ -43,6 +42,11 @@ jobs:
         env:
           # 使い捨ての Postgres を指す。永続化テストは接続先がループバックでなければ落ちる
           # （`src/infra/db/test-support.ts`）。
+          DATABASE_URL: postgresql://mmkn:mmkn@127.0.0.1:5432/mmkn
+      # クライアント間整合（`docs/adr/0010-testing.md`）。**同じシナリオを Web と Discord の
+      # 両方から流し、できあがった記録が一致することを結果で確かめる。**
+      - run: npm run test:parity
+        env:
           DATABASE_URL: postgresql://mmkn:mmkn@127.0.0.1:5432/mmkn
       - run: npm run check:deps
       # 表示のカタログ（`docs/adr/0010-testing.md`）。**確かめるのはビルドが通ることだけで、

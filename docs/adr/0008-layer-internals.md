@@ -138,6 +138,15 @@ cookie の読み取りはフレームワーク（`next/headers`）に依存す�
 
 **`discord-api-types` を使い、Interaction の型を自前で定義しない。** 型のみでランタイム依存を持たないため、アダプタ層のフレームワーク非依存を壊さない。
 
+**採用の理由が「型のみ」である以上、値としても import しない** [確定]。このパッケージは種別や部品の番号を enum として持つが、それを値として使うとランタイムのコードが 1 つ増える。代わりに、**必要な数値を 1 か所に書き、`import type` した enum の型に照らして固定する。**
+
+```ts
+export const INTERACTION = { ping: 1, /* … */ } as const satisfies Record<string, InteractionType>
+//                                  ^ 誤った数値はここで型検査に落ちる
+```
+
+数値の正はパッケージの側にあり、書き写しの誤りは検査で落ちる。**プロトコルの定数をここ以外に打たない**（置き場は上記ツリーの `protocol.ts`）。
+
 ### ディレクトリ構造
 
 **このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアントごとに増える場所を `adapter/`・`infra/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
@@ -181,12 +190,15 @@ src/
 │   │   ├─ router.ts              … Interaction 種別で分岐
 │   │   ├─ context.ts             … 外部 ID → User、場 → Group。解決できなければ案内を返す
 │   │   ├─ definitions.ts         … コマンド・部品・モーダルの宣言と可視性（adr/0006）
+│   │   ├─ protocol.ts            … Interaction の種別・応答・部品の数値（後述「Discord のペイロード型」）
+│   │   ├─ payload.ts             … ペイロードから値を読む（引数・モーダルの入力・運ばれた候補）
 │   │   ├─ controller/command/  controller/component/  controller/modal/
 │   │   └─ presenter/             … モーダルの組み立てもここ（永続化に問い合わせない。adr/0006）
 │   ├─ web/
 │   │   ├─ controller/
 │   │   └─ presenter/
-│   └─ shared/                    … 通貨の表示整形。最小単位は domain/money が正
+│   └─ shared/                    … 通貨の表示整形・参加コードの共有リンク
+│                                    最小単位は domain/money が正
 └─ infra/
     ├─ db/                        … client / schema / migrations / mapper / repository
     │                                加えて test-support（永続化テストの下ごしらえ。テスト専用）
@@ -199,7 +211,8 @@ tests/                            … 層をまたぐテストのみ（adr/0010�
 ├─ client-parity/                 … Web と Discord の結果が一致すること
 └─ e2e/                           … Playwright
 
-scripts/                          … アプリが読み込まない道具（現在は空。枠だけを持つ）
+scripts/                          … アプリが読み込まない道具
+└─ discord/                       … コマンドの登録と、設定の診断（adr/0006・docs/operations.md）
 ```
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
@@ -226,7 +239,7 @@ scripts/                          … アプリが読み込まない道具（現
 
 **`scripts/**` を制限なしとするのは、アプリが読み込まない場所だからである。** ここに置いた道具がどんな依存を持っても、`src/**` に流れ込まないことは**逆向きの参照を禁止すること**で担保する。**`src/**` から `scripts/**` への参照は禁止する。**
 
-**`scripts/` に現在の置き物は無い。** 唯一の想定だった通貨表の生成器は `adr/0016` が持たないと決めた。枠と検査のルールは、次に道具が必要になったときのために残す。
+**`scripts/` には Discord のコマンド登録と診断を置く** [確定]。どちらもアプリの実行時には走らず、宣言（`adapter/discord/definitions.ts`）と API クライアント（`infra/discord/`）を読む。層をまたぐが、`src/**` から参照されない場所であるため向きの問題は起きない。手順は `docs/operations.md` を正とする。
 
 ## 結果
 

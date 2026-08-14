@@ -1,3 +1,5 @@
+import { invitePath } from '../../shared/invite'
+
 /**
  * 画面の場所（`docs/adr/0009-web-ui.md`）。
  *
@@ -21,10 +23,11 @@ export const route = {
   newRecord: (groupId: string) => `/groups/${groupId}/records/new`,
   record: (groupId: string, recordId: string) => `/groups/${groupId}/records/${recordId}`,
 
-  /** 参加コードを埋め込んだ共有リンク（`docs/domain/group.md`「Group の属性」）。 */
-  invite: (inviteCode: string) => `/j/${inviteCode}`,
+  /**
+   * 参加コードを埋め込んだ共有リンク（`docs/domain/group.md`「Group の属性」）。
+   *
+   * **形の正は `src/adapter/shared/invite.ts`。** 参加の画面を持つのは Web だが、
+   * リンクを人に渡すのは Discord からも起きるため、path はクライアントをまたいで 1 か所にある。
+   */
+  invite: (inviteCode: string) => invitePath(inviteCode),
 } as const
-
-/** 共有リンクとして人に渡す形。`origin` は入口が渡す（アダプタは実行環境を知らない）。 */
-export const inviteUrl = (origin: string, inviteCode: string): string =>
-  `${origin}${route.invite(inviteCode)}`
