@@ -15,7 +15,8 @@ import type { ViewInviteError, ViewInviteOutput } from '../../../usecase/group/v
 import { currencyNameOf, moneyText, type MoneyText } from '../../shared/money'
 import type { TextFieldLimits } from './form'
 import { messageOf } from './message'
-import { inviteUrl, route } from './route'
+import { inviteUrl } from '../../shared/invite'
+import { route } from './route'
 
 /**
  * グループとメンバーの表示（`docs/features.md` #1〜#4）。
