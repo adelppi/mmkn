@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { authStubEnabled, createStubAuthClient } from './stub'
 
 /**
  * 認証基盤への接続（`docs/adr/0003-tech-stack.md`「認証」・`docs/adr/0012-login.md`）。
@@ -36,11 +37,18 @@ const required = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string => {
 /**
  * リクエストごとに作る。**モジュールスコープに持たない**（cookie を通じて 1 人の利用者に
  * 結びつくため、リクエストをまたいで意味を持つ状態になる。`docs/adr/0003`）。
+ *
+ * **偽の認証に切り替わる口がここに 1 つだけある**（`stub.ts`）。認証基盤への接続を作るのは
+ * このリクエストだけであるため、**分岐をここに置けば他のどこにも要らない**
+ * （`app/_lib/session.ts`・`app/api/discord/route.ts`・`proxy.ts` は変わらない）。
+ * **切り替わるのは `E2E_AUTH_STUB` が立っているときだけで、既定は本物である。**
  */
 export const createAuthClient = (cookies: CookieStore): AuthClient =>
-  createServerClient(required('SUPABASE_URL'), required('SUPABASE_ANON_KEY'), {
-    cookies: {
-      getAll: () => cookies.getAll(),
-      setAll: (cookiesToSet) => cookies.setAll(cookiesToSet),
-    },
-  })
+  authStubEnabled()
+    ? createStubAuthClient(cookies)
+    : createServerClient(required('SUPABASE_URL'), required('SUPABASE_ANON_KEY'), {
+        cookies: {
+          getAll: () => cookies.getAll(),
+          setAll: (cookiesToSet) => cookies.setAll(cookiesToSet),
+        },
+      })

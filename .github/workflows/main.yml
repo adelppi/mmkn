@@ -1,0 +1,123 @@
+# main へマージしたときのリリース。
+#
+# 何をどの順で走らせるかと、その理由の正は `docs/adr/0011-ci-and-release.md`
+# 「main へのマージ時に走らせるもの」。**順序が意味を持つ。**
+#
+#   1. E2E                     使い捨ての Postgres と、ここで起動したアプリに対して回す
+#   2. マイグレーションの適用   本番 DB。失敗したら 3 以降に進まない
+#   3. デプロイ                 Vercel
+#   4. スラッシュコマンドの登録  定義に差分があるときだけ実行される
+#
+# **時刻で起動するものはここにも他にも無い**（`docs/adr/0011`「定期実行するものを持たない」・
+# `docs/adr/0016`）。走るのは PR（`pr.yml`）と main の 2 経路だけである。
+name: main
+
+on:
+  push:
+    branches: [main]
+
+# **本番に触れるため、同時に 2 つ走らせない。** 途中で追い越すと、古いコードのデプロイが
+# 新しいスキーマに当たる時間が生まれる。走っているものは止めずに、順番に流す。
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # ── 1. E2E ────────────────────────────────────────────────────────────────
+  # **本番に対して回さない**（`docs/adr/0011`）。DB は使い捨ての Postgres、アプリはここで
+  # 起動したもの、認証は偽の認証（`src/infra/auth/stub.ts`）。**本番の秘密情報を渡さない。**
+  e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mmkn
+          POSTGRES_PASSWORD: mmkn
+          POSTGRES_DB: mmkn
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mmkn -d mmkn"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://mmkn:mmkn@127.0.0.1:5432/mmkn
+
+  # ── 2. マイグレーションの適用 ───────────────────────────────────────────────
+  # **コミット済みの SQL をそのまま当てる**（`docs/adr/0005-data-access-and-authorization.md`）。
+  # 生成はここで行わない。**前方のみで、戻すためのマイグレーションを持たない**（`docs/adr/0011`）。
+  migrate:
+    needs: e2e
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+        env:
+          # アプリに渡すものと同じ形でよい（`docs/adr/0011`「着手時の確認結果」）。
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # ── 3. デプロイ ────────────────────────────────────────────────────────────
+  # **Vercel の Git 連携による自動デプロイには任せない**（`docs/adr/0011`・`vercel.json`）。
+  # マイグレーションの適用とコマンド登録をデプロイの前後に挟むため、順序を自分で持つ。
+  #
+  # **`needs: migrate` が「マイグレーションが失敗したらデプロイしない」の実体である。**
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      # 本番の設定（環境変数）を取り、その設定でビルドしてから送る。
+      - run: npx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - run: npx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - run: npx vercel@latest deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  # ── 4. スラッシュコマンドの登録 ─────────────────────────────────────────────
+  # **定義に差分があるときだけ登録される**（判定はスクリプトの中。`scripts/discord/register.ts`）。
+  #
+  # **ここが失敗してもデプロイは巻き戻さない**（`docs/adr/0011`）。Discord 側が古い定義のまま
+  # 動くだけで、Web は正常に動く。**巻き戻す手順を置かないことがその実体である。**
+  # 失敗したときの確認は `docs/operations.md`「途中で失敗したときの確認」。
+  register-commands:
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run discord:register
+        env:
+          # **この 2 つはホスティング環境に置かない**（`docs/adr/0011`「秘密情報の置き場」）。
+          # 署名検証は公開鍵で行うため、アプリは Bot Token を必要としない。
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}

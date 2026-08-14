@@ -11,6 +11,7 @@
     "test:unit": "vitest run",
     "test:db": "vitest run --config vitest.config.db.ts",
     "test:parity": "vitest run --config vitest.config.parity.ts",
+    "test:e2e": "playwright test",
     "check:deps": "depcruise app proxy.ts src scripts tests",
     "discord:register": "tsx --env-file-if-exists=.env.local scripts/discord/register.ts",
     "discord:diagnose": "tsx --env-file-if-exists=.env.local scripts/discord/diagnose.ts",
@@ -35,6 +36,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@storybook/nextjs-vite": "^10.5.8",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
