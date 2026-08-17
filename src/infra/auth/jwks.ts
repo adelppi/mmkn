@@ -1,5 +1,6 @@
 import type { JWK } from '@supabase/supabase-js'
 import { requiredEnv } from './client'
+import { authStubEnabled } from './stub'
 
 /**
  * セッションの署名を検証する公開鍵（`docs/adr/0008-layer-internals.md`「セッションの検証」）。
@@ -55,6 +56,13 @@ const load = async (url: string): Promise<PublicKeys> => {
  *
  * **設定漏れはこれに当たらない。** 取りに行く先が分からないのは遅さの問題ではないため、落とす。
  *
+ * ## 偽の認証のとき
+ *
+ * **鍵を取りに行かない**（`stub.ts`）。偽の認証はトークンに署名せず、検証する鍵も持たない。
+ * ここで配布先を求めると、E2E が本物の認証基盤へ出て行くか、設定が無いまま落ちるかのどちらかに
+ * なる。**E2E はリポジトリの中にあるものだけで完結する**（`docs/adr/0011-ci-and-release.md`・
+ * `docs/adr/0010-testing.md`「E2E が使う認証基盤」）。
+ *
  * ## 鍵が入れ替わったとき
  *
  * **取り直す期限を持たない。** 持っている鍵に無い署名が来ると、認証基盤の SDK が自分で取りに行く
@@ -62,6 +70,10 @@ const load = async (url: string): Promise<PublicKeys> => {
  * プロセスが入れ替わるまでの間、往復が 1 回戻るだけである。**
  */
 export const verificationKeys = async (): Promise<PublicKeys> => {
+  // **偽の認証には署名も鍵も無い。** 覚えもしない（切り替わるのは環境変数であり、
+  // プロセスの寿命の中で変わるものとして扱わない）。
+  if (authStubEnabled()) return NONE
+
   if (cached !== undefined) return cached
 
   const url = endpoint()

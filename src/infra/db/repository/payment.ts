@@ -1,10 +1,10 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import type { GroupId, PaymentId } from '../../../domain/id'
 import type { Payment } from '../../../domain/record/payment'
 import type { PaymentRepository } from '../../../usecase/port/payment-repository'
 import type { Version, Versioned, VersionedDelete, VersionedWrite } from '../../../usecase/usecase'
 import type { Database } from '../client'
-import { fromPayment, fromPaymentBearers, toPayment, type PaymentBearerRow } from '../mapper/payment'
+import { fromPayment, fromPaymentBearers, toPayment, toPayments } from '../mapper/payment'
 import { paymentBearers, payments } from '../schema'
 
 /**
@@ -17,16 +17,6 @@ import { paymentBearers, payments } from '../schema'
 
 /** 最初の版。 */
 const INITIAL_VERSION: Version = 1
-
-const groupBearers = (rows: readonly PaymentBearerRow[]): Map<string, PaymentBearerRow[]> => {
-  const grouped = new Map<string, PaymentBearerRow[]>()
-  for (const row of rows) {
-    const bucket = grouped.get(row.paymentId) ?? []
-    bucket.push(row)
-    grouped.set(row.paymentId, bucket)
-  }
-  return grouped
-}
 
 export const drizzlePaymentRepository = (db: Database): PaymentRepository => ({
   async find(id: PaymentId) {
@@ -42,26 +32,17 @@ export const drizzlePaymentRepository = (db: Database): PaymentRepository => ({
   },
 
   async listByGroup(groupId: GroupId) {
-    const rows = await db.select().from(payments).where(eq(payments.groupId, groupId))
-    if (rows.length === 0) return []
-
-    const bearers = await db
-      .select()
-      .from(paymentBearers)
-      .where(
-        inArray(
-          paymentBearers.paymentId,
-          rows.map((row) => row.id),
-        ),
-      )
-    const grouped = groupBearers(bearers)
+    // Payment と、その負担者を **1 本の問い合わせ**で読む。負担者を別に引くと往復が 2 段になる。
+    // **外部結合にするのは、負担者の行が無い Payment を落とさないためである。**
+    const rows = await db
+      .select({ payment: payments, bearer: paymentBearers })
+      .from(payments)
+      .leftJoin(paymentBearers, eq(paymentBearers.paymentId, payments.id))
+      .where(eq(payments.groupId, groupId))
 
     // 並び順はここでは決めない（`docs/domain/record.md`「記録の並び」がドメインの規則として持つ）。
-    return rows.map(
-      (row): Versioned<Payment> => ({
-        record: toPayment(row, grouped.get(row.id) ?? []),
-        version: row.version,
-      }),
+    return toPayments(rows).map(
+      ({ payment, version }): Versioned<Payment> => ({ record: payment, version }),
     )
   },
 

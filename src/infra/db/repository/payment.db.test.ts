@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { toGroupId, toMemberId, toPaymentId } from '../../../domain/id'
 import { Payment } from '../../../domain/record/payment'
@@ -101,6 +102,18 @@ describe('Payment 集約の保存と読み出し', () => {
 
   it('記録が 1 件も無ければ空', async () => {
     expect(await repository().listByGroup(toGroupId('g1'))).toEqual([])
+  })
+
+  it('負担者の行が無い Payment も、一覧から落ちない', async () => {
+    // 負担者のいない Payment はドメインが作らせない（`docs/domain/record.md`「支払者と負担者」）。
+    // Payment と負担者を一度に読む形が、負担者の無い記録を消してしまわないことを確かめる。
+    await repository().create(paymentOf())
+    await database.db.delete(paymentBearers).where(eq(paymentBearers.paymentId, 'p1'))
+
+    const found = await repository().listByGroup(toGroupId('g1'))
+
+    expect(found.map((it) => it.record.id)).toEqual([toPaymentId('p1')])
+    expect(found[0]?.record.bearers).toEqual([])
   })
 
   it('存在しない Payment は undefined', async () => {

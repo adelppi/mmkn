@@ -55,6 +55,32 @@ describe('取りに行く先', () => {
   })
 })
 
+describe('偽の認証のとき', () => {
+  it('鍵を取りに行かない。配布先の設定が無くても落ちない', async () => {
+    // E2E が起動するアプリには `SUPABASE_URL` を渡さない（`playwright.config.ts`）。
+    // **偽の認証は署名を持たないため、鍵も要らない**（`docs/adr/0010-testing.md`
+    // 「E2E が使う認証基盤」）。ここで落ちると、E2E のログインがすべて失敗する。
+    vi.stubEnv('SUPABASE_URL', '')
+    vi.stubEnv('E2E_AUTH_STUB', '1')
+    const fetchMock = vi.fn(() => {
+      throw new Error('取りに行ってはいけない')
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await (await freshJwks()).verificationKeys()).toEqual({ keys: [] })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('偽の認証でなければ、これまでどおり取りに行く', async () => {
+    vi.stubEnv('E2E_AUTH_STUB', '')
+    const fetchMock = vi.fn().mockResolvedValue(ok({ keys: [KEY] }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await (await freshJwks()).verificationKeys()).toEqual({ keys: [KEY] })
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(JWKS_URL)
+  })
+})
+
 describe('リクエストごとに取り直さない', () => {
   it('2 回目からは取りに行かない', async () => {
     const fetchMock = vi.fn().mockResolvedValue(ok({ keys: [KEY] }))
