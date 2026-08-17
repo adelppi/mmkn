@@ -1,3 +1,13 @@
+import {
+  bundledExternalAccounts,
+  bundledGroups,
+  bundledPayments,
+  bundledPlaceMappings,
+  bundledTransfers,
+  bundledUsers,
+  noBundling,
+  type BundleReads,
+} from '@/app/_lib/bundle'
 import type { AuthClient } from '@/src/infra/auth/client'
 import { supabaseExternalAccountRepository } from '@/src/infra/auth/external-account'
 import { database, sqlClient } from '@/src/infra/db/client'
@@ -53,19 +63,27 @@ import { viewSettlement } from '@/src/usecase/settlement/view-settlement'
  * 認証基盤への接続（`auth`）を引数で受けるのは、それが cookie に結びついており、
  * cookie へのアクセス手段がアプリ層から注入されるためである（`docs/adr/0008`「セッションの読み取り」）。
  * **作る場所は `app/_lib/session.ts`。** ここはそれを組み込むだけで、セッションを解決しない。
+ *
+ * **取得を束ねるのもここである**（`docs/adr/0009-web-ui.md`「束ねる位置」）。包むのは
+ * リポジトリの読み取りで、ユースケースの側は束ねられていることを知らない。
+ * **合図（`bundle`）を立てるのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない。**
+ * 書き込みを伴う経路（`app/_lib/action.ts` の `scope()`）は既定のまま呼ぶ。
  */
-export function wire(context: LogContext, auth: AuthClient) {
+export function wire(context: LogContext, auth: AuthClient, bundle: BundleReads = noBundling) {
   const db = database()
-  const users = drizzleUserRepository(db)
+  const users = bundledUsers(drizzleUserRepository(db), bundle)
 
   const deps = {
-    groups: drizzleGroupRepository(db),
+    groups: bundledGroups(drizzleGroupRepository(db), bundle),
     users,
-    payments: drizzlePaymentRepository(db),
-    transfers: drizzleTransferRepository(db),
-    placeMappings: drizzlePlaceMappingRepository(db),
+    payments: bundledPayments(drizzlePaymentRepository(db), bundle),
+    transfers: bundledTransfers(drizzleTransferRepository(db), bundle),
+    placeMappings: bundledPlaceMappings(drizzlePlaceMappingRepository(db), bundle),
     // **ログイン手段だけは mmkn の DB に無い。** 実体は認証基盤の側にある（`adr/0012`）。
-    externalAccounts: supabaseExternalAccountRepository({ sql: sqlClient(), client: auth, users }),
+    externalAccounts: bundledExternalAccounts(
+      supabaseExternalAccountRepository({ sql: sqlClient(), client: auth, users }),
+      bundle,
+    ),
     ids: cuid2IdGenerator,
     clock: systemClock,
     inviteCodes: cuid2InviteCodeGenerator,
