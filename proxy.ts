@@ -1,13 +1,13 @@
 import { createAuthClient, hasSessionCookie, type CookieStore } from '@/src/infra/auth/client'
-import { currentLoginIdentifier } from '@/src/infra/auth/session'
+import { refreshSession } from '@/src/infra/auth/session'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
  * セッションのトークンを更新し、cookie に書き戻す
  * （`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
  *
- * **これが要るのは、Server Component が cookie を書けないためである。** 期限切れのトークンは
- * 認証基盤の SDK が問い合わせのついでに更新するが、その結果を Server Component からは保存できない。
+ * **これが要るのは、Server Component が cookie を書けないためである。** 期限切れのトークンを
+ * 更新できるのは認証基盤の SDK だが、その結果を Server Component からは保存できない。
  * 保存できないまま古いトークンを使い続けると、**利用者から見ると勝手にログアウトされる。**
  *
  * **ここは認可を判定しない。** 判定はドメイン層にあり（`docs/adr/0005`）、そこへ至る経路は
@@ -37,8 +37,10 @@ export async function proxy(request: NextRequest) {
   // 認証基盤への往復を挟むと、何も起きない待ち時間だけが増える。
   if (!hasSessionCookie(cookies)) return response
 
-  // 値を使うためではなく、**更新を起こして書き戻すために呼ぶ。**
-  await currentLoginIdentifier(createAuthClient(cookies))
+  // **更新を起こして書き戻すためだけに呼ぶ。** 誰であるかはここでは要らない。
+  // 識別子を得る側は署名の検証で済ませ、認証基盤に出ない（`docs/adr/0008`「セッションの検証」）。
+  // **その分、期限切れを更新できる場所はここだけになる。**
+  await refreshSession(createAuthClient(cookies))
 
   return response
 }

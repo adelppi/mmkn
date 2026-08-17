@@ -81,12 +81,38 @@ const callbackWith = (redirectTo: string, code: string): string =>
  */
 export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
   const auth = {
-    getUser: async () => {
+    /**
+     * **本物では署名の検証にあたる**（`docs/adr/0008-layer-internals.md`「セッションの検証」）。
+     * 偽の認証は署名を持たないため、cookie の値をそのまま識別子として返す。
+     *
+     * **本物と同じく、ここでも認証基盤へは出ない。**
+     */
+    getClaims: async () => {
       const loginIdentifier = cookieValue(cookies, SESSION_COOKIE)
-      if (loginIdentifier === undefined) return { data: { user: null }, error: null }
+      if (loginIdentifier === undefined) return { data: null, error: null }
+
+      return { data: { claims: { sub: loginIdentifier } }, error: null }
+    },
+
+    /**
+     * **入口が更新を起こすために呼ぶ**（`proxy.ts`）。
+     *
+     * **偽の認証のトークンは期限切れにならないため、更新すべきものは無い。**
+     * したがって E2E は「期限切れが入口で更新される」ことを確かめられない
+     * （`docs/adr/0010-testing.md`「E2E が使う認証基盤」）。手で確かめる手順が
+     * `docs/operations.md` にあり、そちらが正である。
+     */
+    getSession: async () => {
+      const loginIdentifier = cookieValue(cookies, SESSION_COOKIE)
+      if (loginIdentifier === undefined) return { data: { session: null }, error: null }
 
       return {
-        data: { user: { id: loginIdentifier, identities: identitiesOf(loginIdentifier) } },
+        data: {
+          session: {
+            access_token: loginIdentifier,
+            user: { id: loginIdentifier, identities: identitiesOf(loginIdentifier) },
+          },
+        },
         error: null,
       }
     },
