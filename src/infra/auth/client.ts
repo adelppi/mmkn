@@ -28,7 +28,8 @@ export type CookieStore = {
 
 export type AuthClient = SupabaseClient
 
-const required = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string => {
+/** **無ければ落とす。** 設定されていないまま繋ぎに行っても、失敗の理由が分からなくなる。 */
+export const requiredEnv = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string => {
   const value = process.env[name]
   if (value === undefined || value === '') throw new Error(`${name} が設定されていない`)
   return value
@@ -46,7 +47,7 @@ const required = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string => {
 export const createAuthClient = (cookies: CookieStore): AuthClient =>
   authStubEnabled()
     ? createStubAuthClient(cookies)
-    : createServerClient(required('SUPABASE_URL'), required('SUPABASE_ANON_KEY'), {
+    : createServerClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_ANON_KEY'), {
         cookies: {
           getAll: () => cookies.getAll(),
           setAll: (cookiesToSet) => cookies.setAll(cookiesToSet),

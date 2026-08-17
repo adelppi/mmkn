@@ -3,6 +3,7 @@ import type { UserId } from '../../domain/id'
 import type { UserRepository } from '../../usecase/port/user-repository'
 import type { AuthClient } from './client'
 import type { LoginService } from './external-account'
+import { verificationKeys } from './jwks'
 
 /**
  * セッションの読み取りと、ログインの往復（`docs/adr/0008-layer-internals.md`「セッションの読み取り」・
@@ -32,13 +33,38 @@ const loginMethodsOf = (
 ): readonly ExternalAccount[] =>
   identities.map((identity) => ({ service: identity.provider, id: identity.id }))
 
-/** 本人であることが確かめられた識別子。ログインしていなければ `undefined`。 */
+/**
+ * 本人であることが確かめられた識別子。ログインしていなければ `undefined`。
+ *
+ * **確かめ方は署名の検証であり、認証基盤には問い合わせない**（`docs/adr/0008`「セッションの検証」）。
+ * cookie の中身をそのまま信じない点は変わらない。署名が合わないトークンも、期限が切れたトークンも、
+ * ここでは「ログインしていない」になる（`docs/domain/group.md`「前提条件を満たさなかったとき」）。
+ *
+ * **鍵はモジュールスコープから渡す**（`jwks.ts`）。接続はリクエストごとに作られるため、
+ * 渡さないと鍵を取りに行く往復が毎回走る。
+ */
 export const currentLoginIdentifier = async (client: AuthClient): Promise<string | undefined> => {
-  // `getUser()` は認証基盤に問い合わせて検証する。cookie の中身をそのまま信じない。
-  const { data, error } = await client.auth.getUser()
-  if (error !== null || data.user === null) return undefined
+  const { data, error } = await client.auth.getClaims(undefined, { jwks: await verificationKeys() })
+  if (error !== null || data === null) return undefined
 
-  return loginIdentifierOf(data.user)
+  return loginIdentifierOf({ id: data.claims.sub })
+}
+
+/**
+ * 期限切れのトークンを更新させる。**値は返さない。**
+ *
+ * **呼ぶのはリクエストの入口だけである**（`proxy.ts`。`docs/adr/0008`「更新されたセッションの
+ * 書き戻しは、リクエストの入口で行う」）。読み取りの経路は cookie を書けないため、そこで更新しても
+ * 利用者の手元に残らない。**署名の検証（上記）は期限を見るだけで、更新はここが持つ。**
+ *
+ * **期限内なら往復は起きない。** セッションを読むだけで済むためである。
+ *
+ * 更新できなかったときにここで判断することは無い。**入口は通す・通さないを決めない**
+ * （`docs/adr/0005`。判定はドメイン層にある）。次に識別子を求めた時点で、
+ * 期限切れのトークンが「ログインしていない」として扱われる。
+ */
+export const refreshSession = async (client: AuthClient): Promise<void> => {
+  await client.auth.getSession()
 }
 
 /**

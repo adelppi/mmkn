@@ -89,15 +89,15 @@ describe('ログインの往復', () => {
 
     // **同じ cookie を読む別の接続でも見える。** リクエストごとに作り直されるため。
     const next = createStubAuthClient(cookies)
-    const { data } = await next.auth.getUser()
+    const { data } = await next.auth.getClaims()
 
-    expect(data.user?.id).toBe('taro')
+    expect(data?.claims.sub).toBe('taro')
   })
 
-  it('ログインしていなければ user は無い', async () => {
-    const { data, error } = await createStubAuthClient(cookieStore()).auth.getUser()
+  it('ログインしていなければ、確かめられた識別子は無い', async () => {
+    const { data, error } = await createStubAuthClient(cookieStore()).auth.getClaims()
 
-    expect(data.user).toBeNull()
+    expect(data).toBeNull()
     expect(error).toBeNull()
   })
 
@@ -107,8 +107,26 @@ describe('ログインの往復', () => {
 
     await createStubAuthClient(cookies).auth.signOut()
 
-    const { data } = await createStubAuthClient(cookies).auth.getUser()
-    expect(data.user).toBeNull()
+    const { data } = await createStubAuthClient(cookies).auth.getClaims()
+    expect(data).toBeNull()
+  })
+})
+
+describe('入口からの更新', () => {
+  it('ログインしていれば、更新の対象になるセッションが見える', async () => {
+    const cookies = cookieStore()
+    await createStubAuthClient(cookies).auth.exchangeCodeForSession('taro')
+
+    const { data } = await createStubAuthClient(cookies).auth.getSession()
+
+    expect(data.session?.access_token).toBe('taro')
+  })
+
+  it('ログインしていなければ、更新の対象は無い', async () => {
+    const { data, error } = await createStubAuthClient(cookieStore()).auth.getSession()
+
+    expect(data.session).toBeNull()
+    expect(error).toBeNull()
   })
 })
 
