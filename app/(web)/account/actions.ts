@@ -1,11 +1,10 @@
 'use server'
 
-import { refresh, scope } from '@/app/_lib/action'
+import { discard, refresh, scope } from '@/app/_lib/action'
 import { removeLoginMethod } from '@/src/adapter/web/controller/account'
 import type { RemoveLoginMethodView } from '@/src/adapter/web/presenter/account'
 import { route } from '@/src/adapter/web/presenter/route'
 import { endSession } from '@/src/infra/auth/session'
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 /**
@@ -22,7 +21,7 @@ export async function removeLoginMethodAction(previous: RemoveLoginMethodView, d
     actor,
   })(previous, data)
 
-  return refresh(view, route.account())
+  return refresh(view)
 }
 
 /**
@@ -33,6 +32,9 @@ export async function removeLoginMethodAction(previous: RemoveLoginMethodView, d
  *
  * 前提条件（ログインしていること）の判定はユースケースが持ち、**セッションを終わらせるのは
  * それが通ったあと**である（`src/usecase/account/log-out.ts`）。
+ *
+ * **手元にあるものを捨てさせる**（`docs/adr/0009-web-ui.md`「直前に見たものを取り直さない」）。
+ * 残すと、**共有の端末で前の利用者の画面が次の人に見える。**
  */
 export async function logOutAction() {
   const { client, usecases, actor } = await scope()
@@ -40,6 +42,6 @@ export async function logOutAction() {
   const result = await usecases.logOut({ actor })
   if (result.ok) await endSession(client)
 
-  revalidatePath('/', 'layout')
+  discard()
   redirect(route.login())
 }

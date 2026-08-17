@@ -19,7 +19,14 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'app/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
+    // `proxy.ts` はリクエストの入口で、層ではないためトップレベルに置かれる（`docs/adr/0008`）。
+    // **テストは対象の隣**（`docs/adr/0010`）なので、そこだけ 1 ファイル分を名指しで拾う。
+    include: [
+      'src/**/*.test.ts',
+      'app/**/*.test.{ts,tsx}',
+      'scripts/**/*.test.ts',
+      'proxy.test.ts',
+    ],
     exclude: ['**/node_modules/**', '**/*.db.test.ts'],
   },
 })

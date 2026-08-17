@@ -14,17 +14,17 @@ import { NextResponse, type NextRequest } from 'next/server'
  * ユースケースだけである。ここが持つのはトークンの更新だけで、通す・通さないは決めない。
  *
  * **更新するものが無いリクエストでは、認証基盤に問い合わせない**（同「どのリクエストで更新するか」）。
- * 素通しする 2 つは、どちらも「保存すべき新しいトークンが生まれない」ことが理由である。
+ * 素通しするものは、いずれも「保存すべき新しいトークンが生まれない」ことが理由である。
+ *
+ * **画面の先読みは素通ししない。見分けられないためである**（同上）。中身まで先に取りにいく往復
+ * （`docs/adr/0009-web-ui.md`「直前に見たものを取り直さない」）は、**実際の遷移とまったく同じ形で
+ * 届く。** それでよいのは、先読みも利用者のブラウザ自身が出す往復であり、**返した cookie が
+ * そのまま手元に残る**ためである。期限内なら問い合わせは起きない（`src/infra/auth/session.ts`）。
  *
  * ファイル名が `middleware` ではなく `proxy` なのは、Next.js 16 で前者が非推奨になったため。
  */
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request })
-
-  // **先読みでは更新しない。** 画面を先に取りにいくだけの往復であり、そこで新しいトークンを
-  // 発行しても、利用者の手元に残る保証がない（応答の cookie が使われるとは限らない）。
-  // 実際の遷移と操作は先読みではないため、更新の機会はそちらで訪れる。
-  if (request.headers.get('next-router-prefetch') !== null) return response
 
   const cookies: CookieStore = {
     getAll: () => request.cookies.getAll().map(({ name, value }) => ({ name, value })),

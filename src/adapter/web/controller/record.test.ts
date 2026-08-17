@@ -248,6 +248,23 @@ describe('記録を削除する', () => {
       expect.objectContaining({ transfer: toTransferId('t1') }),
     )
   })
+
+  it('版が変わっていたら、削除も読み込み直す導線になる', async () => {
+    // **古い表示から始めても、正しく失敗する**（`docs/adr/0009-web-ui.md`
+    // 「直前に見たものを取り直さない」／`docs/domain/record.md`「同じ記録に同時に手が入ったとき」）。
+    const deps = {
+      ...stubs(),
+      deletePayment: async () => err({ kind: 'versionConflict' as const }),
+      actor: taro.id,
+    }
+    const previous = initialRecordFormView(
+      recordFormFields(group, [], { type: 'payment', recordId: 'p1', version: 4 }),
+    )
+
+    const view = await deleteRecord(deps as never)(previous, form({ type: 'payment' }))
+
+    expect(view.kind).toBe('conflict')
+  })
 })
 
 /**

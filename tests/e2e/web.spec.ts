@@ -48,6 +48,35 @@ const goTo = async (page: Page, groupUrl: string, path = '') => {
   await page.goto(`${groupUrl}${path}`)
 }
 
+/**
+ * サーバーへの往復を数える（`docs/adr/0009-web-ui.md`「直前に見たものを取り直さない」）。
+ *
+ * **中身を運ぶ往復には、先読みの印が付かない。** 形だけを取りにいく往復には付く。そのため
+ * **先読みかどうかは印では分からず、いつ起きたかで見る**（`docs/adr/0008-layer-internals.md`
+ * 「画面の先読みは素通ししない。見分けられないためである」）。
+ *
+ * - まだそこへ移っていないうちに起きた中身の往復 … **先読み**
+ * - 押したあとに起きた往復 … **押してから待つ往復。これが起きてはいけない**
+ */
+const roundTrips = (page: Page) => {
+  const seen: { readonly path: string; readonly shell: boolean }[] = []
+
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (!url.searchParams.has('_rsc')) return
+
+    seen.push({
+      path: url.pathname,
+      shell: request.headers()['next-router-prefetch'] !== undefined,
+    })
+  })
+
+  return {
+    content: (path: string) => seen.filter((r) => !r.shell && r.path === path).length,
+    forget: () => seen.splice(0),
+  }
+}
+
 test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 → 送金の記録）', async ({
   browser,
   baseURL,
@@ -56,6 +85,10 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
 
   const taro = await signUp(browser, origin, 'e2e-taro', 'たろう')
   const jiro = await signUp(browser, origin, 'e2e-jiro', 'じろう')
+
+  // **数え始めるのは、画面に着く前である。** 先読みは着いた直後に始まるため、着いてから
+  // 数え始めると数え漏らす。
+  const traffic = roundTrips(taro.page)
 
   // ── グループを作成する（`docs/features.md` #1）──────────────────────────────
   await taro.page.goto('/groups/new')
@@ -97,16 +130,38 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
   // **上端はタブで共有される**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
   // 切り替えても同じグループ名がそこに在り続け、選択だけが移る。
   const tab = (name: string) => taro.page.getByRole('link', { name, exact: true })
+  const records = new URL(groupUrl).pathname
+
+  // **見ている間に、他の 2 つが中身まで先に取られる**（同「直前に見たものを取り直さない」）。
+  // まだそこへ移っていないため、ここで起きる中身の往復はすべて先読みである。
+  await expect.poll(() => traffic.content(`${records}/balances`)).toBeGreaterThan(0)
+  await expect.poll(() => traffic.content(`${records}/settlement`)).toBeGreaterThan(0)
 
   await tab('収支').click()
   await expect(taro.page).toHaveURL(/\/balances$/)
   await expect(tab('収支')).toHaveAttribute('aria-current', 'page')
   await expect(taro.page.getByRole('link', { name: 'E2E 旅行' })).toBeVisible()
+  await expect(taro.page.getByText('じろう')).toBeVisible()
+
+  await tab('精算').click()
+  await expect(taro.page).toHaveURL(/\/settlement$/)
+  await expect(tab('精算')).toHaveAttribute('aria-current', 'page')
+
+  // **一度見たタブへ戻っても待たない。** 直前に見たものが手元に残っている。
+  traffic.forget()
+
+  await tab('収支').click()
+  await expect(taro.page).toHaveURL(/\/balances$/)
+  await expect(tab('収支')).toHaveAttribute('aria-current', 'page')
+  await expect(taro.page.getByText('じろう')).toBeVisible()
+
+  expect(traffic.content(`${records}/balances`)).toBe(0)
 
   await tab('記録').click()
   await expect(taro.page).toHaveURL(/\/groups\/[^/]+$/)
   await expect(tab('記録')).toHaveAttribute('aria-current', 'page')
   await expect(taro.page.getByRole('link', { name: 'E2E 旅行' })).toBeVisible()
+  await expect(taro.page.getByText('宿代')).toBeVisible()
 
   // ── 清算案を見る（`docs/features.md` #9）────────────────────────────────────
   // たろうが 1000 を払い、2 人で負担した。**じろう → たろう の 1 件になる。**
