@@ -9,6 +9,11 @@ import { redirect } from 'next/navigation'
  * **セッションを変える操作も、変えない操作も、ここで cookie を書ける接続を作る**
  * （`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。読み取り専用の経路は
  * `app/_lib/read.ts` にあり、そちらは cookie を書けない。
+ *
+ * **ここでは取得を束ねない**（`docs/adr/0009-web-ui.md`「束ねるのは読み取りだけの経路に限る」）。
+ * `wire()` を合図なしで呼ぶのがそれで、既定が束ねない側になっている。束ねると書き込み直前の
+ * 読み直しが古い値を返し、同じ記録に同時に手が入ったことの検出が**失敗しないまま**成立しなくなる
+ * （`docs/domain/record.md`「同じ記録に同時に手が入ったとき」）。
  */
 export const scope = async () => {
   const client = await authClient()
