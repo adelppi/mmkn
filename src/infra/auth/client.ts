@@ -39,10 +39,12 @@ export const requiredEnv = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string 
  * リクエストごとに作る。**モジュールスコープに持たない**（cookie を通じて 1 人の利用者に
  * 結びつくため、リクエストをまたいで意味を持つ状態になる。`docs/adr/0003`）。
  *
- * **偽の認証に切り替わる口がここに 1 つだけある**（`stub.ts`）。認証基盤への接続を作るのは
- * このリクエストだけであるため、**分岐をここに置けば他のどこにも要らない**
+ * **偽の認証に切り替わる口がここにある**（`stub.ts`）。**アプリ層には分岐が要らない**
  * （`app/_lib/session.ts`・`app/api/discord/route.ts`・`proxy.ts` は変わらない）。
  * **切り替わるのは `E2E_AUTH_STUB` が立っているときだけで、既定は本物である。**
+ *
+ * **分岐は `infra/auth` の中に 2 つある。** 接続（ここ）と、署名を検証する公開鍵（`jwks.ts`）。
+ * 偽の認証は署名を持たないため、鍵の配布先も持たない。
  */
 export const createAuthClient = (cookies: CookieStore): AuthClient =>
   authStubEnabled()
