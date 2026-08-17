@@ -27,6 +27,23 @@ export type PaymentBearerRow = {
   readonly memberId: string
 }
 
+/**
+ * 版を持つ Payment の行。
+ *
+ * **版はドメインのエンティティに持たせない**（`docs/adr/0005`「同時書き込みの競合」）ため、
+ * 行の側にだけ現れ、`Payment` とは別に受け渡す。
+ */
+export type VersionedPaymentRow = PaymentRow & { readonly version: number }
+
+/**
+ * Payment 1 件と負担者 1 件を並べた行。**負担者の行が無い Payment では負担者側が null になる**
+ * （外部結合で読むため）。
+ */
+export type PaymentWithBearerRow = {
+  readonly payment: VersionedPaymentRow
+  readonly bearer: PaymentBearerRow | null
+}
+
 export const toPayment = (row: PaymentRow, bearers: readonly PaymentBearerRow[]): Payment => ({
   id: toPaymentId(row.id),
   groupId: toGroupId(row.groupId),
@@ -40,6 +57,34 @@ export const toPayment = (row: PaymentRow, bearers: readonly PaymentBearerRow[])
   recordedBy: toUserId(row.recordedBy),
   recordedAt: row.recordedAt,
 })
+
+/**
+ * 結合して読んだ行を、Payment ごとにたたみ直す。版は行の側から一緒に返す。
+ *
+ * 1 件の Payment は負担者の数だけ行に展開されるため、Payment の識別子でまとめ直す。
+ * **負担者の行が無い Payment も落とさない。**
+ *
+ * **並び順はここでは決めない**（`docs/domain/record.md`「記録の並び」がドメインの規則として持つ）。
+ */
+export const toPayments = (
+  rows: readonly PaymentWithBearerRow[],
+): readonly { readonly payment: Payment; readonly version: number }[] => {
+  const folded = new Map<
+    string,
+    { readonly row: VersionedPaymentRow; readonly bearers: PaymentBearerRow[] }
+  >()
+
+  for (const { payment, bearer } of rows) {
+    const bucket = folded.get(payment.id) ?? { row: payment, bearers: [] }
+    if (bearer !== null) bucket.bearers.push(bearer)
+    folded.set(payment.id, bucket)
+  }
+
+  return [...folded.values()].map(({ row, bearers }) => ({
+    payment: toPayment(row, bearers),
+    version: row.version,
+  }))
+}
 
 export const fromPayment = (payment: Payment): PaymentRow => ({
   id: payment.id,

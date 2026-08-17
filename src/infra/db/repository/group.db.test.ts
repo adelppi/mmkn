@@ -4,6 +4,7 @@ import { Member } from '../../../domain/group/member'
 import { toGroupId, toMemberId } from '../../../domain/id'
 import { currency } from '../../../domain/money/currency'
 import { groupOf, hanako, jiro, taro } from '../../../usecase/fixture'
+import { groups } from '../schema'
 import { connectForTest, truncateAll, type TestDatabase } from '../test-support'
 import { drizzleGroupRepository } from './group'
 import { drizzleUserRepository } from './user'
@@ -63,6 +64,22 @@ describe('Group 集約の保存と読み出し', () => {
   it('存在しない Group は undefined', async () => {
     expect(await repository().findById(toGroupId('いない'))).toBeUndefined()
     expect(await repository().findByInviteCode('いない')).toBeUndefined()
+  })
+
+  it('Member のいない Group も落ちない', async () => {
+    // Member のいない Group はユースケースからは作れない（作成者が必ず Member になる）。
+    // Group と Member を一度に読む形が、Member の無い Group を消してしまわないことを確かめる。
+    await database.db
+      .insert(groups)
+      .values({ id: 'g9', name: '空', defaultCurrency: 'JPY', inviteCode: 'invite-9' })
+
+    expect(await repository().findById(toGroupId('g9'))).toEqual({
+      id: toGroupId('g9'),
+      name: '空',
+      defaultCurrency: 'JPY',
+      inviteCode: 'invite-9',
+      members: [],
+    })
   })
 
   it('その User が Member である Group だけを、Member ごと読める', async () => {

@@ -1,10 +1,10 @@
-import { eq, inArray } from 'drizzle-orm'
+import { eq, inArray, type SQL } from 'drizzle-orm'
 import type { Group } from '../../../domain/group/group'
 import type { Member } from '../../../domain/group/member'
 import type { GroupId, UserId } from '../../../domain/id'
 import type { CreateGroupOutcome, GroupRepository } from '../../../usecase/port/group-repository'
 import type { Database } from '../client'
-import { fromGroup, fromMember, toGroup } from '../mapper/group'
+import { fromGroup, fromMember, toGroup, toGroups } from '../mapper/group'
 import { groups, members } from '../schema'
 import { GROUPS_INVITE_CODE_UNIQUE, isUniqueViolation } from './constraint'
 
@@ -14,23 +14,30 @@ import { GROUPS_INVITE_CODE_UNIQUE, isUniqueViolation } from './constraint'
  * **トランザクションはこの中に閉じる。** ユースケースはその存在を知らない（`docs/adr/0008`）。
  */
 export const drizzleGroupRepository = (db: Database): GroupRepository => {
-  const load = async (row: typeof groups.$inferSelect | undefined): Promise<Group | undefined> => {
-    if (row === undefined) return undefined
+  /**
+   * Group と、その Member を **1 本の問い合わせ**で読む。Member を別に引くと往復が 2 段になる。
+   *
+   * **外部結合にするのは、Member のいない Group を落とさないためである。**
+   * 鍵で 1 件に絞るため、たたみ直した結果は 0 件か 1 件になる。
+   */
+  const load = async (where: SQL): Promise<Group | undefined> => {
+    const rows = await db
+      .select({ group: groups, member: members })
+      .from(groups)
+      .leftJoin(members, eq(members.groupId, groups.id))
+      .where(where)
 
-    const memberRows = await db.select().from(members).where(eq(members.groupId, row.id))
-
-    return toGroup(row, memberRows)
+    const [group] = toGroups(rows)
+    return group
   }
 
   return {
     async findById(id: GroupId) {
-      const [row] = await db.select().from(groups).where(eq(groups.id, id)).limit(1)
-      return load(row)
+      return load(eq(groups.id, id))
     },
 
     async findByInviteCode(inviteCode: string) {
-      const [row] = await db.select().from(groups).where(eq(groups.inviteCode, inviteCode)).limit(1)
-      return load(row)
+      return load(eq(groups.inviteCode, inviteCode))
     },
 
     async listByUser(userId: UserId) {
