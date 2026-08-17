@@ -2,8 +2,6 @@
 
 import { refresh, scope } from '@/app/_lib/action'
 import { registerSettlementTransfer } from '@/src/adapter/web/controller/settlement'
-import { field } from '@/src/adapter/web/presenter/form'
-import { route } from '@/src/adapter/web/presenter/route'
 import type { SettlementTransferView } from '@/src/adapter/web/presenter/settlement'
 
 /**
@@ -22,5 +20,5 @@ export async function registerSettlementTransferAction(
     actor,
   })(previous, data)
 
-  return refresh(view, route.settlement(field(data, 'groupId')))
+  return refresh(view)
 }

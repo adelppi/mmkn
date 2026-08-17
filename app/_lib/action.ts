@@ -23,6 +23,20 @@ export const scope = async () => {
 }
 
 /**
+ * **手元にあるものをすべて捨てさせる**（`docs/adr/0009-web-ui.md`「直前に見たものを取り直さない」）。
+ *
+ * 画面を移動したとき、直前に見たものは 30 秒だけ再利用される（`next.config.ts`）。**操作の
+ * あとにそれが残ると、変えた本人にだけ古い表示が見える。**
+ *
+ * **捨てる範囲を絞らない。** 1 つの記録を変えると、記録の一覧も、収支も、清算案も同時に変わる。
+ * どれが変わったかを数え上げる形にすると、**数え漏らしたものが古いまま残り、しかも失敗しない。**
+ *
+ * ビューモデルを返す操作は下の 2 つを通るため、直に呼ぶのは**ログアウトのように、ビューモデルを
+ * 返さずに終わる操作**だけである。
+ */
+export const discard = () => revalidatePath('/', 'layout')
+
+/**
  * ビューモデルが次の場所を指していれば、そこへ送り出す。
  *
  * **成功と失敗で分岐しない。** どのビューモデルも同じ 1 行を通り、行き先を持つものだけが動く
@@ -30,7 +44,7 @@ export const scope = async () => {
  */
 export const navigate = <V extends object>(view: V): V => {
   if ('redirectTo' in view && typeof view.redirectTo === 'string') {
-    revalidatePath('/', 'layout')
+    discard()
     redirect(view.redirectTo)
   }
 
@@ -38,7 +52,7 @@ export const navigate = <V extends object>(view: V): V => {
 }
 
 /** その場に留まる操作のあと、表示を取り直させる。 */
-export const refresh = <V>(view: V, path: string): V => {
-  revalidatePath(path)
+export const refresh = <V>(view: V): V => {
+  discard()
   return view
 }

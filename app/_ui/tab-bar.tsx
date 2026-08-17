@@ -16,6 +16,10 @@ import { cn } from '@/app/_ui/utils'
  * （`docs/adr/0009-web-ui.md`「上端を共有する」）、切り替えても作り直されない。作り直されない
  * ものはサーバーの側で「いまどこか」を知り得ないため、ここで見る。**押した直後に選択が変わる**
  * のも同じ理由で、内容が届くのを待たない。
+ *
+ * **見ている間に、他のタブを先に取りにいく**（同「直前に見たものを取り直さない」）。切り替えは
+ * この 3 つの間でしか起こらないため、取りにいく先が確定している。**中身まで取る**のは、
+ * 形だけ先に取っても切り替えの待ちが消えないためである（形は `loading.tsx` が既に持っている）。
  */
 export function TabBar({
   tabs,
@@ -35,6 +39,7 @@ export function TabBar({
           <Link
             key={tab.href}
             href={tab.href}
+            prefetch
             aria-current={current ? 'page' : undefined}
             className={cn(
               'flex-1 rounded-md py-2 text-center text-sm transition-colors',
