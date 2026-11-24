@@ -14,8 +14,7 @@ export type User = {
   /**
    * ログインしたときに行き着く、その人を指すもの。名前とは別のものであり、名前を変えても変わらない。
    *
-   * **ログイン手段（`login-method.ts`）とも別のもの。** ログイン手段は 1 つ以上あって後から増やせるが、
-   * **どれで入ってもここに行き着き、増やしても変わらない**（`docs/domain/group.md`「User の属性」）。
+   * **ログイン手段とも別のもの**（`docs/domain/group.md`「User の属性」）。
    * 何を識別子とするかは `docs/adr/0012-login.md` を正とする。
    */
   readonly loginIdentifier: string

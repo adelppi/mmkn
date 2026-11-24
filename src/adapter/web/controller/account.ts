@@ -1,24 +1,14 @@
-import type { UserId } from '../../../domain/id'
 import type {
   CreateAccountError,
   CreateAccountInput,
 } from '../../../usecase/account/create-account'
 import type { User } from '../../../domain/group/user'
-import type {
-  RemoveLoginMethodError,
-  RemoveLoginMethodInput,
-} from '../../../usecase/account/remove-login-method'
 import type { UseCase } from '../../../usecase/usecase'
-import {
-  toCreateAccountView,
-  toRemoveLoginMethodView,
-  type CreateAccountView,
-  type RemoveLoginMethodView,
-} from '../presenter/account'
+import { toCreateAccountView, type CreateAccountView } from '../presenter/account'
 import { field } from '../presenter/form'
 
 /**
- * アカウントとログイン手段への操作（`docs/adr/0008-layer-internals.md`「Controller と Presenter」）。
+ * アカウントへの操作（`docs/adr/0008-layer-internals.md`「Controller と Presenter」）。
  *
  * **外から届いた入力をユースケースの入力に変換し、ユースケースを呼び、Presenter に渡す。**
  * ここに業務ルールを書かない（判定はドメイン層。`docs/adr/0005`）。
@@ -49,24 +39,5 @@ export const createAccount =
     return toCreateAccountView(
       name,
       await deps.createAccount({ loginIdentifier: deps.loginIdentifier, name }),
-    )
-  }
-
-/**
- * ログイン手段を削除する（`docs/domain/group.md`「ログイン手段を削除する」）。
- *
- * **最後の 1 つかどうかをここで見ない。** 判定はドメイン層にあり、失敗はそのままタグとして戻る。
- */
-export const removeLoginMethod =
-  (deps: {
-    removeLoginMethod: UseCase<RemoveLoginMethodInput, void, RemoveLoginMethodError>
-    actor: UserId | undefined
-  }) =>
-  async (_previous: RemoveLoginMethodView, data: FormData): Promise<RemoveLoginMethodView> => {
-    const service = field(data, 'service')
-
-    return toRemoveLoginMethodView(
-      service,
-      await deps.removeLoginMethod({ actor: deps.actor, service }),
     )
   }

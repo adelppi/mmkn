@@ -23,7 +23,7 @@ const signUp = async (browser: Browser, origin: string, identifier: string, name
 
   const page = await context.newPage()
   await page.goto('/login')
-  await page.getByRole('button', { name: 'Google で続ける' }).click()
+  await page.getByRole('button', { name: 'Discord で続ける' }).click()
 
   // **ここだけ、偽の認証と本物とで往復の形が違う。** 本物は外部の認可画面へブラウザごと出て、
   // そこから戻ってくる。偽の認証は同じ origin の中に留まるため、**戻りの 1 回分をここで開く。**

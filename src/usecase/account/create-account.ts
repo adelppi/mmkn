@@ -13,8 +13,7 @@ import type { UseCase } from '../usecase'
  * 認証基盤に委ねてあり（`docs/adr/0012-login.md`）、ここへ届くのはその結果の識別子だけである。
  * **ユースケースはセッションの存在を知らない**（`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
  *
- * **そのアカウントが最初のログイン手段になる。** 2 つ目以降を増やすのは
- * `add-login-method.ts` の責務であり、ここは 1 つだけを与える。
+ * **そのアカウントがログイン手段になる。** 後から増えることも替わることも無い。
  */
 
 export type CreateAccountInput = {
@@ -52,7 +51,7 @@ export const createAccount =
     const outcome = await deps.users.create(user.value)
     if (outcome.kind === 'loginIdentifierTaken') return err({ kind: 'alreadyRegistered' })
 
-    // **Group・Member は作られず、ログイン手段も 2 つ以上にならない**（`docs/domain/group.md`
+    // **Group・Member は作られない**（`docs/domain/group.md`
     // 「アカウントを作成する」の「起きないこと」）。
     return ok(user.value)
   }

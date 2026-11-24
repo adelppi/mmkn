@@ -15,14 +15,11 @@
 | ユーザー | `User` | `domain/group.md` |
 | ユーザーの名前 | `name` | `domain/group.md` |
 | ログイン識別子 | `loginIdentifier` | `domain/group.md`（認証基盤の user の識別子としたのは `adr/0012`） |
-| ログイン手段 | `loginMethod` | `domain/group.md`（使える外部サービスは `adr/0012`） |
 | グループ | `Group` | `domain/group.md` |
 | メンバー | `Member` | `domain/group.md` |
 | 表示名 | `displayName` | `domain/group.md` |
 | 既定通貨 | `defaultCurrency` | `domain/group.md` |
 | 参加コード | `inviteCode` | `domain/group.md`（形式は `adr/0002`） |
-| 外部アカウント | `ExternalAccount` | `domain/group.md` |
-| サービスの種別 | `service` | `domain/group.md`（ポートの形は `adr/0008`） |
 | 操作する User | `actor` | `domain/group.md`「前提条件を満たさなかったとき」 |
 | 前提条件を満たさなかった理由 | `GroupAccessDenied` | `domain/group.md`「前提条件を満たさなかったとき」 |
 
@@ -96,4 +93,3 @@
   - `settlementTransfer`（清算案が示す送金）と `Transfer`（記録された送金）… `domain/settlement.md`
   - `occurredOn`（発生日・時刻を持たない）と `recordedAt`（登録日時・時点）… `domain/record.md`
   - `name`（User の名前）と `displayName`（Group 内の表示名）と `loginIdentifier`（ログイン識別子）… `domain/group.md`
-  - `loginIdentifier`（1 User に 1 つ。ログインしたときに行き着く先）と `loginMethod`（1 User に 1 つ以上。ログインの入口となる外部アカウント）… `domain/group.md`「User と外部アカウント」。**片方は増えず、もう片方は増える**

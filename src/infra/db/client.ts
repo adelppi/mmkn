@@ -15,16 +15,6 @@ import * as schema from './schema'
 export type Database = PostgresJsDatabase<typeof schema>
 
 /**
- * ドライバの接続。**ORM を通さない問い合わせだけがこれを使う。**
- *
- * 使う先は `infra/auth` の 1 か所しかない。認証基盤の内部テーブル（`auth` スキーマ）は
- * mmkn のスキーマ定義（`schema.ts`）に無く、ORM から引けないためである
- * （`docs/adr/0007-external-account-linking.md`「認証基盤のスキーマへの依存をポートで隔離する」）。
- * **ORM は引き続き `infra/db` の中だけに閉じる。**
- */
-export type SqlClient = ReturnType<typeof createClient>
-
-/**
  * 接続を作る。
  *
  * **Supavisor の transaction mode では prepared statement が使えないため、ドライバ側で無効化する**
@@ -58,10 +48,6 @@ const url = (): string => {
  * 対象外とされている。合成ルート（`app/_lib/wire.ts`）はリクエストごとに呼ばれるが、
  * ここはその外側で一度だけ作られる。
  */
-let sharedClient: SqlClient | undefined
 let shared: Database | undefined
 
-/** ドライバの接続。**ORM と同じプールを使う**（接続数を二重に持たないため）。 */
-export const sqlClient = (): SqlClient => (sharedClient ??= createClient(url()))
-
-export const database = (): Database => (shared ??= createDatabase(sqlClient()))
+export const database = (): Database => (shared ??= createDatabase(createClient(url())))

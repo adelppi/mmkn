@@ -197,7 +197,7 @@ app/
 │   ├─ page.tsx
 │   ├─ actions.ts                 … 'use server'。adapter/web/controller へ委譲
 │   └─ _containers/<name>/        … adr/0009
-└─ auth/callback/route.ts         … ログインとログイン手段の追加のコールバック（adr/0012）
+└─ auth/callback/route.ts         … ログインのコールバック（adr/0012）
 
 src/
 ├─ domain/                        … 依存なし
@@ -211,7 +211,6 @@ src/
 │   ├─ port/
 │   │   ├─ group-repository.ts / payment-repository.ts / transfer-repository.ts
 │   │   ├─ user-repository.ts
-│   │   ├─ external-account-repository.ts   … (サービス種別, 外部 ID) → User
 │   │   ├─ id-generator.ts / clock.ts / invite-code-generator.ts
 │   │   └─ fake.ts                … ポートの偽実装（テスト専用。adr/0010）
 │   └─ group/  record/  settlement/  account/
@@ -224,7 +223,7 @@ src/
 └─ infra/
     ├─ db/                        … client / schema / migrations / mapper / repository
     │                                加えて test-support（永続化テストの下ごしらえ。テスト専用）
-    ├─ auth/                      … client / session / external-account
+    ├─ auth/                      … client / session / jwks / stub
     ├─ log/                       … 構造化ログの出力（adr/0014）
     └─ system/                    … clock / id / invite-code
 
@@ -235,7 +234,6 @@ tests/                            … 層をまたぐテストのみ（adr/0010�
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
 - `infra/db/mapper` を独立させ、ORM の推論型がリポジトリの外へ漏れない壁とする（`adr/0005`）
 - **テスト専用のものも、対象と同じ層に置く。** 偽実装はポートの隣（それが実装するもののそば）、前提データはユースケース層の直下、永続化テストの下ごしらえは `infra/db` の中に置く。層をまたがないため `tests/` には出さない（`adr/0010`）
-- ログイン手段（外部アカウント）の参照は `infra/auth` に置く。認証基盤のスキーマ依存をそこだけに閉じるため（`adr/0012`）
 - `adapter/shared` はクライアント固有でないものだけを置く
 
 ### 依存方向の機械検査のルール

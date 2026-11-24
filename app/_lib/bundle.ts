@@ -1,4 +1,3 @@
-import type { ExternalAccountRepository } from '@/src/usecase/port/external-account-repository'
 import type { GroupRepository } from '@/src/usecase/port/group-repository'
 import type { PaymentRepository } from '@/src/usecase/port/payment-repository'
 import type { TransferRepository } from '@/src/usecase/port/transfer-repository'
@@ -80,17 +79,4 @@ export const bundledTransfers = (
   ...repository,
   find: bundle(repository.find),
   listByGroup: bundle(repository.listByGroup),
-})
-
-/**
- * `findUserId` は外部アカウント（オブジェクト）を受け取る。**引数が素の値ではないため、同じものを
- * 指していても別の呼び出しとして扱われ得る。** 束ならないだけで結果は変わらない。
- */
-export const bundledExternalAccounts = (
-  repository: ExternalAccountRepository,
-  bundle: BundleReads,
-): ExternalAccountRepository => ({
-  ...repository,
-  findUserId: bundle(repository.findUserId),
-  listByUser: bundle(repository.listByUser),
 })

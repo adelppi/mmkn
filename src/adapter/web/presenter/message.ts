@@ -43,12 +43,6 @@ const MESSAGES = {
   nameTooLong: `名前は ${USER_NAME_MAX_LENGTH} 文字以内です。`,
   alreadyRegistered: 'このアカウントでは、すでに mmkn を使いはじめています。',
 
-  // ログイン手段（`docs/domain/group.md`「User と外部アカウント」）
-  usedByAnotherUser: 'このアカウントは、すでに別の人のログイン手段になっています。',
-  serviceAlreadyUsed: 'このサービスのログイン手段は、すでに登録されています。',
-  notALoginMethod: 'このサービスは、ログイン手段になっていません。',
-  lastLoginMethod: '最後のログイン手段は削除できません。先に別の手段を追加してください。',
-
   // グループ
   groupNameEmpty: 'グループ名を入力してください。',
   groupNameTooLong: `グループ名は ${GROUP_NAME_MAX_LENGTH} 文字以内です。`,

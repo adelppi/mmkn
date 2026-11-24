@@ -20,7 +20,7 @@
 | ランタイム | Next.js App Router / Vercel | — |
 | Web の実行モデル | Server Actions | 後述 |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
-| 認証 | Supabase Auth | `adr/0012-login.md`（ログインとログイン手段の追加） |
+| 認証 | Supabase Auth | `adr/0012-login.md`（ログイン） |
 | 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
 | UI | Tailwind CSS + shadcn/ui | `adr/0009-web-ui.md` |
 | テスト | Vitest / Playwright / Storybook | `adr/0010-testing.md` |
@@ -73,6 +73,6 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 
 ## 検討した代替案
 
-- **Neon + Auth.js**：DB としては問題ないが、認証が別建てになる。外部アカウントとアプリのアカウントの紐付け表を自前で持つことになり、`adr/0012` が認証基盤に委ねているもの（複数のログイン手段の管理）を自分で実装・保守することになる。個人開発で持つ責務としては割に合わない。
+- **Neon + Auth.js**：DB としては問題ないが、認証が別建てになる。外部アカウントとアプリのアカウントの紐付け表を自前で持つことになり、`adr/0012` が認証基盤に委ねているもの（外部アカウントと user の対応の管理）を自分で実装・保守することになる。個人開発で持つ責務としては割に合わない。
 - **バックエンドを別言語（Go / Kotlin 等）で建てる**：Web の UI と型を共有できず、個人開発で扱う言語が 2 つになる。ドメインの定義を 2 か所に持つ危険もある。
 - **Vercel 以外のホスティング（常駐プロセスを持てる環境）**：常駐させるものが無いため利点がない。

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { err, ok } from '../../../domain/result'
 import { taro } from '../../../usecase/fixture'
-import { initialCreateAccountView, initialRemoveLoginMethodView } from '../presenter/account'
-import { createAccount, removeLoginMethod } from './account'
+import { initialCreateAccountView } from '../presenter/account'
+import { createAccount } from './account'
 
 const form = (entries: Record<string, string>) => {
   const data = new FormData()
@@ -52,31 +52,5 @@ describe('アカウントを作成する', () => {
     })(initialCreateAccountView(), form({ name: 'あ'.repeat(21) }))
 
     expect(view.kind).toBe('invalid')
-  })
-})
-
-describe('ログイン手段を削除する', () => {
-  it('選ばれたサービスと、操作する User を渡す', async () => {
-    const usecase = vi.fn(async () => ok(undefined))
-
-    await removeLoginMethod({ removeLoginMethod: usecase, actor: taro.id })(
-      initialRemoveLoginMethodView(),
-      form({ service: 'discord' }),
-    )
-
-    expect(usecase).toHaveBeenCalledWith({ actor: taro.id, service: 'discord' })
-  })
-
-  it('最後の 1 つかどうかを、ここでは見ない', async () => {
-    const usecase = vi.fn(async () => err({ kind: 'lastLoginMethod' as const }))
-
-    const view = await removeLoginMethod({ removeLoginMethod: usecase, actor: taro.id })(
-      initialRemoveLoginMethodView(),
-      form({ service: 'google' }),
-    )
-
-    // 呼んだうえで、ドメイン層が返した失敗をそのままタグにしている。
-    expect(usecase).toHaveBeenCalled()
-    expect(view.kind).toBe('failed')
   })
 })

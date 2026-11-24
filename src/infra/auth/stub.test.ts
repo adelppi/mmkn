@@ -50,33 +50,22 @@ describe('ログインの往復', () => {
     const client = createStubAuthClient(cookieStore([{ name: 'mmkn-e2e-login-as', value: 'taro' }]))
 
     const { data } = await client.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'discord',
       options: { redirectTo: 'http://127.0.0.1:3000/auth/callback' },
     })
 
     expect(data.url).toBe('http://127.0.0.1:3000/auth/callback?code=taro')
   })
 
-  it('戻り先が既に問い合わせ文字列を持っていても壊さない', async () => {
-    const client = createStubAuthClient(cookieStore([{ name: 'mmkn-e2e-login-as', value: 'taro' }]))
-
-    const { data } = await client.auth.signInWithOAuth({
-      provider: 'discord',
-      options: { redirectTo: 'http://127.0.0.1:3000/auth/callback?add=discord' },
-    })
-
-    expect(data.url).toBe('http://127.0.0.1:3000/auth/callback?add=discord&code=taro')
-  })
-
-  it('誰としてログインするかが置かれていなければ、サービスごとの既定になる', async () => {
+  it('誰としてログインするかが置かれていなければ、既定の人になる', async () => {
     const client = createStubAuthClient(cookieStore())
 
     const { data } = await client.auth.signInWithOAuth({
-      provider: 'google',
+      provider: 'discord',
       options: { redirectTo: '/auth/callback' },
     })
 
-    expect(data.url).toBe('/auth/callback?code=e2e%3Agoogle')
+    expect(data.url).toBe('/auth/callback?code=e2e%3Adiscord')
   })
 
   it('往復を完了するとログイン識別子が返るようになる', async () => {
@@ -127,13 +116,5 @@ describe('入口からの更新', () => {
 
     expect(data.session).toBeNull()
     expect(error).toBeNull()
-  })
-})
-
-describe('扱わないもの', () => {
-  it('ログイン手段の追加は、成功したことにせず落ちる', async () => {
-    const client = createStubAuthClient(cookieStore())
-
-    await expect(client.auth.linkIdentity({ provider: 'discord' })).rejects.toThrow()
   })
 })
