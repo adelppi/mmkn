@@ -17,13 +17,9 @@ import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import type { RecordFormView } from '@/src/adapter/web/presenter/record'
 
 /**
- * 記録の登録・編集（設計 06・07）。
+ * 記録の登録・編集（設計 06・07）。**1 枚のフォームで支払いと送金の両方を扱う。**
  *
- * **1 枚のフォームで支払いと送金の両方を扱い、上部の切り替えで選ぶ。**
- *
- * **業務ルールをここに書かない**（`docs/adr/0009-web-ui.md`「クライアント側の入力検査」）。
- * 支払者と負担者の関係も、送り手と受け手が別人であることも、金額の上限も、ここでは見ない。
- * **入力属性に渡す数値はビューモデルから来る**（正はドメイン層）。
+ * 業務ルールをここに書かない（`docs/adr/0009-web-ui.md`「クライアント側の入力検査」）。
  */
 export function RecordFormPresentation(
   props: FormProps<RecordFormView> & {

@@ -6,13 +6,7 @@ import { endSession } from '@/src/infra/auth/session'
 import { redirect } from 'next/navigation'
 
 /**
- * ログアウトする（`docs/domain/group.md`「ログアウトする」・`docs/features.md` #11）。
- *
- * **退会ではない。** User も、Group・Member・記録も、ログイン手段も何一つ変わらない
- * （`docs/features.md`「mmkn が持たないもの」）。
- *
- * 前提条件（ログインしていること）の判定はユースケースが持ち、**セッションを終わらせるのは
- * それが通ったあと**である（`src/usecase/account/log-out.ts`）。
+ * ログアウトする（`docs/domain/group.md`「ログアウトする」）。
  *
  * **手元にあるものを捨てさせる**（`docs/adr/0009-web-ui.md`「直前に見たものを取り直さない」）。
  * 残すと、**共有の端末で前の利用者の画面が次の人に見える。**

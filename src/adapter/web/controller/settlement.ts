@@ -14,8 +14,6 @@ import {
 /**
  * 清算案からの送金記録（`docs/features.md` #10）。
  *
- * **金額を入力に取らない**（`docs/domain/settlement.md`「清算案の送金を記録する」）。
- * 送るのは「誰から誰へ、どの通貨で」だけで、額は登録の時点で導出し直される。
  * **画面に出ていた額を送り返す経路を作らない。** 作ると、変わった清算案の額が黙って記録される。
  */
 export const registerSettlementTransfer =
@@ -38,11 +36,7 @@ export const registerSettlementTransfer =
         sender: toMemberId(field(data, 'sender')),
         recipient: toMemberId(field(data, 'recipient')),
         currency: field(data, 'currency'),
-        /**
-         * **発生日は入力で受け取る**（`docs/domain/record.md`「発生日」）。
-         * 「今日」がどの日付かを決めるのは操作した本人の手元であり、サーバーの時計ではない。
-         * 画面が手元の日付を入れて送る。
-         */
+        /** 発生日は操作した本人の手元で決まる（`docs/domain/record.md`「発生日」）。 */
         occurredOn: field(data, 'occurredOn'),
       }),
     )

@@ -5,17 +5,13 @@ import {
 } from '../../../domain/group/text'
 import { MONEY_MAX_AMOUNT } from '../../../domain/money/money'
 import { DESCRIPTION_MAX_LENGTH } from '../../../domain/record/payment'
-import { moneyText } from '../../shared/money'
+import { moneyText } from '../money'
 import { currency } from '../../../domain/money/currency'
 
 /**
  * 失敗を、その場で読める日本語に直す（`docs/adr/0009-web-ui.md`「失敗の描画」）。
  *
- * **ビューモデルのタグに対応する文言をここ 1 か所に持つ。** Presentational は受け取った文字列を
- * 描くだけで、どの失敗が起きたかを判定しない。
- *
- * **上限の数値をここに打たない**（`CLAUDE.md`）。すべてドメイン層が公開する定数から取る。
- * 文言を足すのは失敗の種類が増えたときだけで、そのときは型検査が抜けを落とす（後述）。
+ * **上限の数値をここに打たない。** すべてドメイン層が公開する定数から取る。
  */
 
 const amountLimit = () => {
@@ -25,13 +21,7 @@ const amountLimit = () => {
   return jpy.ok ? moneyText(MONEY_MAX_AMOUNT, jpy.value).digits : String(MONEY_MAX_AMOUNT)
 }
 
-/**
- * 失敗のタグと文言の対応。
- *
- * **ユースケースの失敗はユースケースごとのタグ付き union である**（`docs/adr/0008`）ため、
- * ここは全ユースケース分の合併になる。`messageOf` が受け取れるのはここに載っているタグだけで、
- * **新しい失敗を足して文言を書き忘れると、Presenter の側が型検査で落ちる。**
- */
+/** 失敗のタグと文言の対応。**新しい失敗を足して文言を書き忘れると、Presenter の側が型検査で落ちる。** */
 const MESSAGES = {
   // 前提条件を満たさなかったときの 3 区別（`docs/domain/group.md`）
   notAuthenticated: 'ログインが必要です。',
@@ -82,10 +72,5 @@ const MESSAGES = {
 /** 文言を持っている失敗のタグ。 */
 export type FailureTag = keyof typeof MESSAGES
 
-/**
- * 失敗を文言にする。
- *
- * 引数の型を `{ kind: FailureTag }` に絞ってあるため、**文言を持たない失敗は渡せない。**
- * ユースケースの失敗が増えたときは、ここに 1 行足すまで Presenter が通らない。
- */
+/** 失敗を文言にする。**文言を持たない失敗は渡せない。** */
 export const messageOf = (error: { readonly kind: FailureTag }): string => MESSAGES[error.kind]

@@ -16,16 +16,9 @@ import type {
 } from '@/src/adapter/web/presenter/settlement'
 
 /**
- * 精算（設計 05）。
+ * 精算（設計 05）。**「送金した」は金額を送らない**（`docs/domain/settlement.md`「清算案の送金を記録する」）。
  *
- * **「送金した」は金額を送らない**（`docs/domain/settlement.md`「清算案の送金を記録する」）。
- * 送るのは誰から誰へ・どの通貨か・発生日だけで、額は登録の時点で導出し直される。
- *
- * **発生日はブラウザ側で組み立てる。** 「今日」がどの日付かは操作した本人の手元で決まる
- * （`docs/domain/record.md`「発生日」）。
- *
- * **記録できたことは知らせで伝え、画面には残さない**（設計「トースト」）。画面に残すのは、
- * 続きの操作がいるとき（清算案が変わっていたとき）だけである。
+ * 記録できたことは知らせで伝え、画面に残すのは、続きの操作がいるときだけである。
  */
 export function SettlementListPresentation(
   props: SettlementView & {
@@ -114,12 +107,7 @@ export function SettlementListPresentation(
   )
 }
 
-/**
- * 送金の記録の結果を、知らせに直す。
- *
- * **清算案が変わっていたときは知らせにしない。** 続きの操作（読み直し）がいるため、
- * 消えてしまうものに載せない（設計「清算案が変わったとき」）。
- */
+/** 送金の記録の結果を、知らせに直す。**清算案が変わっていたときは、続きの操作がいるため知らせにしない。** */
 const toNotice = (view: SettlementTransferView): NoticeView | undefined => {
   if (view.kind === 'registered') return { tone: 'done', message: view.message }
   if (view.kind === 'failed') return { tone: 'failed', message: view.message }

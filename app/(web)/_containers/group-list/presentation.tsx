@@ -6,14 +6,7 @@ import { Money } from '@/app/_ui/money'
 import { AppBar, Empty, Notice, Screen } from '@/app/_ui/notice'
 import type { GroupListView } from '@/src/adapter/web/presenter/group'
 
-/**
- * グループ一覧（設計 02）。
- *
- * **props はビューモデルそのもの**（`docs/adr/0009-web-ui.md`）。
- * **失敗もここで描く。** Container は成功と失敗で分岐しない。
- *
- * 並ぶ収支は**自分の分だけ**である（`src/usecase/group/list-groups.ts`）。
- */
+/** グループ一覧（設計 02）。並ぶ収支は**自分の分だけ**である。 */
 export function GroupListPresentation(props: GroupListView) {
   if (props.kind === 'notAuthenticated') {
     return (

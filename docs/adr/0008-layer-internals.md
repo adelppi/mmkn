@@ -181,7 +181,7 @@ cookie の中身をそのまま信じないという要求は変わらない。�
 
 ### ディレクトリ構造
 
-**このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアント固有のものを `adapter/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
+**このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアントに合わせた変換を `adapter/` の外に置かない）を、この ADR で定めた内訳まで展開したもの。
 
 **大半のテストファイルは対象の隣に置くため、ツリーには現れない。** 層をまたぐテストだけがトップレベルの `tests/` に出る（どちらに置くかの基準は `adr/0010` を正とする）。
 
@@ -215,11 +215,10 @@ src/
 │   │   └─ fake.ts                … ポートの偽実装（テスト専用。adr/0010）
 │   └─ group/  record/  settlement/  account/
 ├─ adapter/
-│   ├─ web/
-│   │   ├─ controller/
-│   │   └─ presenter/
-│   └─ shared/                    … 通貨の表示整形・参加コードの共有リンク
-│                                    最小単位は domain/money が正
+│   └─ web/
+│       ├─ controller/
+│       ├─ presenter/
+│       └─ money.ts               … 通貨の表示整形。最小単位は domain/money が正
 └─ infra/
     ├─ db/                        … client / schema / migrations / mapper / repository
     │                                加えて test-support（永続化テストの下ごしらえ。テスト専用）
@@ -231,10 +230,9 @@ tests/                            … 層をまたぐテストのみ（adr/0010�
 └─ e2e/                           … Playwright
 ```
 
-- `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
+- `adapter/web/controller` と `adapter/web/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
 - `infra/db/mapper` を独立させ、ORM の推論型がリポジトリの外へ漏れない壁とする（`adr/0005`）
 - **テスト専用のものも、対象と同じ層に置く。** 偽実装はポートの隣（それが実装するもののそば）、前提データはユースケース層の直下、永続化テストの下ごしらえは `infra/db` の中に置く。層をまたがないため `tests/` には出さない（`adr/0010`）
-- `adapter/shared` はクライアント固有でないものだけを置く
 
 ### 依存方向の機械検査のルール
 

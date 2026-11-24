@@ -3,12 +3,7 @@ import { memberOrder } from '../../../domain/record/share'
 import type { Payment } from '../../../domain/record/payment'
 import { toMoney, toPlainDate } from './value'
 
-/**
- * `payments` / `payment_bearers` の行と `Payment` 集約の変換。
- *
- * **行の形をここで明示的に宣言する**（理由は `mapper/user.ts` と同じ）。
- * **負担額は保存も復元もしない。** 金額と負担者から導出する（`docs/domain/record.md`「負担額の配分」）。
- */
+/** `payments` / `payment_bearers` の行と `Payment` 集約の変換。行の形を宣言する理由は `mapper/user.ts` と同じ。 */
 
 export type PaymentRow = {
   readonly id: string
@@ -27,12 +22,7 @@ export type PaymentBearerRow = {
   readonly memberId: string
 }
 
-/**
- * 版を持つ Payment の行。
- *
- * **版はドメインのエンティティに持たせない**（`docs/adr/0005`「同時書き込みの競合」）ため、
- * 行の側にだけ現れ、`Payment` とは別に受け渡す。
- */
+/** 版を持つ Payment の行。版は `Payment` とは別に受け渡す（`docs/adr/0005`「同時書き込みの競合」）。 */
 export type VersionedPaymentRow = PaymentRow & { readonly version: number }
 
 /**
@@ -58,14 +48,7 @@ export const toPayment = (row: PaymentRow, bearers: readonly PaymentBearerRow[])
   recordedAt: row.recordedAt,
 })
 
-/**
- * 結合して読んだ行を、Payment ごとにたたみ直す。版は行の側から一緒に返す。
- *
- * 1 件の Payment は負担者の数だけ行に展開されるため、Payment の識別子でまとめ直す。
- * **負担者の行が無い Payment も落とさない。**
- *
- * **並び順はここでは決めない**（`docs/domain/record.md`「記録の並び」がドメインの規則として持つ）。
- */
+/** 結合して読んだ行を、Payment ごとにたたみ直す。**負担者の行が無い Payment も落とさない。** */
 export const toPayments = (
   rows: readonly PaymentWithBearerRow[],
 ): readonly { readonly payment: Payment; readonly version: number }[] => {

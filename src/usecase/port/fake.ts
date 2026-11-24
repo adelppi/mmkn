@@ -25,21 +25,12 @@ import type { TransferRepository } from './transfer-repository'
 import type { CreateUserOutcome, UserRepository } from './user-repository'
 
 /**
- * ポートの偽実装。**テストからだけ使う。**
- *
- * `docs/adr/0004-layers-and-dependencies.md` は「ドメイン・ユースケースの単体テストは、
- * 実 DB・実 HTTP を使わずポートの偽実装で回す」と定めており、`docs/adr/0008` は
- * 「ユースケースが依存を引数で受けるため、テストで偽実装に差し替えるのに仕掛けが要らない」を
- * 利点に挙げている。**これがその偽実装で、モックの仕組みを何も必要としない。**
+ * ポートの偽実装。**テストからだけ使う**（`docs/adr/0010-testing.md`）。
  *
  * **実装は本物と同じ約束を守る。** 特に次の 2 つは、守らないとテストが本物と違う結論を出す。
  *
  * - `addMembers` は**追加された Member だけを書き込む**（一覧を置き換えない）
  * - 更新・削除は**操作者が見ていた版と一致するときだけ通る**
- *
- * ここで作る ID は**連番であり、本物の生成器の代わりにはならない**
- * （本物は乱数由来である必要がある。`docs/adr/0008`「識別子の生成」）。テストの中で
- * 並びと同一性が読めることを優先している。
  */
 
 const INITIAL_VERSION: Version = 1

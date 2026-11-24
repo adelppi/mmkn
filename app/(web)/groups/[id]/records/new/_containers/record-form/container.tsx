@@ -9,17 +9,9 @@ import {
 import { RecordFormPresentation } from './presentation'
 
 /**
- * 記録の登録と編集（設計 06・07・08）。
+ * 記録の登録と編集（設計 06・07・08）。違うのは初期状態が空か既存の記録かだけである。
  *
- * **登録と編集で同じ Container を使う。** 出す入力欄も、判定も、保存の経路も同じで、
- * 違うのは初期状態が空か既存の記録かだけである（`docs/domain/record.md`「編集」）。
- * 編集の画面は `records/[recordId]/edit` から、この Container をそのまま呼ぶ。
- *
- * **記録の一覧と同じ取得を使う。** メンバーの選択肢と、入力候補に出す通貨（そのグループに
- * 既に記録がある通貨。`docs/domain/money.md`）を、どちらもここから得る。
- * リクエストの中で束ねられるため、一覧と別に読み直すことにはならない。
- *
- * **成功と失敗で分岐しない**（`docs/adr/0009-web-ui.md`）。読めなかった場合も Presenter がタグにする。
+ * メンバーの選択肢と入力候補に出す通貨を、記録の一覧と同じ取得から得る。
  */
 export async function RecordFormContainer({
   groupId,

@@ -23,11 +23,6 @@ const LOOPBACK_HOSTS = ['127.0.0.1', 'localhost', '::1', '[::1]']
  * 接続先がローカルの Postgres であることを確かめる。
  *
  * **永続化テストは中身を空にしてから回る。** 接続先を間違えると、そこにあるデータを消す。
- * `docs/adr/0011-ci-and-release.md` は「未マージのコードが本番データに到達する経路を作らない」
- * と定めており、**その経路をここで塞ぐ**（`.env.example`「手元の値に本番を書かない」も同じ要求）。
- *
- * 手元の Postgres は `127.0.0.1`（`docker-compose.yml`）、CI の使い捨て Postgres も
- * 同じホストから見えるため、ループバック以外を弾いても回らなくなるものは無い。
  */
 const requireLocal = (url: string): string => {
   const host = URL.parse(url)?.hostname

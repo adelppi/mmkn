@@ -3,12 +3,7 @@ import type { FormAction } from '@/src/adapter/web/presenter/form'
 import { initialJoinView, toInviteView, type JoinView } from '@/src/adapter/web/presenter/group'
 import { InvitePresentation } from './presentation'
 
-/**
- * 招待リンクから参加（設計 10）。
- *
- * **下見もユースケースを通す**（`docs/adr/0005-data-access-and-authorization.md`）。
- * 参加コードから直接リポジトリを引く経路は無い。
- */
+/** 招待リンクから参加（設計 10）。 */
 export async function InviteContainer({
   inviteCode,
   action,

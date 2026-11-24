@@ -4,12 +4,7 @@ import { Payment } from '../record/payment'
 import { memberOrder } from '../record/share'
 import type { Transfer } from '../record/transfer'
 
-/**
- * 収支（`docs/domain/settlement.md`「収支」）。
- *
- * **保存しない。** 導出するたびに、その時点で存在する記録から計算する。
- * **通貨ごとに独立して計算する**（`docs/domain/money.md`「通貨をまたがない」）。
- */
+/** 収支（`docs/domain/settlement.md`「収支」）。 */
 
 /** ある Member の、ある通貨についての過不足。正なら受け取る側、負なら支払う側、0 なら過不足なし。 */
 export type Balance = {
@@ -40,20 +35,9 @@ const move = (ledger: Ledger, currency: Currency, member: MemberId, amount: numb
 }
 
 /**
- * 記録から収支を導出する。
+ * 記録から収支を導出する（`docs/domain/settlement.md`「収支」「境界・例外ケース」）。
  *
- * - Payment … 支払者は金額の分だけプラス、負担者は負担額の分だけマイナス
- * - Transfer … 送り手は金額の分だけプラス、受け手は金額の分だけマイナス
- *
- * **お金を出した側がプラスになる**という 1 つの見方で、どちらの記録も揃っている。
- * 正が「受け取る側」、負が「支払う側」を意味するのはこのため
- * （`docs/domain/settlement.md`「収支の意味」）。
- *
- * **発生日は使わない**（`docs/domain/record.md`「発生日」）。未来の日付の記録も、
- * 日付が来るのを待たずにそのまま収支に入る。
- *
- * **記録が存在する通貨についてのみ導出する**（`docs/domain/settlement.md`「境界・例外ケース」）。
- * 現れるのはその通貨の記録に登場した Member だけで、収支が 0 になった Member も落とさない。
+ * 現れるのはその通貨の記録に登場した Member だけで、**収支が 0 になった Member も落とさない。**
  */
 export const balancesOf = (records: Records): readonly CurrencyBalances[] => {
   const ledger: Ledger = new Map()

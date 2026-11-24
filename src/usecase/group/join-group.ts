@@ -16,13 +16,7 @@ export type JoinGroupInput = {
   readonly displayName: string
 }
 
-/**
- * 失敗。参加コードに対応する Group が無い場合は「見つからない」として扱う
- * （`docs/domain/group.md`「前提条件を満たさなかったとき」）。
- *
- * **「その Group の Member でない」はここに現れない。** 参加は Member でない人が行う操作であり、
- * 前提条件が Member であることを求めていないため。
- */
+/** **「その Group の Member でない」はここに現れない。** 参加は Member でない人が行う操作であるため。 */
 export type JoinGroupError =
   | { readonly kind: 'notAuthenticated' }
   | { readonly kind: 'notFound' }

@@ -7,13 +7,7 @@ import type { UseCase, Version, Versioned } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 import { requireRecord, type VersionConflict } from './access'
 
-/**
- * 支払いを編集する（`docs/domain/record.md`「編集」・`docs/features.md` #7）。
- *
- * **グループの Member であれば、他の Member が登録した記録も編集できる。**
- * 編集できる属性はすべて渡す。**編集前の内容は残らない。**
- * **登録日時は取り直さない**ため、一覧での位置は動かない。
- */
+/** 支払いを編集する（`docs/domain/record.md`「編集」・`docs/features.md` #7）。 */
 
 export type EditPaymentInput = {
   readonly actor: UserId | undefined

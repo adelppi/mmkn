@@ -9,19 +9,14 @@ import type { Transfer } from '../../../domain/record/transfer'
 import type { Result } from '../../../domain/result'
 import type { ListRecordsError, ListRecordsOutput } from '../../../usecase/record/list-records'
 import type { Versioned } from '../../../usecase/usecase'
-import { amountText, moneyText, type MoneyText } from '../../shared/money'
+import { amountText, moneyText, type MoneyText } from '../money'
 import type { AmountFieldLimits, TextFieldLimits } from './form'
 import { toCurrencyOptions, type CurrencyOptionView } from './group'
 import { messageOf, type FailureTag } from './message'
 import type { NoticeTag } from './notice'
 import { route } from './route'
 
-/**
- * 記録（支払いと送金）の表示（`docs/features.md` #5〜#7）。
- *
- * **Payment と Transfer をまとめて 1 つの列として扱う**（`docs/domain/record.md`「記録の並び」）。
- * 並び自体はユースケースが済ませてあるため、ここが行うのは日付ごとの束ねと整形だけである。
- */
+/** 記録（支払いと送金）の表示（`docs/features.md` #5〜#7）。並びはユースケースが済ませてある。 */
 
 const isPayment = (record: AnyRecord): record is Payment => 'bearers' in record
 
@@ -66,10 +61,7 @@ export type RecordListView =
     }
 
 /**
- * 発生日の見出し。
- *
- * **`Date` を経由しない**（`docs/domain/record.md`「発生日」：日付は時刻もタイムゾーンも持たない）。
- * 一度でも時点に直すと、入力された日付が別の日付として読み替えられる経路ができる。
+ * 発生日の見出し。**`Date` を経由しない**（`src/domain/record/date.ts`）。
  *
  * 年は、一覧の中で最も新しい記録と違うときだけ出す。
  */
@@ -175,11 +167,8 @@ export type RecordFormFields = {
 /**
  * 金額の入力属性（`docs/adr/0009`「クライアント側の入力検査」）。
  *
- * **数値はドメイン層の定数から取る。** 上限は「その通貨の最小単位で `MONEY_MAX_AMOUNT`」
- * （`docs/domain/money.md`）であり、それを人が打つ表記に直したものをここに入れる。
- *
- * **選ばれている通貨についての値である。** 送信せずに通貨を切り替えると、ブラウザ側の上限は
- * 一時的にずれる。**判定の正はドメイン層 1 か所だけ**なので、ずれても結論は変わらない。
+ * 選ばれている通貨についての値であり、送信せずに通貨を切り替えると一時的にずれる。
+ * 判定の正はドメイン層なので、結論は変わらない。
  */
 const amountLimitsOf = (currency: Currency): AmountFieldLimits => {
   const minorUnit = minorUnitOf(currency)
@@ -245,12 +234,7 @@ export const recordFormFields = (
   }
 }
 
-/**
- * 送られてきた入力を、いまのフォームの状態に重ねる。
- *
- * **入力欄の中身はサーバーが返したものが正である**（`docs/adr/0009`「フォーム」）。
- * 失敗して戻すときも、打った内容をそのまま返す。通貨が変わっていれば入力属性も取り直す。
- */
+/** 送られてきた入力を、いまのフォームの状態に重ねる。失敗して戻すときも、打った内容をそのまま返す。 */
 export const withSubmitted = (
   base: RecordFormFields,
   values: {
@@ -286,12 +270,7 @@ const toCurrencyFallback = (base: RecordFormFields): Currency => {
   return fallback.value
 }
 
-/**
- * 選択肢を持たないフォーム。
- *
- * **直前の状態が無いときにだけ使う。** 通常は Server Action が受け取った直前の状態から
- * メンバーと通貨の選択肢を引き継ぐ。
- */
+/** 選択肢を持たないフォーム。**直前の状態が無いときにだけ使う。** */
 export const emptyRecordForm = (
   groupId: string,
   type: 'payment' | 'transfer',
@@ -343,12 +322,7 @@ export const initialRecordFormView = (form: RecordFormFields): RecordFormView =>
   form,
 })
 
-/**
- * 登録の初期状態（`docs/adr/0009-web-ui.md`「フォーム」：初期状態も Presenter が持つ）。
- *
- * **読めなかった場合もここでタグにする。** Container が成功と失敗で分岐しないようにするため、
- * 記録の一覧と同じ結果を受け取って、そのままフォームか失敗かを返す。
- */
+/** 登録の初期状態。読めなかった場合もここでタグにする。 */
 export const toNewRecordFormView = (
   result: Result<ListRecordsOutput, ListRecordsError>,
 ): RecordFormView => {
@@ -378,11 +352,7 @@ export const toEditRecordFormView = (
 /**
  * 登録・編集・削除の結果をビューモデルに直す。
  *
- * **競合と、前提条件を満たさなかったときだけ別のタグにする。** 入力の不備はすべて `invalid` に
- * 集め、フォームに戻す。案内すべきことが違う（やり直す先が違う）ためである。
- *
- * **済んだことは行き先に載せる**（`done`）。成功すると画面は記録一覧へ移るため、
- * 何が済んだかは遷移をまたいで伝える必要がある（`./notice.ts`）。
+ * **競合と、前提条件を満たさなかったときだけ別のタグにする。** やり直す先が違うためである。
  */
 export const toRecordFormView = (
   form: RecordFormFields,

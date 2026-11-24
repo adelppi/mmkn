@@ -17,18 +17,7 @@ import type { TransferRepository } from '../port/transfer-repository'
 import type { UseCase, Versioned } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 
-/**
- * 清算案の送金を記録する（`docs/domain/settlement.md`「清算案の送金を記録する」・
- * `docs/features.md` #10）。
- *
- * **金額を入力に取らない。** その時点の記録から清算案を導出し直し、示されている額をそのまま使う。
- * 表示から登録までの間に記録が変わっていれば、登録される金額は表示された額と異なる。
- *
- * **その時点の清算案にその送金が含まれていなければ、Transfer は登録されず、
- * 清算案が変わったことが操作者に伝わる**（`settlementChanged`）。
- *
- * できあがる Transfer は、手で入力したものと区別されない（`register-transfer.ts`）。
- */
+/** 清算案の送金を記録する（`docs/domain/settlement.md`「清算案の送金を記録する」・`docs/features.md` #10）。 */
 
 export type RegisterSettlementTransferInput = {
   readonly actor: UserId | undefined
@@ -36,13 +25,7 @@ export type RegisterSettlementTransferInput = {
   readonly sender: MemberId
   readonly recipient: MemberId
   readonly currency: string
-  /**
-   * 発生日。**金額と違い、これは入力で受け取る。**
-   *
-   * ドメインは発生日にタイムゾーンを持たせず、「今日」がどの日付かを決めない
-   * （`docs/domain/record.md`「発生日」）。操作した本人の手元で「今日」にあたる日付を決めるのは
-   * 入口の責務であり、ユースケースはそれをそのまま保持する。
-   */
+  /** 発生日。**金額と違い、これは入力で受け取る**（`docs/domain/record.md`「発生日」）。 */
   readonly occurredOn: string
 }
 

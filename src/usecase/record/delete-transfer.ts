@@ -7,11 +7,7 @@ import type { UseCase, Version } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 import { requireRecord, type VersionConflict } from './access'
 
-/**
- * 送金を削除する（`docs/domain/record.md`「削除」・`docs/features.md` #7）。
- *
- * **その記録は完全に存在しなくなる。削除履歴を残さず、復元もできない。**
- */
+/** 送金を削除する（`docs/domain/record.md`「削除」・`docs/features.md` #7）。 */
 
 export type DeleteTransferInput = {
   readonly actor: UserId | undefined

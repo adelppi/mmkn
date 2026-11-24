@@ -18,13 +18,7 @@ export type CreateGroupInput = {
   readonly defaultCurrency: string
 }
 
-/**
- * 失敗（`docs/adr/0008-layer-internals.md`：**ユースケースごとのタグ付き union**）。
- *
- * `inviteCodeUnavailable` は、参加コードの生成し直しを繰り返しても空きが見つからなかったことを表す。
- * cuid2 の 24 文字で現実には起きないが、**衝突は起きない前提にしない**（`docs/adr/0002`）以上、
- * 諦める場合を型に出しておく。
- */
+/** `inviteCodeUnavailable` は、参加コードの生成し直しを繰り返しても空きが無かったことを表す（`docs/adr/0002`）。 */
 export type CreateGroupError =
   | { readonly kind: 'notAuthenticated' }
   | CreateGroupFailure

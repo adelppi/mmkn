@@ -10,15 +10,7 @@ import type { TransferRepository } from '../port/transfer-repository'
 import type { UseCase } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 
-/**
- * 収支・清算案を見る（`docs/domain/settlement.md`「収支・清算案を見る」・
- * `docs/features.md` #8・#9）。
- *
- * **どちらも保存しない。** 導出するたびに、その時点で存在する記録から計算する。
- * 導出した結果を次回のために残すこともしない。
- *
- * **Member でない人に、収支・清算案の中身は見えない**（`docs/domain/settlement.md`）。
- */
+/** 収支・清算案を見る（`docs/domain/settlement.md`「収支・清算案を見る」・`docs/features.md` #8・#9）。 */
 
 export type ViewSettlementInput = {
   readonly actor: UserId | undefined

@@ -1,13 +1,9 @@
 import { err, ok, type Result } from '../result'
 
 /**
- * 発生日の型（`docs/domain/record.md`「発生日」）。
+ * 発生日の型（`docs/domain/record.md`「発生日」）。`YYYY-MM-DD` の形で、入力された日付をそのまま保持する。
  *
- * **時刻もタイムゾーンも持たない日付。** `YYYY-MM-DD` の形で、入力された日付をそのまま保持する。
- * どの地域の日付として解釈するかという情報を持たないため、海外で記録しても後から読み替えられない。
- *
- * `Date` を使わないのは、`Date` が時点（タイムゾーンに依存する瞬間）を表すためである。
- * 一度でも `Date` を経由すると、入力された日付が別の日付として読み替えられる経路ができる。
+ * **`Date` を経由しない。** 一度でも時点に直すと、別の日付として読み替えられる経路ができる。
  */
 
 declare const plainDateBrand: unique symbol
@@ -27,13 +23,7 @@ const daysInMonth = (year: number, month: number): number => {
   return month === 4 || month === 6 || month === 9 || month === 11 ? 30 : 31
 }
 
-/**
- * `YYYY-MM-DD` を発生日として解釈する。
- *
- * **未来の日付を許す**（`docs/domain/record.md`「発生日」）。前払いのように、これから起きる
- * 支払いを先に記録したい場面があるため。上限を見ないので、ここは現在時刻を必要としない
- * （ドメイン層は依存を持たない。`docs/adr/0004`）。
- */
+/** `YYYY-MM-DD` を発生日として解釈する。**未来の日付も許す**（`docs/domain/record.md`「発生日」）。 */
 export const plainDate = (raw: string): Result<PlainDate, PlainDateInvalid> => {
   const matched = FORMAT.exec(raw.trim())
   if (matched === null) return err({ kind: 'dateInvalid' })
@@ -52,7 +42,6 @@ export const plainDate = (raw: string): Result<PlainDate, PlainDateInvalid> => {
  * 発生日の比較。`a` が古ければ負、新しければ正、同じなら 0 を返す。
  *
  * 桁を揃えた `YYYY-MM-DD` なので、符号単位の比較がそのまま日付の前後になる。
- * 実行環境の設定に左右されない（`src/domain/id.ts` の `compareId` と同じ理由）。
  */
 export const comparePlainDate = (a: PlainDate, b: PlainDate): number => {
   if (a < b) return -1

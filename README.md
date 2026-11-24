@@ -27,42 +27,11 @@ Transfer ─┘
 
 ## ドキュメント
 
-**まず `docs/README.md`（目次と「どの事実がどこにあるか」）を読む。**
-
-| | 内容 |
-|---|---|
-| `docs/RULES.md` | **配置ルール。docs に何かを書く前に必ず読む** |
-| `docs/overview.md` | 何を・誰に・なぜ作るか |
-| `docs/features.md` | 何を作る／作らないか（持たないものとその理由） |
-| `docs/domain/` | どう動くか（技術に依存しない業務ルール） |
-| `docs/adr/` | どう作るか（技術的意思決定の記録） |
-| `docs/glossary.md` | 日本語の概念とコード上の名前の対応 |
-| `docs/operations.md` | 手元の準備・リリース・診断の手順 |
-| `docs/open-questions.md` | まだ決まっていないこと |
-
-ドメイン文書は 4 つ。
-
-| ファイル | 扱うもの |
-|---|---|
-| `docs/domain/group.md` | グループとメンバー、参加コード、表示名 |
-| `docs/domain/money.md` | 金額と通貨（整数 + 通貨、通貨をまたがない） |
-| `docs/domain/record.md` | Payment / Transfer、負担額の配分と端数、編集・削除 |
-| `docs/domain/settlement.md` | 収支の導出と清算案 |
+目次と「どの事実がどこにあるか」は `docs/README.md`。**docs に何かを書く前に `docs/RULES.md` を読む。**
 
 ## 開発の進め方
 
-1 Issue = 1 ブランチ = 1 PR、squash merge。Issue・PR・コミットメッセージはすべて日本語。
-
-規約の本体は `CLAUDE.md`。スラッシュコマンドは 4 本。
-
-| コマンド | 用途 |
-|---|---|
-| `/sync-docs` | 会話で決まったことを docs/ に反映する |
-| `/check-docs` | docs/ の整合性を検査する |
-| `/create-issue <一文>` | 質問で詳細を掘り下げて Issue を起票する |
-| `/implement-issue <番号>` | ブランチ作成 → 実装 → テスト → PR 作成 |
-
-**仕様や技術方針を話し合ったら、その会話の終わりに `/sync-docs` を実行する。** docs に落ちていない決定は、次の会話では存在しないものとして扱われる。
+規約とスラッシュコマンドは `CLAUDE.md`。
 
 このプロジェクトの土台になっている雛形の説明は `TEMPLATE.md` を参照。
 
@@ -70,14 +39,6 @@ Transfer ─┘
 
 **v1 の機能を実装済み。** クライアントは Web だけ（`docs/adr/0017-web-only.md`）。
 
-- ドメインモデルは `docs/domain/` の 4 文書に確定済み
-- 技術的意思決定は `docs/adr/`
-- 未確定の論点はゼロ（`docs/open-questions.md`）
-- v1 は機能一覧の 11 機能すべて。段階リリースをしない（`docs/features.md`）
-- 層のディレクトリと依存方向の検査、lint / 型検査 / 単体テストが PR の CI で回る
-
 技術スタックは TypeScript / Next.js / Vercel / Supabase（`docs/adr/0003-tech-stack.md`）。
 
 手元での回し方は `docs/operations.md`「手元の準備」「検査の回し方」。ディレクトリ構造の正は `docs/adr/0008-layer-internals.md`。
-
-**機能の実装に着手する前に、`docs/operations.md`「実装着手時に必ず確かめること」を通す。** 決定済みだが前提が外れると影響が大きく、確認が安いものを集めてある。

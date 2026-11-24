@@ -9,17 +9,12 @@ import type {
   ViewSettlementOutput,
 } from '../../../usecase/settlement/view-settlement'
 import type { Versioned } from '../../../usecase/usecase'
-import { currencyNameOf, moneyText, type MoneyText } from '../../shared/money'
+import { currencyNameOf, moneyText, type MoneyText } from '../money'
 import { messageOf } from './message'
 import { route } from './route'
 import type { ViewerBalanceRowView } from './group'
 
-/**
- * 収支と清算案の表示（`docs/features.md` #8〜#10）。
- *
- * **どちらも保存しない。** 表示のたびにユースケースが記録から導出したものを整形するだけである
- * （`docs/domain/settlement.md`）。
- */
+/** 収支と清算案の表示（`docs/features.md` #8〜#10）。 */
 
 const nameOf = (group: Group, member: MemberId): string =>
   Member.byId(group.members, member)?.displayName ?? '（不明）'
@@ -83,12 +78,7 @@ export const toBalanceView = (
   }
 }
 
-/**
- * 記録一覧の上に出す「あなたの収支」。
- *
- * **他の Member の収支は含まない。** 一覧の上に置くのは自分の過不足だけで、
- * 全員分は収支のタブで見る。
- */
+/** 記録一覧の上に出す「あなたの収支」。他の Member の収支は含まない。 */
 export type ViewerBalanceView =
   | { readonly kind: 'ok'; readonly rows: readonly ViewerBalanceRowView[] }
   | { readonly kind: 'even'; readonly message: string }
@@ -187,12 +177,7 @@ export const toSettlementView = (
   return { kind: 'ok', currencies, note: SETTLEMENT_NOTE }
 }
 
-/**
- * 清算案からの送金記録の結果。
- *
- * **押した時点の清算案にその送金が無ければ、Transfer は登録されず、変わったことが伝わる**
- * （`docs/domain/settlement.md`）。
- */
+/** 清算案からの送金記録の結果。 */
 export type SettlementTransferView =
   | { readonly kind: 'idle' }
   | { readonly kind: 'registered'; readonly message: string }

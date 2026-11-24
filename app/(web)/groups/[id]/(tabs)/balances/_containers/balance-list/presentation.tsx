@@ -5,12 +5,7 @@ import { Money } from '@/app/_ui/money'
 import { Empty, Notice } from '@/app/_ui/notice'
 import type { BalanceView } from '@/src/adapter/web/presenter/settlement'
 
-/**
- * 収支（設計 04）。
- *
- * **通貨ごとに独立して並ぶ**（`docs/domain/money.md`「通貨をまたがない」）。
- * 合算した金額は出さない。**過不足が 0 の Member も落とさない。**
- */
+/** 収支（設計 04）。**通貨ごとに独立して並ぶ**（`docs/domain/money.md`「通貨をまたがない」）。 */
 export function BalanceListPresentation(props: BalanceView) {
   if (props.kind !== 'ok' && props.kind !== 'empty') {
     return (

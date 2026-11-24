@@ -7,12 +7,7 @@ import type { Database } from '../client'
 import { fromTransfer, toTransfer } from '../mapper/transfer'
 import { transfers } from '../schema'
 
-/**
- * `TransferRepository` の実装。
- *
- * 集約は Transfer 単体で、内側に持つものが無いためトランザクションは要らない。
- * 楽観ロックの扱いは `PaymentRepository` と同じ（`docs/adr/0005-data-access-and-authorization.md`）。
- */
+/** `TransferRepository` の実装（`docs/adr/0005-data-access-and-authorization.md`）。 */
 
 /** 最初の版。 */
 const INITIAL_VERSION: Version = 1

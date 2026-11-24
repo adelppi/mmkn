@@ -9,12 +9,7 @@ import type { TransferRepository } from '../port/transfer-repository'
 import type { UseCase, Versioned } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 
-/**
- * 送金を記録する（`docs/domain/record.md`「Transfer（送金）」・`docs/features.md` #6）。
- *
- * **清算案から登録したものと、手で入力したものを区別しない**（`docs/domain/settlement.md`）。
- * 金額を入力しない導線は `register-settlement-transfer.ts` にある。
- */
+/** 送金を記録する（`docs/domain/record.md`「Transfer（送金）」・`docs/features.md` #6）。 */
 
 export type RegisterTransferInput = {
   readonly actor: UserId | undefined

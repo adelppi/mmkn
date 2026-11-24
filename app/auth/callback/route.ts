@@ -5,16 +5,7 @@ import { route } from '@/src/adapter/web/presenter/route'
 import { completeLogin, loginReturn } from '@/src/infra/auth/session'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * 認可画面から戻ってくる先（`docs/adr/0012-login.md`）。
- *
- * **ここは往復の完了と、対応するユースケースの呼び出しだけを行う。**
- * 結果をどう見せるかは Web の画面が持つ（`docs/adr/0009-web-ui.md` の Presenter）。
- * ここが決めるのは行き先だけで、文言は持たない。
- *
- * **`/auth/callback` は fetch の口ではなく、外部サービスからのリダイレクト先である。**
- * `docs/adr/0003-tech-stack.md` が Web の操作の経路を Server Actions に絞っていることとは衝突しない。
- */
+/** 認可画面から戻ってくる先（`docs/adr/0012-login.md`）。**決めるのは行き先だけで、文言は持たない。** */
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const to = (path: string) => NextResponse.redirect(new URL(path, url.origin))

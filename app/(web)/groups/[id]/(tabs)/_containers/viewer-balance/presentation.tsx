@@ -2,11 +2,7 @@ import { Money } from '@/app/_ui/money'
 import { Eyebrow, Notice } from '@/app/_ui/notice'
 import type { ViewerBalanceView } from '@/src/adapter/web/presenter/settlement'
 
-/**
- * あなたの収支（設計 03 の上部）。
- *
- * **自分の過不足だけを出す。** 全員分は収支のタブで見る（`docs/domain/settlement.md`）。
- */
+/** あなたの収支（設計 03 の上部）。 */
 export function ViewerBalancePresentation(props: ViewerBalanceView) {
   // 読めなかった理由は上端（`group-header`）が伝える。ここは黙って何も出さない。
   if (props.kind !== 'ok' && props.kind !== 'even') return null

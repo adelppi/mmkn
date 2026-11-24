@@ -8,25 +8,13 @@ import { requireRecordMember } from './access'
 import { plainDate, type PlainDate, type PlainDateInvalid } from './date'
 import { distribute, memberOrder, type Share } from './share'
 
-/**
- * 支払い（`docs/domain/record.md`「Payment（支払い）」）。
- *
- * **グループ外に対して、ある Member が支払ったお金と、その金額を負担する Member** を記録する。
- *
- * Payment と、その負担者をひとまとまりとして扱う（`docs/adr/0008-layer-internals.md`「永続化の単位」）。
- * 楽観ロックの版はここに持たない（`docs/adr/0005-data-access-and-authorization.md`）。
- */
+/** 支払い（`docs/domain/record.md`「Payment（支払い）」）。 */
 export type Payment = {
   readonly id: PaymentId
   readonly groupId: GroupId
   /** 支払いを行った Member。**登録者とは別のもの**（`docs/glossary.md`「名前の付け方」）。 */
   readonly payer: MemberId
-  /**
-   * 金額を負担する Member の集合。1 人以上で、同じ Member を重複して含まない。
-   *
-   * **集合であり、並びは意味を持たない。** 配分順序で正規化してあるため、
-   * 同じ負担者を別の順番で入力しても同じ Payment になる。
-   */
+  /** 金額を負担する Member の集合。**並びは意味を持たない。** 配分順序で正規化してある。 */
   readonly bearers: readonly MemberId[]
   /** **1 件の記録は 1 つの通貨だけを持つ**（`docs/domain/money.md`「通貨をまたがない」）。 */
   readonly money: Money
@@ -40,11 +28,7 @@ export type Payment = {
   readonly recordedAt: Date
 }
 
-/**
- * 内容の上限（`docs/domain/record.md`「Payment（支払い）」）。
- *
- * **この数値をここ以外に書かない**（`CLAUDE.md`）。画面側の入力属性もここから取る。
- */
+/** 内容の上限（`docs/domain/record.md`「Payment（支払い）」）。**この数値をここ以外に書かない。** */
 export const DESCRIPTION_MAX_LENGTH = 100
 
 /** 属性が制約を満たさなかったときの失敗。 */
@@ -73,11 +57,7 @@ type Attributes = {
 const isMember = (group: Group, member: MemberId): boolean =>
   Member.byId(group.members, member) !== undefined
 
-/**
- * 内容を整える。**前後の空白を落とす。空は許す**（`docs/domain/record.md`）。
- *
- * 長さは符号単位ではなくコードポイントで数える（`src/domain/group/text.ts` と同じ理由）。
- */
+/** 内容を整える。空は許す。長さはコードポイントで数える（`src/domain/group/text.ts`）。 */
 const description = (raw: string): Result<string, { kind: 'descriptionTooLong' }> => {
   const trimmed = raw.trim()
   if ([...trimmed].length > DESCRIPTION_MAX_LENGTH) return err({ kind: 'descriptionTooLong' })
@@ -85,11 +65,7 @@ const description = (raw: string): Result<string, { kind: 'descriptionTooLong' }
   return ok(trimmed)
 }
 
-/**
- * 支払者と負担者のルール（`docs/domain/record.md`「支払者と負担者」）。
- *
- * **支払者と負担者は独立している。** 支払者が負担者に含まれてもよいし、含まれなくてもよい。
- */
+/** 支払者と負担者のルール（`docs/domain/record.md`「支払者と負担者」）。 */
 const bearers = (
   group: Group,
   raw: readonly MemberId[],
@@ -133,11 +109,7 @@ const attributes = (group: Group, input: Attributes): Result<Validated, PaymentI
   })
 }
 
-/**
- * 支払いを記録する。
- *
- * ID と登録日時は受け取るだけで、ここでは作らない（`docs/adr/0008-layer-internals.md`）。
- */
+/** 支払いを記録する。 */
 const create = (
   input: {
     id: PaymentId
@@ -158,17 +130,7 @@ const create = (
   })
 }
 
-/**
- * 支払いを編集する（`docs/domain/record.md`「編集」）。
- *
- * 前提条件は「操作する User が、その記録の属するグループの Member であること」。
- * **グループの Member であれば、他の Member が登録した記録も編集できる。**
- *
- * 編集できる属性はすべて渡す。渡された内容がそのまま現在の記録になり、**編集前の内容は残らない。**
- *
- * **登録日時を取り直さない**（`docs/domain/record.md`「記録の並び」）。記録を直しても
- * 一覧での位置は動かない。ID・グループ・登録者も変わらない。
- */
+/** 支払いを編集する（`docs/domain/record.md`「編集」）。登録日時・ID・グループ・登録者は変わらない。 */
 const edit = (
   payment: Payment,
   input: { group: Group; actor: UserId | undefined } & Attributes,
@@ -182,18 +144,13 @@ const edit = (
   return ok({ ...payment, ...validated.value })
 }
 
-/**
- * 負担額の配分（`docs/domain/record.md`「負担額の配分」）。
- *
- * 保存せず、必要になるたびに金額と負担者から導出する。**同じ Payment からは常に同じ配分になる。**
- */
+/** 負担額の配分（`docs/domain/record.md`「負担額の配分」）。 */
 const shares = (payment: Payment): readonly Share[] =>
   distribute(payment.money.amount, payment.bearers)
 
 /**
  * Payment への操作。
  *
- * **削除はここに無い。** 削除は状態の遷移を持たず（記録が完全に存在しなくなるだけ）、
- * ドメインが担うのは認可の判定だけである（`access.ts` の `requireRecordMember`）。
+ * **削除はここに無い。** 状態の遷移を持たず、ドメインが担うのは認可の判定だけである（`access.ts`）。
  */
 export const Payment = { create, edit, shares }

@@ -4,11 +4,7 @@ import { err, ok } from '../../domain/result'
 import type { UserRepository } from '../port/user-repository'
 import type { UseCase } from '../usecase'
 
-/**
- * 自分のアカウントを見る（`docs/features.md` #11）。
- *
- * **読み取りもユースケースを通す**（`docs/adr/0009-web-ui.md`）。
- */
+/** 自分のアカウントを見る（`docs/features.md` #11）。 */
 
 export type ViewAccountInput = {
   readonly actor: UserId | undefined

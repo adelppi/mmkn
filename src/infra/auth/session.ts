@@ -3,36 +3,15 @@ import type { UserRepository } from '../../usecase/port/user-repository'
 import type { AuthClient } from './client'
 import { verificationKeys } from './jwks'
 
-/**
- * セッションの読み取りと、ログインの往復（`docs/adr/0008-layer-internals.md`「セッションの読み取り」・
- * `docs/adr/0012-login.md`）。
- *
- * **ここが返すのは mmkn の `UserId` だけで、ユースケースはセッションの存在を知らない。**
- * cookie へのアクセス手段はアプリ層から注入される（`client.ts`）。
- *
- * **mmkn はパスワードを持たず、メールを送らない**（`docs/adr/0012`）。
- * したがってここには、合言葉の照合も、確認メールも、再設定の導線も存在しない。
- */
+/** セッションの読み取りと、ログインの往復（`docs/adr/0008`「セッションの読み取り」・`docs/adr/0012-login.md`）。 */
 
-/**
- * 認証基盤の user から、mmkn のログイン識別子を取り出す。
- *
- * **識別子は認証基盤が持つ user の識別子**（`docs/adr/0012`「provider が返す ID を識別子に
- * しない理由」）。
- *
- * **provider が返す ID もメールアドレスも識別子に使わない。**
- */
+/** 認証基盤の user から、mmkn のログイン識別子を取り出す（`docs/adr/0012`「provider が返す ID を識別子にしない理由」）。 */
 const loginIdentifierOf = (user: { id: string }): string => user.id
 
 /**
  * 本人であることが確かめられた識別子。ログインしていなければ `undefined`。
  *
  * **確かめ方は署名の検証であり、認証基盤には問い合わせない**（`docs/adr/0008`「セッションの検証」）。
- * cookie の中身をそのまま信じない点は変わらない。署名が合わないトークンも、期限が切れたトークンも、
- * ここでは「ログインしていない」になる（`docs/domain/group.md`「前提条件を満たさなかったとき」）。
- *
- * **鍵はモジュールスコープから渡す**（`jwks.ts`）。接続はリクエストごとに作られるため、
- * 渡さないと鍵を取りに行く往復が毎回走る。
  */
 export const currentLoginIdentifier = async (client: AuthClient): Promise<string | undefined> => {
   const { data, error } = await client.auth.getClaims(undefined, { jwks: await verificationKeys() })
@@ -42,28 +21,16 @@ export const currentLoginIdentifier = async (client: AuthClient): Promise<string
 }
 
 /**
- * 期限切れのトークンを更新させる。**値は返さない。**
+ * 期限切れのトークンを更新させる。**呼ぶのはリクエストの入口（`proxy.ts`）だけである**
+ * （`docs/adr/0008`「更新されたセッションの書き戻しは、リクエストの入口で行う」）。
  *
- * **呼ぶのはリクエストの入口だけである**（`proxy.ts`。`docs/adr/0008`「更新されたセッションの
- * 書き戻しは、リクエストの入口で行う」）。読み取りの経路は cookie を書けないため、そこで更新しても
- * 利用者の手元に残らない。**署名の検証（上記）は期限を見るだけで、更新はここが持つ。**
- *
- * **期限内なら往復は起きない。** セッションを読むだけで済むためである。
- *
- * 更新できなかったときにここで判断することは無い。**入口は通す・通さないを決めない**
- * （`docs/adr/0005`。判定はドメイン層にある）。次に識別子を求めた時点で、
- * 期限切れのトークンが「ログインしていない」として扱われる。
+ * 期限内なら往復は起きない。更新できなければ、次に識別子を求めた時点で「ログインしていない」になる。
  */
 export const refreshSession = async (client: AuthClient): Promise<void> => {
   await client.auth.getSession()
 }
 
-/**
- * 現在の `UserId`。ログインしていない、またはその人の User がまだいなければ `undefined`。
- *
- * **識別子から `UserId` への変換は入口で閉じる**（`docs/adr/0004-layers-and-dependencies.md`）。
- * 内側へ流すのは `UserId` だけで、ログイン識別子は流さない。
- */
+/** 現在の `UserId`。ログインしていない、またはその人の User がまだいなければ `undefined`。 */
 export const currentUserId = async (
   client: AuthClient,
   users: UserRepository,
@@ -81,11 +48,7 @@ const LOGIN_SERVICE = 'discord'
 /**
  * ログインの往復を始める。返した URL へ送り出す。
  *
- * ブラウザではなくサーバーで開始するため、**認証基盤の URL と anon key がブラウザに露出しない**
- * （`.env.example`）。
- *
- * **スコープを渡さない。** 渡しても認証基盤の既定に足されるだけで、減らせない
- * （`docs/adr/0012`「Discord に要求するスコープ」）。
+ * **スコープを渡さない。** 渡しても足されるだけで、減らせない（`docs/adr/0012`「Discord に要求するスコープ」）。
  */
 export const startLogin = async (client: AuthClient, redirectTo: string): Promise<string> => {
   const { data, error } = await client.auth.signInWithOAuth({
@@ -117,11 +80,7 @@ export const loginReturn = (params: URLSearchParams): LoginReturn => {
     : { kind: 'failed' }
 }
 
-/**
- * 認可画面から戻ってきた往復を完了させる。
- *
- * `rejected` は認証基盤が往復を受け付けなかったことを表す。
- */
+/** 認可画面から戻ってきた往復を完了させる。`rejected` は認証基盤が受け付けなかったことを表す。 */
 export type CompletedLogin =
   | { readonly kind: 'completed'; readonly loginIdentifier: string }
   | { readonly kind: 'rejected'; readonly code: string | undefined }
@@ -134,13 +93,7 @@ export const completeLogin = async (client: AuthClient, code: string): Promise<C
   return { kind: 'completed', loginIdentifier: loginIdentifierOf(data.user) }
 }
 
-/**
- * セッションを終わらせる。
- *
- * **これはログアウトの一部でしかない。** 前提条件（ログインしていること）の判定は
- * ユースケース側にある（`src/usecase/account/log-out.ts`）。**退会ではないため、
- * User も記録もログイン手段も何一つ消えない**（`docs/features.md`「mmkn が持たないもの」）。
- */
+/** セッションを終わらせる。前提条件の判定はユースケース側にある（`src/usecase/account/log-out.ts`）。 */
 export const endSession = async (client: AuthClient): Promise<void> => {
   const { error } = await client.auth.signOut()
   // **握りつぶさない。** 終われなかったのに終わったことにすると、次の操作が他人の操作になる。

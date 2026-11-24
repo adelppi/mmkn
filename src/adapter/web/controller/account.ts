@@ -7,22 +7,12 @@ import type { UseCase } from '../../../usecase/usecase'
 import { toCreateAccountView, type CreateAccountView } from '../presenter/account'
 import { field, optionalField } from '../presenter/form'
 
-/**
- * アカウントへの操作（`docs/adr/0008-layer-internals.md`「Controller と Presenter」）。
- *
- * **外から届いた入力をユースケースの入力に変換し、ユースケースを呼び、Presenter に渡す。**
- * ここに業務ルールを書かない（判定はドメイン層。`docs/adr/0005`）。
- *
- * シグネチャは「直前の状態と入力を受けて、次の状態を返す」形にそろえる
- * （`docs/adr/0009-web-ui.md`「フォーム」）。
- */
+/** アカウントへの操作（`docs/adr/0008-layer-internals.md`「Controller と Presenter」）。 */
 
 /**
  * アカウントを作成する（`docs/domain/group.md`「アカウントを作成する」）。
  *
- * **ログイン識別子は入力から取らない。** 本人であることが確かめられた結果として届くものを
- * 合成ルート側から受け取る（`docs/adr/0012-login.md`）。**入力から取れる形にすると、
- * 他人の識別子を打ち込む経路ができる。**
+ * **ログイン識別子は入力から取らない。** 取れる形にすると、他人の識別子を打ち込む経路ができる。
  */
 export const createAccount =
   (deps: {

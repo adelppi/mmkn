@@ -27,7 +27,7 @@ import type {
   RegisterTransferInput,
 } from '../../../usecase/record/register-transfer'
 import type { UseCase, Versioned } from '../../../usecase/usecase'
-import { parseAmount } from '../../shared/money'
+import { parseAmount } from '../money'
 import { field, fields } from '../presenter/form'
 import type { NoticeTag } from '../presenter/notice'
 import {
@@ -39,13 +39,9 @@ import {
 } from '../presenter/record'
 
 /**
- * 記録への操作（`docs/features.md` #5〜#7）。
+ * 記録への操作（`docs/features.md` #5〜#7）。**入力の変換だけを行う。**
  *
- * **入力の変換だけを行う。** 支払者と負担者の関係も、金額の上限も、発生日の妥当性も見ない。
- * すべてドメイン層が判定し、失敗はビューモデルのタグとして戻る（`docs/adr/0009-web-ui.md`）。
- *
- * 支払いと送金を 1 つの入口にまとめてあるのは、**画面が 1 枚のフォームで両方を扱うため**
- * （上部の切り替えで選ぶ）。**振る舞いはどちらもそれぞれのユースケースがそのまま担う。**
+ * 支払いと送金を 1 つの入口にまとめてあるのは、画面が 1 枚のフォームで両方を扱うため。
  */
 
 export type RecordUseCases = {
@@ -67,13 +63,9 @@ const baseFormOf = (previous: RecordFormView, data: FormData): RecordFormFields 
       )
 
 /**
- * どの記録への操作かを、送られてきた入力から取る。
+ * どの記録への操作かを、送られてきた入力から取る。送られてこなければ、直前の状態を使う。
  *
- * **画面が隠しの入力として送っているのは、直前の状態が識別子を持たない場合があるためである。**
- * 記録の詳細（設計 08）の削除は、フォームの状態としては空の形から始まる。そこから
- * 引き継げるのは選択肢だけで、**どの記録を消すのかは送られてきたものにしか無い。**
- *
- * **送られてこなければ、直前の状態を使う。** 登録では識別子そのものが存在しない。
+ * 記録の詳細（設計 08）の削除はフォームの状態が空の形から始まるため、対象は入力にしか無い。
  */
 const identifiedForm = (base: RecordFormFields, data: FormData): RecordFormFields => {
   const or = (name: 'groupId' | 'recordId' | 'version') => {
@@ -100,8 +92,7 @@ const submittedForm = (previous: RecordFormView, data: FormData): RecordFormFiel
 /**
  * 打たれた金額を、その通貨の最小単位を 1 とした整数にする。
  *
- * **読めなかったものを 0 で埋めない。** `NaN` のまま渡し、ドメイン層に「金額として成立しない」と
- * 判定させる（`docs/domain/money.md`「金額の表し方」）。**扱えない通貨も同じで、ここでは弾かない。**
+ * **読めなかったものを 0 で埋めない。** `NaN` のまま渡し、ドメイン層に判定させる。
  */
 const amountOf = (form: RecordFormFields): number => {
   const known = toCurrency(form.currency)
@@ -112,11 +103,7 @@ const amountOf = (form: RecordFormFields): number => {
 
 const versionOf = (form: RecordFormFields): number => Number(form.version)
 
-/**
- * 保存が済んだときに伝えること（`src/adapter/web/presenter/notice.ts`）。
- *
- * **登録と編集を分ける。** 初めて記録したのか、既にあるものを直したのかで、伝えたいことが違う。
- */
+/** 保存が済んだときに伝えること。 */
 const savedNotice = (form: RecordFormFields): NoticeTag =>
   form.recordId !== ''
     ? 'recordSaved'
@@ -178,11 +165,7 @@ export const saveRecord =
     )
   }
 
-/**
- * 記録を削除する。**削除履歴を残さず、復元もできない**（`docs/domain/record.md`「削除」）。
- *
- * 版が変わっていれば失敗する。**自動でやり直さない**（`docs/adr/0005`）。
- */
+/** 記録を削除する（`docs/domain/record.md`「削除」）。 */
 export const deleteRecord =
   (deps: RecordUseCases & { actor: UserId | undefined }) =>
   async (previous: RecordFormView, data: FormData): Promise<RecordFormView> => {

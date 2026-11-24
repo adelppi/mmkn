@@ -1,12 +1,7 @@
 import { toLoginView } from '@/src/adapter/web/presenter/account'
 import { LoginPresentation } from './presentation'
 
-/**
- * ログイン（設計 01）。
- *
- * **ここはユースケースを呼ばない。** ログインはまだ始まっていない。
- * 実際に始めるのは Server Action（`../../actions.ts`）。
- */
+/** ログイン（設計 01）。 */
 export async function LoginContainer({
   inviteCode,
   failure,

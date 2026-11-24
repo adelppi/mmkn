@@ -8,11 +8,7 @@ import type { Versioned } from '../usecase'
 /**
  * 読んだ記録が、操作の対象として成立していることを確かめる。
  *
- * **判定そのものはドメイン層（`src/domain/record/access.ts` の `requireRecordMember`）が行う。**
- * ここが持つのは、その結果を型に反映することだけ。
- *
- * 記録が読めなかった場合と、**他のグループの記録を指した場合**は、どちらも「見つからない」になる
- * （`docs/domain/record.md`「境界・例外ケース」）。
+ * **判定はドメイン層（`src/domain/record/access.ts`）が行い**、ここは結果を型に反映するだけである。
  */
 export const requireRecord = <T extends { readonly groupId: GroupId }>(
   group: Group,
@@ -29,11 +25,5 @@ export const requireRecord = <T extends { readonly groupId: GroupId }>(
   return ok(found)
 }
 
-/**
- * 記録の更新・削除が、操作者の見ていた版で通らなかったことを表す失敗。
- *
- * **後から届いた変更は失敗し、失敗したことが操作者に伝わる**
- * （`docs/domain/record.md`「同じ記録に同時に手が入ったとき」）。
- * **自動でやり直さない**（`docs/adr/0005-data-access-and-authorization.md`）。
- */
+/** 記録の更新・削除が、操作者の見ていた版で通らなかった（`docs/domain/record.md`「同じ記録に同時に手が入ったとき」）。 */
 export type VersionConflict = { readonly kind: 'versionConflict' }

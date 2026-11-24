@@ -13,24 +13,14 @@ import {
 } from 'drizzle-orm/pg-core'
 
 /**
- * テーブル定義（`docs/adr/0005-data-access-and-authorization.md`）。
+ * テーブル定義（`docs/adr/0005-data-access-and-authorization.md`）。**この定義から SQL を生成し、コミットする。**
  *
- * **この定義から SQL を生成し、その SQL をコミットする**（`migrations/`）。本番にスキーマを
- * 直接反映する経路（push 型）は使わない。生成と適用の手順は `docs/operations.md`。
- *
- * テーブル設計そのものは `docs/domain/` から起こす実装作業であり、ここに業務ルールを書かない
- * （`docs/RULES.md` §2）。DB 側に置くのは**一意性と参照の整合**だけで、**判断（誰が何をしてよいか・
- * 値が妥当か）はドメイン層にしか置かない**（`docs/adr/0005`「ドメインにしか置かないものと、
- * DB にも置くものの線引き」）。
- *
- * **外部アカウントのテーブルはここに無い。** 対応は認証基盤が持つ（`docs/adr/0012`）。
+ * DB 側に置くのは一意性と参照の整合だけで、業務ルールは書かない。
+ * 外部アカウントのテーブルは無い。対応は認証基盤が持つ（`docs/adr/0012`）。
  */
 
 /**
  * 全拒否ポリシー（`docs/adr/0005`「認可の置き場所」）。
- *
- * **RLS を認可の正本にはしないが、有効化しないテーブルは anon key 経由で誰でも読み書きできてしまう。**
- * アプリは `DATABASE_URL` で直接接続し PostgREST を経由しないため、このポリシーは動作に影響しない。
  *
  * **テーブルを追加したら、必ずこれも付ける**（付け忘れは `schema.db.test.ts` が落とす）。
  */
@@ -49,12 +39,7 @@ export const users = pgTable(
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    /**
-     * ログインしたときに行き着く、その人を指すもの（`docs/domain/group.md`「User の属性」）。
-     * 値が何かは `docs/adr/0012-login.md` を正とする。
-     *
-     * **mmkn 全体で重複しない。** 同時実行でしか壊れないため、DB の制約でも担保する。
-     */
+    /** ログインしたときに行き着く、その人を指すもの（`docs/adr/0012-login.md`）。 */
     loginIdentifier: text('login_identifier').notNull(),
   },
   (t) => [unique('users_login_identifier_unique').on(t.loginIdentifier), denyAll('users')],
@@ -88,11 +73,7 @@ export const members = pgTable(
     displayName: text('display_name').notNull(),
   },
   (t) => [
-    /**
-     * **同じ Group・同じ User の組が 2 つ存在しない**（`docs/adr/0005`）。
-     *
-     * 制約で弾く形にすることで、リポジトリが現在の Member 一覧を読んでから書き戻す必要がなくなる。
-     */
+    /** 同じ Group・同じ User の組が 2 つ存在しない（`docs/adr/0005`）。 */
     unique('members_group_id_user_id_unique').on(t.groupId, t.userId),
     index('members_group_id_idx').on(t.groupId),
     denyAll('members'),
@@ -129,12 +110,7 @@ export const payments = pgTable(
   (t) => [index('payments_group_id_idx').on(t.groupId), denyAll('payments')],
 ).enableRLS()
 
-/**
- * Payment の負担者（`docs/domain/record.md`「支払者と負担者」）。
- *
- * Payment 集約の内側にあるため、Payment を消せば一緒に消える。
- * **負担額は保存しない。** 金額と負担者から導出する（`docs/domain/record.md`「負担額の配分」）。
- */
+/** Payment の負担者。**負担額は保存しない**（`docs/domain/record.md`「負担額の配分」）。 */
 export const paymentBearers = pgTable(
   'payment_bearers',
   {

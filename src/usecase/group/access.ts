@@ -8,12 +8,7 @@ import type { GroupRepository } from '../port/group-repository'
 /**
  * Group を読み、操作する User がその Member であることを確かめる。
  *
- * **判定そのものはドメイン層（`src/domain/group/access.ts` の `requireGroupMember`）が行う。**
- * ここが持つのは読み込みと、その結果を型に反映することだけで、認可のルールは持たない
- * （`docs/adr/0005-data-access-and-authorization.md`「認可の置き場所」）。
- *
- * 「未ログイン」「存在しない」「Member でない」の 3 区別と、その優先順位は
- * `docs/domain/group.md`「前提条件を満たさなかったとき」を正とする。
+ * **判定はドメイン層（`src/domain/group/access.ts`）が行い**、ここは結果を型に反映するだけである。
  */
 export const loadGroupAsMember = async (
   groups: GroupRepository,

@@ -7,13 +7,7 @@ import { startLogin } from '@/src/infra/auth/session'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-/**
- * 認可画面への往復を始める（`docs/adr/0012-login.md`）。
- *
- * **Web の経路は Server Actions**（`docs/adr/0003-tech-stack.md`）。往復のために
- * API Routes を新しく作らない。戻ってくる先だけが Route Handler（`app/auth/callback/route.ts`）で、
- * それは外部サービスからのリダイレクト先であって、こちらから叩く口ではない。
- */
+/** 認可画面への往復を始める（`docs/adr/0012-login.md`）。 */
 
 const callbackUrl = async (): Promise<string> => {
   const list = await headers()

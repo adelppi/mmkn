@@ -7,15 +7,7 @@ import type { GroupRepository } from '../port/group-repository'
 import type { UseCase } from '../usecase'
 import { loadGroupAsMember } from './access'
 
-/**
- * Group の内容を見る（`docs/domain/group.md`「Group の属性」「Member の属性」）。
- *
- * **読み取りもユースケースを通す**（`docs/adr/0005-data-access-and-authorization.md`・
- * `docs/adr/0009-web-ui.md`）。表示のための取得も、リポジトリを直接呼ぶ経路を作らない。
- *
- * 前提条件は「操作する User が、その Group の Member であること」。
- * 参加コードもここから読めるため、**Member でない人に渡ることはない。**
- */
+/** Group の内容を見る（`docs/domain/group.md`「Group の属性」「Member の属性」）。 */
 
 export type ViewGroupInput = {
   readonly actor: UserId | undefined

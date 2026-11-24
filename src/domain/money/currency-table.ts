@@ -21,19 +21,9 @@
 export type CurrencyEntry = {
   /** ISO 4217 の通貨コード。 */
   readonly code: string
-  /**
-   * 最小単位の桁数。**mmkn 側で独自に決めない**（`docs/domain/money.md`）。
-   *
-   * ISO 4217 から削除されても、**削除された時点の桁数をそのまま使い続ける。**
-   * 削除を境に過去の記録の金額の解釈が変わってはいけないため、この値は消さない。
-   */
+  /** 最小単位の桁数。**ISO 4217 から削除されても消さない**（`docs/domain/money.md`「廃止された通貨」）。 */
   readonly minorUnit: number
-  /**
-   * ISO 4217 から削除された通貨に立てる印（`docs/domain/money.md`「廃止された通貨」）。
-   *
-   * **印が立っても扱いは現行の通貨と何も変わらない。** 変わるのは入力候補に出すかどうかだけで、
-   * 記録・収支・清算案はそのまま導出され続ける。印は人が立てる（`docs/operations.md`）。
-   */
+  /** ISO 4217 から削除された通貨に立てる印（`docs/domain/money.md`「廃止された通貨」）。 */
   readonly withdrawn?: true
 }
 

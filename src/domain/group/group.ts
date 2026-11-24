@@ -6,20 +6,11 @@ import { Member, type DisplayNameInvalid } from './member'
 import { constrainText, GROUP_NAME_MAX_LENGTH } from './text'
 import type { User } from './user'
 
-/**
- * お金の動きを管理する単位（`docs/domain/group.md`「Group の属性」）。
- *
- * Group と、その Member をひとまとまりとして扱う（`docs/adr/0008-layer-internals.md`「永続化の単位」）。
- */
+/** お金の動きを管理する単位（`docs/domain/group.md`「Group の属性」）。 */
 export type Group = {
   readonly id: GroupId
   readonly name: string
-  /**
-   * 金額を入力するときの初期値。**扱える通貨を制限しない**（`docs/domain/money.md`）。
-   *
-   * 初期値でしかないが、**扱えない通貨コードは既定通貨にもできない**
-   * （`docs/domain/money.md`「最小単位を持たない通貨コードは扱わない」）。
-   */
+  /** 金額を入力するときの初期値。**扱える通貨を制限しない**（`docs/domain/money.md`）。 */
   readonly defaultCurrency: Currency
   /** 参加コード。作成時に受け取り、以後変更も再生成もしない（形式は `docs/adr/0002-invite-code.md`）。 */
   readonly inviteCode: string
@@ -42,12 +33,7 @@ const groupName = (raw: string): Result<string, GroupNameInvalid> => {
   return err(constrained.error === 'empty' ? { kind: 'groupNameEmpty' } : { kind: 'groupNameTooLong' })
 }
 
-/**
- * グループを作成する（`docs/domain/group.md`「グループを作成する」）。
- *
- * 作成者は Member になり、その表示名の初期値には User の名前を使う。
- * ID と参加コードは受け取るだけで、ここでは作らない（`docs/adr/0008-layer-internals.md`）。
- */
+/** グループを作成する（`docs/domain/group.md`「グループを作成する」）。 */
 const create = (input: {
   id: GroupId
   name: string
@@ -82,12 +68,7 @@ const create = (input: {
   })
 }
 
-/**
- * グループ設定を変更する（`docs/domain/group.md`「グループ設定を変更する」）。
- *
- * 渡されたものだけを変える。参加コードと Member は変わらず、変更前の値も残らない。
- * **同時に変更されても失敗させない。後から届いた方が勝つ**（`docs/adr/0005-data-access-and-authorization.md`）。
- */
+/** グループ設定を変更する（`docs/domain/group.md`「グループ設定を変更する」）。渡されたものだけを変える。 */
 const changeSettings = (
   group: Group,
   input: { actor: UserId | undefined; name?: string; defaultCurrency?: string },
@@ -112,11 +93,7 @@ const changeSettings = (
 /**
  * グループに参加する（`docs/domain/group.md`「グループに参加する」）。
  *
- * 参加コードから Group を解決するのは呼び出し側で、見つからなければ「存在しない」失敗になる
- * （`access.ts` の `requireGroupMember`）。
- *
  * **既に Member であれば、新しい Member を作らず、入力された表示名も反映しない。**
- * 表示名を変えるのは「表示名を変更する」の責務であり、参加は何度行っても結果が変わらない。
  */
 const join = (
   group: Group,
@@ -136,12 +113,7 @@ const join = (
   return ok({ ...group, members: [...group.members, member.value] })
 }
 
-/**
- * 表示名を変更する（`docs/domain/group.md`「表示名を変更する」）。
- *
- * 前提条件は「対象が、そのグループの Member であること」。
- * 同じ User の、他のグループの Member の表示名は変わらない。
- */
+/** 表示名を変更する（`docs/domain/group.md`「表示名を変更する」）。 */
 const changeDisplayName = (
   group: Group,
   input: { member: MemberId; displayName: string },

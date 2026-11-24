@@ -1,4 +1,3 @@
-import { invitePath } from '../../shared/invite'
 import { NOTICE_PARAM, type NoticeTag } from './notice'
 
 /** 開いていた招待の参加コードを運ぶ場所（問い合わせ文字列）。 */
@@ -19,13 +18,10 @@ const withQuery = (path: string, query: Readonly<Record<string, string | undefin
   return params.size === 0 ? path : `${path}?${params}`
 }
 
-/**
- * 画面の場所（`docs/adr/0009-web-ui.md`）。
- *
- * **ビューモデルに載せるリンクはここで組み立てる。** Presentational は受け取った文字列を
- * `href` に置くだけで、場所を知らない。**識別子を素の文字列で受ける**のは、ビューモデルが
- * シリアライズ可能な素の値だけで構成されるため（`docs/adr/0009`）。
- */
+/** **参加コードは 1 区間に収める。** 区切りを含む値が来ても、別の場所を指さない。 */
+const invitePath = (inviteCode: string): string => `/j/${encodeURIComponent(inviteCode)}`
+
+/** 画面の場所（`docs/adr/0009-web-ui.md`）。**ビューモデルに載せるリンクはここで組み立てる。** */
 export const route = {
   login: (options: { readonly inviteCode?: string; readonly failure?: LoginFailure } = {}) =>
     withQuery('/login', {
@@ -46,13 +42,7 @@ export const route = {
   entrance: (inviteCode?: string) => (inviteCode === undefined ? '/' : invitePath(inviteCode)),
   newGroup: () => '/groups/new',
 
-  /**
-   * グループのトップ（記録一覧）。
-   *
-   * **操作の結果を伝える印を、行き先そのものに載せる**（`docs/adr/0009-web-ui.md`「トースト」）。
-   * 記録の登録・編集・削除はここへ送り出すため、伝えごとは遷移をまたぐ。**サーバー側で持ち回らず**
-   * （`docs/adr/0003`）、渡した相手のブラウザだけが持つ場所に置く。
-   */
+  /** グループのトップ（記録一覧）。操作の結果を伝える印を載せられる（`docs/adr/0009-web-ui.md`「トースト」）。 */
   group: (groupId: string, notice?: NoticeTag) =>
     notice === undefined
       ? `/groups/${groupId}`
@@ -64,10 +54,6 @@ export const route = {
   newRecord: (groupId: string) => `/groups/${groupId}/records/new`,
   record: (groupId: string, recordId: string) => `/groups/${groupId}/records/${recordId}`,
 
-  /**
-   * 参加コードを埋め込んだ共有リンク（`docs/domain/group.md`「Group の属性」）。
-   *
-   * **形の正は `src/adapter/shared/invite.ts`。**
-   */
-  invite: (inviteCode: string) => invitePath(inviteCode),
+  /** 参加コードを埋め込んだ共有リンク。`origin` は入口が渡す（アダプタは実行環境を知らない）。 */
+  inviteUrl: (origin: string, inviteCode: string) => `${origin}${invitePath(inviteCode)}`,
 } as const

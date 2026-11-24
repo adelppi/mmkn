@@ -2,12 +2,7 @@ import type { GroupId, TransferId } from '../../domain/id'
 import type { Transfer } from '../../domain/record/transfer'
 import type { Version, Versioned, VersionedDelete, VersionedWrite } from '../usecase'
 
-/**
- * Transfer 集約の永続化ポート（`docs/adr/0008-layer-internals.md`「永続化の単位」）。
- *
- * 集約は **Transfer** 単体。形は `PaymentRepository` と同じで、楽観ロックの版も同じ扱いをする
- * （`docs/adr/0005-data-access-and-authorization.md`「楽観ロックを持つのは Payment と Transfer だけ」）。
- */
+/** Transfer 集約の永続化ポート（`docs/adr/0008-layer-internals.md`「永続化の単位」）。 */
 export type TransferRepository = {
   /** 記録と版を組で読む。 */
   find(id: TransferId): Promise<Versioned<Transfer> | undefined>

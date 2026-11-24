@@ -38,21 +38,10 @@ import { registerSettlementTransfer } from '@/src/usecase/settlement/register-se
 import { viewSettlement } from '@/src/usecase/settlement/view-settlement'
 
 /**
- * 合成ルート（`docs/adr/0008-layer-internals.md`「合成ルート」）。
+ * 合成ルート（`docs/adr/0008-layer-internals.md`「合成ルート」）。リクエストごとに呼ぶ。
  *
- * **依存の組み立てはここだけで行い、リクエストごとに呼ぶ。DI コンテナのライブラリは使わない。**
- * `container` という名前を使わないのは、`docs/adr/0009-web-ui.md` の Container Component と
- * 衝突するため。
- *
- * **コネクションプールはここで作らない**（`src/infra/db/client.ts` のモジュールスコープにある）。
- * リクエストごとに作り直すのは、ポート実装とユースケースの組み立てだけ。
- *
- * **ログはここで包む**（`docs/adr/0014-logging.md`）。ユースケースの中にログ出力を散らさない。
- *
- * **取得を束ねるのもここである**（`docs/adr/0009-web-ui.md`「束ねる位置」）。包むのは
- * リポジトリの読み取りで、ユースケースの側は束ねられていることを知らない。
- * **合図（`bundle`）を立てるのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない。**
- * 書き込みを伴う経路（`app/_lib/action.ts` の `scope()`）は既定のまま呼ぶ。
+ * **`bundle` を立てるのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない**
+ * （`docs/adr/0009-web-ui.md`「束ねる位置」）。
  */
 export function wire(context: LogContext, bundle: BundleReads = noBundling) {
   const db = database()

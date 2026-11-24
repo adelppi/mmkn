@@ -2,11 +2,7 @@ import { Button } from '@/app/_ui/button'
 import { Notice, Screen } from '@/app/_ui/notice'
 import type { LoginView } from '@/src/adapter/web/presenter/account'
 
-/**
- * ログイン（設計 01）。
- *
- * **パスワードの入力欄も、再設定の導線も無い**（`docs/adr/0012-login.md`）。
- */
+/** ログイン（設計 01）。 */
 export function LoginPresentation(props: LoginView & { readonly action: (data: FormData) => void }) {
   return (
     <Screen className="justify-center gap-10 px-7 pb-24">

@@ -1,12 +1,7 @@
 import type { UseCase } from '../../usecase/usecase'
 import { writeLog, type LogContext } from './logger'
 
-/**
- * ユースケースをログで包む（`docs/adr/0014-logging.md`「どこで出すか」）。
- *
- * **包む形にするのは、ドメイン層・ユースケース層にログの存在を持ち込まないためである。**
- * 合成ルート（`app/_lib/wire.ts`）がこれを使い、ユースケースの中にログ出力を散らさない。
- */
+/** ユースケースをログで包む（`docs/adr/0014-logging.md`「どこで出すか」）。 */
 
 /**
  * 失敗の union のタグを取り出す。
