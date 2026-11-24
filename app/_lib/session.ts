@@ -44,11 +44,11 @@ const writableCookies = async (): Promise<CookieStore> => {
   }
 }
 
-/** 読み取りだけの文脈で使う。**ログイン・ログアウト・ログイン手段の追加には使えない。** */
+/** 読み取りだけの文脈で使う。**ログイン・ログアウトには使えない。** */
 export const readOnlyAuthClient = async (): Promise<AuthClient> =>
   createAuthClient(await readOnlyCookies())
 
-/** セッションを変える操作（ログイン・ログアウト・ログイン手段の追加と削除）で使う。 */
+/** セッションを変える操作（ログイン・ログアウト）で使う。 */
 export const authClient = async (): Promise<AuthClient> =>
   createAuthClient(await writableCookies())
 

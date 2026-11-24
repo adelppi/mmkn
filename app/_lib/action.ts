@@ -17,7 +17,7 @@ import { redirect } from 'next/navigation'
  */
 export const scope = async () => {
   const client = await authClient()
-  const usecases = wire({ correlationId: crypto.randomUUID() }, client)
+  const usecases = wire({ correlationId: crypto.randomUUID() })
 
   return { client, usecases, actor: await currentUserId(client) }
 }

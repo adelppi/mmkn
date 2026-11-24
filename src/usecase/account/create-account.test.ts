@@ -3,7 +3,7 @@ import { fakeIdGenerator, fakeUserRepository } from '../port/fake'
 import { createAccount } from './create-account'
 
 /**
- * **Group・Member が作られないこと、ログイン手段が 2 つ以上にならないことは、
+ * **Group・Member が作られないことは、
  * このユースケースがそれらのポートを受け取っていないことで担保している**
  * （`docs/domain/group.md`「アカウントを作成する」の「起きないこと」）。
  * 触れる先が無いため、偽実装を渡して確かめる形にはしていない。

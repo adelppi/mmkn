@@ -1,5 +1,4 @@
 import {
-  bundledExternalAccounts,
   bundledGroups,
   bundledPayments,
   bundledTransfers,
@@ -7,9 +6,7 @@ import {
   noBundling,
   type BundleReads,
 } from '@/app/_lib/bundle'
-import type { AuthClient } from '@/src/infra/auth/client'
-import { supabaseExternalAccountRepository } from '@/src/infra/auth/external-account'
-import { database, sqlClient } from '@/src/infra/db/client'
+import { database } from '@/src/infra/db/client'
 import { drizzleGroupRepository } from '@/src/infra/db/repository/group'
 import { drizzlePaymentRepository } from '@/src/infra/db/repository/payment'
 import { drizzleTransferRepository } from '@/src/infra/db/repository/transfer'
@@ -19,11 +16,9 @@ import { logged } from '@/src/infra/log/usecase-log'
 import { systemClock } from '@/src/infra/system/clock'
 import { cuid2IdGenerator } from '@/src/infra/system/id'
 import { cuid2InviteCodeGenerator } from '@/src/infra/system/invite-code'
-import { addLoginMethod } from '@/src/usecase/account/add-login-method'
 import { createAccount } from '@/src/usecase/account/create-account'
 import { logIn } from '@/src/usecase/account/log-in'
 import { logOut } from '@/src/usecase/account/log-out'
-import { removeLoginMethod } from '@/src/usecase/account/remove-login-method'
 import { viewAccount } from '@/src/usecase/account/view-account'
 import { changeDisplayName } from '@/src/usecase/group/change-display-name'
 import { changeGroupSettings } from '@/src/usecase/group/change-group-settings'
@@ -54,41 +49,29 @@ import { viewSettlement } from '@/src/usecase/settlement/view-settlement'
  *
  * **ログはここで包む**（`docs/adr/0014-logging.md`）。ユースケースの中にログ出力を散らさない。
  *
- * 認証基盤への接続（`auth`）を引数で受けるのは、それが cookie に結びついており、
- * cookie へのアクセス手段がアプリ層から注入されるためである（`docs/adr/0008`「セッションの読み取り」）。
- * **作る場所は `app/_lib/session.ts`。** ここはそれを組み込むだけで、セッションを解決しない。
- *
  * **取得を束ねるのもここである**（`docs/adr/0009-web-ui.md`「束ねる位置」）。包むのは
  * リポジトリの読み取りで、ユースケースの側は束ねられていることを知らない。
  * **合図（`bundle`）を立てるのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない。**
  * 書き込みを伴う経路（`app/_lib/action.ts` の `scope()`）は既定のまま呼ぶ。
  */
-export function wire(context: LogContext, auth: AuthClient, bundle: BundleReads = noBundling) {
+export function wire(context: LogContext, bundle: BundleReads = noBundling) {
   const db = database()
-  const users = bundledUsers(drizzleUserRepository(db), bundle)
 
   const deps = {
     groups: bundledGroups(drizzleGroupRepository(db), bundle),
-    users,
+    users: bundledUsers(drizzleUserRepository(db), bundle),
     payments: bundledPayments(drizzlePaymentRepository(db), bundle),
     transfers: bundledTransfers(drizzleTransferRepository(db), bundle),
-    // **ログイン手段だけは mmkn の DB に無い。** 実体は認証基盤の側にある（`adr/0012`）。
-    externalAccounts: bundledExternalAccounts(
-      supabaseExternalAccountRepository({ sql: sqlClient(), client: auth, users }),
-      bundle,
-    ),
     ids: cuid2IdGenerator,
     clock: systemClock,
     inviteCodes: cuid2InviteCodeGenerator,
   }
 
   return {
-    // アカウントとログイン手段（`docs/features.md` #11・#12）
+    // アカウント（`docs/features.md` #11）
     createAccount: logged(context, 'createAccount', createAccount(deps)),
     logIn: logged(context, 'logIn', logIn(deps)),
     logOut: logged(context, 'logOut', logOut(deps)),
-    addLoginMethod: logged(context, 'addLoginMethod', addLoginMethod(deps)),
-    removeLoginMethod: logged(context, 'removeLoginMethod', removeLoginMethod(deps)),
     viewAccount: logged(context, 'viewAccount', viewAccount(deps)),
 
     // グループとメンバー（`docs/features.md` #1〜#4）

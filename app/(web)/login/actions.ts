@@ -1,8 +1,6 @@
 'use server'
 
 import { scope } from '@/app/_lib/action'
-import { isLoginService } from '@/app/_lib/login-services'
-import { startAddingLoginMethod } from '@/src/infra/auth/external-account'
 import { startLogin } from '@/src/infra/auth/session'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -15,39 +13,18 @@ import { redirect } from 'next/navigation'
  * それは外部サービスからのリダイレクト先であって、こちらから叩く口ではない。
  */
 
-const callbackUrl = async (query = ''): Promise<string> => {
+const callbackUrl = async (): Promise<string> => {
   const list = await headers()
   const host = list.get('x-forwarded-host') ?? list.get('host') ?? ''
   const protocol = list.get('x-forwarded-proto') ?? 'http'
 
-  return `${protocol}://${host}/auth/callback${query}`
+  return `${protocol}://${host}/auth/callback`
 }
 
 /** ログインを始める。**User は作られない**（`docs/domain/group.md`「ログインする」）。 */
-export async function startLoginAction(service: string) {
-  if (!isLoginService(service)) redirect('/login')
-
+export async function startLoginAction() {
   const { client } = await scope()
-  const url = await startLogin(client, service, await callbackUrl())
-
-  redirect(url)
-}
-
-/**
- * ログイン手段の追加を始める。
- *
- * **必ず本人の明示的な操作から始まる**（`docs/adr/0012`「自動統合に頼らない」）。
- * 戻り先に印を付けておき、完了の側でどちらの往復かを判別する。
- */
-export async function startAddingLoginMethodAction(service: string) {
-  if (!isLoginService(service)) redirect('/account')
-
-  const { client } = await scope()
-  const url = await startAddingLoginMethod(
-    client,
-    service,
-    await callbackUrl(`?add=${encodeURIComponent(service)}`),
-  )
+  const url = await startLogin(client, await callbackUrl())
 
   redirect(url)
 }

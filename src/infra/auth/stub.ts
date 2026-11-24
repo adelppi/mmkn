@@ -18,7 +18,7 @@ import type { AuthClient, CookieStore } from './client'
  * ## 何を確かめられなくなるか
  *
  * **本物の認証基盤の挙動は、E2E では何一つ確かめられない**（同じ外部アカウントで再ログインした
- * ときに同じ user が返るか、ログイン手段の追加が成立するか）。それらは
+ * ときに同じ user が返るか）。それは
  * `docs/operations.md`「実装着手時に必ず確かめること」の手動確認が正であり、ここは代わりにならない。
  *
  * ## 有効になる条件
@@ -59,24 +59,14 @@ const putCookie = (cookies: CookieStore, name: string, value: string): void => {
   ])
 }
 
-/** その識別子のログイン手段。**1 つだけ持つ。** */
-const identitiesOf = (loginIdentifier: string) => [
-  { provider: 'google', id: `google:${loginIdentifier}` },
-]
-
-/**
- * 認可画面の代わりに返す行き先。**そのまま戻り先へ送り返す。**
- *
- * 戻り先は往復の種類で決まる（ログインは印なし、ログイン手段の追加は `?add=…`。
- * `app/auth/callback/route.ts`）ため、既にある問い合わせ文字列を壊さずに `code` を足す。
- */
+/** 認可画面の代わりに返す行き先。**そのまま戻り先へ送り返す。** */
 const callbackWith = (redirectTo: string, code: string): string =>
-  `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}`
+  `${redirectTo}?code=${encodeURIComponent(code)}`
 
 /**
  * 偽の認証への接続。
  *
- * **本物と同じ形の値を返す**（`src/infra/auth/session.ts` と `external-account.ts` が読む形）。
+ * **本物と同じ形の値を返す**（`src/infra/auth/session.ts` が読む形）。
  * 型は認証基盤の SDK のものであり、そのすべてを持たないため、使われる分だけを作って変換する。
  */
 export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
@@ -110,7 +100,7 @@ export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
         data: {
           session: {
             access_token: loginIdentifier,
-            user: { id: loginIdentifier, identities: identitiesOf(loginIdentifier) },
+            user: { id: loginIdentifier },
           },
         },
         error: null,
@@ -129,7 +119,7 @@ export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
       putCookie(cookies, SESSION_COOKIE, code)
 
       return {
-        data: { user: { id: code, identities: identitiesOf(code) } },
+        data: { user: { id: code } },
         error: null,
       }
     },
@@ -137,28 +127,6 @@ export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
     signOut: async () => {
       putCookie(cookies, SESSION_COOKIE, '')
       return { error: null }
-    },
-
-    getUserIdentities: async () => {
-      const loginIdentifier = cookieValue(cookies, SESSION_COOKIE)
-
-      return {
-        data: { identities: loginIdentifier === undefined ? [] : identitiesOf(loginIdentifier) },
-        error: null,
-      }
-    },
-
-    /**
-     * **扱わない。** ログイン手段の追加と削除は認可画面をまたぐ往復であり、
-     * それを自動化しないと決めている（`docs/adr/0010`「E2E の範囲」）。
-     *
-     * **握りつぶさない。** 何事も無かったように振る舞うと、E2E が「追加できた」と誤って通る。
-     */
-    linkIdentity: async () => {
-      throw new Error('E2E の偽の認証は、ログイン手段の追加を扱わない')
-    },
-    unlinkIdentity: async () => {
-      throw new Error('E2E の偽の認証は、ログイン手段の削除を扱わない')
     },
   }
 

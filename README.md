@@ -73,7 +73,7 @@ Transfer ─┘
 - ドメインモデルは `docs/domain/` の 4 文書に確定済み
 - 技術的意思決定は `docs/adr/`
 - 未確定の論点はゼロ（`docs/open-questions.md`）
-- v1 は機能一覧の 12 機能すべて。段階リリースをしない（`docs/features.md`）
+- v1 は機能一覧の 11 機能すべて。段階リリースをしない（`docs/features.md`）
 - 層のディレクトリと依存方向の検査、lint / 型検査 / 単体テストが PR の CI で回る
 
 技術スタックは TypeScript / Next.js / Vercel / Supabase（`docs/adr/0003-tech-stack.md`）。

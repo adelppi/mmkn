@@ -1,8 +1,6 @@
-import type { ExternalAccount } from '../../domain/group/login-method'
 import type { UserId } from '../../domain/id'
 import type { UserRepository } from '../../usecase/port/user-repository'
 import type { AuthClient } from './client'
-import type { LoginService } from './external-account'
 import { verificationKeys } from './jwks'
 
 /**
@@ -20,18 +18,11 @@ import { verificationKeys } from './jwks'
  * 認証基盤の user から、mmkn のログイン識別子を取り出す。
  *
  * **識別子は認証基盤が持つ user の識別子**（`docs/adr/0012`「provider が返す ID を識別子に
- * しない理由」）。ログイン手段を増やしても変わらないため、`docs/domain/group.md` が
- * 「どのログイン手段で入っても行き着く先は同じ」と定めているものにそのまま対応する。
+ * しない理由」）。
  *
  * **provider が返す ID もメールアドレスも識別子に使わない。**
  */
 const loginIdentifierOf = (user: { id: string }): string => user.id
-
-/** その user が持つログイン手段。**認証基盤の identity がそのままログイン手段にあたる。** */
-const loginMethodsOf = (
-  identities: readonly { provider: string; id: string }[],
-): readonly ExternalAccount[] =>
-  identities.map((identity) => ({ service: identity.provider, id: identity.id }))
 
 /**
  * 本人であることが確かめられた識別子。ログインしていなければ `undefined`。
@@ -71,7 +62,7 @@ export const refreshSession = async (client: AuthClient): Promise<void> => {
  * 現在の `UserId`。ログインしていない、またはその人の User がまだいなければ `undefined`。
  *
  * **識別子から `UserId` への変換は入口で閉じる**（`docs/adr/0004-layers-and-dependencies.md`）。
- * 内側へ流すのは `UserId` だけで、ログイン識別子もログイン手段も流さない。
+ * 内側へ流すのは `UserId` だけで、ログイン識別子は流さない。
  */
 export const currentUserId = async (
   client: AuthClient,
@@ -84,20 +75,21 @@ export const currentUserId = async (
   return user?.id
 }
 
+/** ログインに使う外部サービス。**正は `docs/adr/0012-login.md`。** */
+const LOGIN_SERVICE = 'discord'
+
 /**
  * ログインの往復を始める。返した URL へ送り出す。
  *
- * **どのサービスでも入口は同じ形**（`docs/domain/group.md`「User と外部アカウント」）。
  * ブラウザではなくサーバーで開始するため、**認証基盤の URL と anon key がブラウザに露出しない**
  * （`.env.example`）。
+ *
+ * **スコープを渡さない。** 渡しても認証基盤の既定に足されるだけで、減らせない
+ * （`docs/adr/0012`「Discord に要求するスコープ」）。
  */
-export const startLogin = async (
-  client: AuthClient,
-  service: LoginService,
-  redirectTo: string,
-): Promise<string> => {
+export const startLogin = async (client: AuthClient, redirectTo: string): Promise<string> => {
   const { data, error } = await client.auth.signInWithOAuth({
-    provider: service,
+    provider: LOGIN_SERVICE,
     options: { redirectTo, skipBrowserRedirect: true },
   })
   if (error !== null) throw error
@@ -106,30 +98,20 @@ export const startLogin = async (
 }
 
 /**
- * 認可画面から戻ってきた往復を完了させる。**ログインとログイン手段の追加の両方がここを通る。**
+ * 認可画面から戻ってきた往復を完了させる。
  *
- * `rejected` は認証基盤が往復を受け付けなかったことを表す。**追加しようとした外部アカウントが
- * 既に別の User のものであるときも、ここで断られる**（`docs/adr/0012`。実際にそうなるかは
- * `docs/operations.md`「実装着手時に必ず確かめること」の手動確認の対象）。
+ * `rejected` は認証基盤が往復を受け付けなかったことを表す。
  */
-export type CompletedOAuth =
-  | {
-      readonly kind: 'completed'
-      readonly loginIdentifier: string
-      readonly loginMethods: readonly ExternalAccount[]
-    }
+export type CompletedLogin =
+  | { readonly kind: 'completed'; readonly loginIdentifier: string }
   | { readonly kind: 'rejected'; readonly code: string | undefined }
 
-export const completeOAuth = async (client: AuthClient, code: string): Promise<CompletedOAuth> => {
+export const completeLogin = async (client: AuthClient, code: string): Promise<CompletedLogin> => {
   const { data, error } = await client.auth.exchangeCodeForSession(code)
   // **失敗の中身は持ち出さない。** 機械が読む区分だけを返す（`docs/adr/0014-logging.md`）。
   if (error !== null || data.user === null) return { kind: 'rejected', code: error?.code }
 
-  return {
-    kind: 'completed',
-    loginIdentifier: loginIdentifierOf(data.user),
-    loginMethods: loginMethodsOf(data.user.identities ?? []),
-  }
+  return { kind: 'completed', loginIdentifier: loginIdentifierOf(data.user) }
 }
 
 /**

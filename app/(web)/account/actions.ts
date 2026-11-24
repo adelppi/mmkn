@@ -1,28 +1,9 @@
 'use server'
 
-import { discard, refresh, scope } from '@/app/_lib/action'
-import { removeLoginMethod } from '@/src/adapter/web/controller/account'
-import type { RemoveLoginMethodView } from '@/src/adapter/web/presenter/account'
+import { discard, scope } from '@/app/_lib/action'
 import { route } from '@/src/adapter/web/presenter/route'
 import { endSession } from '@/src/infra/auth/session'
 import { redirect } from 'next/navigation'
-
-/**
- * ログイン手段を削除する（`docs/domain/group.md`「ログイン手段を削除する」）。
- *
- * **成功しても他の画面へ送り出さない。** 削除の結果はこの画面で伝わればよく、
- * Group・Member・記録は何も変わらない。
- */
-export async function removeLoginMethodAction(previous: RemoveLoginMethodView, data: FormData) {
-  const { usecases, actor } = await scope()
-
-  const view = await removeLoginMethod({
-    removeLoginMethod: usecases.removeLoginMethod,
-    actor,
-  })(previous, data)
-
-  return refresh(view)
-}
 
 /**
  * ログアウトする（`docs/domain/group.md`「ログアウトする」・`docs/features.md` #11）。

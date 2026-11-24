@@ -4,29 +4,14 @@ import { err, ok } from '../../../domain/result'
 import { taro } from '../../../usecase/fixture'
 import {
   initialCreateAccountView,
-  initialRemoveLoginMethodView,
   toAccountView,
   toCreateAccountView,
   toLoginView,
-  toRemoveLoginMethodView,
 } from './account'
 
 describe('ログイン画面', () => {
-  it('渡されたログイン手段をそのまま並べる', () => {
-    const view = toLoginView(['google', 'discord'])
-
-    expect(view.choices.map((choice) => choice.action)).toEqual([
-      'Google で続ける',
-      'Discord で続ける',
-    ])
-  })
-
-  it('知らないサービスが増えても、そのまま並ぶ（画面を作り直さない）', () => {
-    const view = toLoginView(['github'])
-
-    expect(view.choices).toEqual([
-      { service: 'github', label: 'github', action: 'github で続ける' },
-    ])
+  it('始められるのは Discord だけ', () => {
+    expect(toLoginView()).toEqual({ kind: 'ok', start: 'Discord で続ける' })
   })
 })
 
@@ -73,70 +58,15 @@ describe('アカウント作成', () => {
   })
 })
 
-describe('ログイン手段の管理', () => {
-  const output = (services: readonly string[]) =>
-    ok({
-      user: taro,
-      loginMethods: services.map((service) => ({ service, id: `${service}-1` })),
-    })
-
-  it('使えるサービスが、追加済みかどうかと一緒に並ぶ', () => {
-    const view = toAccountView(['google', 'discord'], output(['google']))
-
-    expect(view.kind).toBe('ok')
-    if (view.kind !== 'ok') return
-
-    expect(view.methods).toEqual([
-      { service: 'google', label: 'Google', connected: true, status: 'ログインに使えます' },
-      { service: 'discord', label: 'Discord', connected: false, status: 'まだ使えません' },
-    ])
-  })
-
-  it('ログイン手段が 1 つのときは、増やすよう促す', () => {
-    const view = toAccountView(['google', 'discord'], output(['google']))
-
-    expect(view.kind === 'ok' && view.atRisk).toBe(true)
-    expect(view.kind === 'ok' && view.encouragement).toContain('すべて失うと')
-  })
-
-  it('2 つ以上あれば、促し方を強めない', () => {
-    const view = toAccountView(['google', 'discord'], output(['google', 'discord']))
-
-    expect(view.kind === 'ok' && view.atRisk).toBe(false)
+describe('アカウント', () => {
+  it('自分の名前と、グループ一覧への導線が出る', () => {
+    expect(toAccountView(ok(taro))).toEqual({ kind: 'ok', name: 'たろう', groupsHref: '/' })
   })
 
   it('ログインしていなければ、その旨とログインへの導線が出る', () => {
-    const view = toAccountView(['google'], err({ kind: 'notAuthenticated' }))
+    const view = toAccountView(err({ kind: 'notAuthenticated' }))
 
     expect(view.kind).toBe('notAuthenticated')
     expect(view.kind === 'notAuthenticated' && view.loginHref).toBe('/login')
-  })
-})
-
-describe('ログイン手段の削除', () => {
-  it('初期状態は何も起きていない', () => {
-    expect(initialRemoveLoginMethodView()).toEqual({ kind: 'idle' })
-  })
-
-  it('削除できたら、その手段で入れなくなったことを伝える', () => {
-    const view = toRemoveLoginMethodView('discord', ok(undefined))
-
-    expect(view.kind).toBe('removed')
-    expect(view.kind === 'removed' && view.message).toBe(
-      'Discord でログインできなくなりました。',
-    )
-  })
-
-  it('最後の 1 つの削除は、失敗のタグとして出る（画面側で判定しない）', () => {
-    const view = toRemoveLoginMethodView('google', err({ kind: 'lastLoginMethod' }))
-
-    expect(view.kind).toBe('failed')
-    expect(view.kind === 'failed' && view.message).toContain('最後のログイン手段は削除できません')
-  })
-
-  it('ログイン手段でないサービスの削除も、失敗のタグとして出る', () => {
-    const view = toRemoveLoginMethodView('discord', err({ kind: 'notALoginMethod' }))
-
-    expect(view.kind).toBe('failed')
   })
 })

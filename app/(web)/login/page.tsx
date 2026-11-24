@@ -1,6 +1,6 @@
 import { startLoginAction } from './actions'
-import { LoginChoicesContainer } from './_containers/login-choices/container'
+import { LoginContainer } from './_containers/login/container'
 
 export default function LoginPage() {
-  return <LoginChoicesContainer action={startLoginAction} />
+  return <LoginContainer action={startLoginAction} />
 }
