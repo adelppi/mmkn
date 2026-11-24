@@ -22,28 +22,35 @@ const context = cache(
 /** 読み取りの文脈では cookie を書けない（`app/_lib/session.ts`）。 */
 const client = cache(async () => await readOnlyAuthClient())
 
-const usecases = cache(() => wire(context(), cache))
+/**
+ * **cookie を先に読む。** 読んだ時点でリクエストごとの描画になるため、ビルド時の事前描画が
+ * DB への接続を作らずに済む（ビルドの環境に本番の接続文字列は無い）。
+ */
+const usecases = cache(async () => {
+  await client()
+  return wire(context(), cache)
+})
 
 /** 現在の `UserId`。ログインしていなければ `undefined`。**失敗として扱うのはユースケース。** */
 export const actor = cache(async () => await currentUserId(await client()))
 
-export const readGroups = cache(async () => usecases().listGroups({ actor: await actor() }))
+export const readGroups = cache(async () => (await usecases()).listGroups({ actor: await actor() }))
 
 export const readGroup = cache(async (groupId: string) =>
-  usecases().viewGroup({ actor: await actor(), group: toGroupId(groupId) }),
+  (await usecases()).viewGroup({ actor: await actor(), group: toGroupId(groupId) }),
 )
 
 export const readRecords = cache(async (groupId: string) =>
-  usecases().listRecords({ actor: await actor(), group: toGroupId(groupId) }),
+  (await usecases()).listRecords({ actor: await actor(), group: toGroupId(groupId) }),
 )
 
 /** 収支と清算案は 1 回の呼び出しで両方返る（`src/usecase/settlement/view-settlement.ts`）。 */
 export const readSettlement = cache(async (groupId: string) =>
-  usecases().viewSettlement({ actor: await actor(), group: toGroupId(groupId) }),
+  (await usecases()).viewSettlement({ actor: await actor(), group: toGroupId(groupId) }),
 )
 
 export const readInvite = cache(async (inviteCode: string) =>
-  usecases().viewInvite({ actor: await actor(), inviteCode }),
+  (await usecases()).viewInvite({ actor: await actor(), inviteCode }),
 )
 
-export const readAccount = cache(async () => usecases().viewAccount({ actor: await actor() }))
+export const readAccount = cache(async () => (await usecases()).viewAccount({ actor: await actor() }))

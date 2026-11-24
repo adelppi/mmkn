@@ -152,23 +152,3 @@ export const transfers = pgTable(
   },
   (t) => [index('transfers_group_id_idx').on(t.groupId), denyAll('transfers')],
 ).enableRLS()
-
-/**
- * **もう使っていない**（`docs/adr/0017-web-only.md`）。読み書きするコードは無い。
- *
- * 壊す変更は 2 回のリリースに分ける（`docs/adr/0011`）ため、落とすのは次のリリース（#45）になる。
- */
-export const placeMappings = pgTable(
-  'place_mappings',
-  {
-    service: text('service').notNull(),
-    placeId: text('place_id').notNull(),
-    groupId: text('group_id')
-      .notNull()
-      .references(() => groups.id),
-  },
-  (t) => [
-    primaryKey({ name: 'place_mappings_pkey', columns: [t.service, t.placeId] }),
-    denyAll('place_mappings'),
-  ],
-).enableRLS()
