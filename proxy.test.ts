@@ -75,8 +75,7 @@ describe('入口を通さないもの', () => {
     !config.matcher.some((pattern) => new RegExp(`^${pattern}$`).test(path))
 
   it('セッションを持たないものは、入口に届く前に外れる', () => {
-    // 署名付きのエンドポイント（`docs/adr/0006`）と、静的ファイル・フレームワークの内部。
-    expect(passesThrough('/api/discord')).toBe(true)
+    // 静的ファイル・フレームワークの内部。
     expect(passesThrough('/_next/static/chunk.js')).toBe(true)
     expect(passesThrough('/favicon.ico')).toBe(true)
     expect(passesThrough('/logo.png')).toBe(true)

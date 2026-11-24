@@ -179,10 +179,9 @@ export const transfers = pgTable(
 ).enableRLS()
 
 /**
- * 場と Group の対応（`docs/domain/group.md`「Group と外部サービスの場」）。
+ * **もう使っていない**（`docs/adr/0017-web-only.md`）。読み書きするコードは無い。
  *
- * **1 つの場に対応する Group は 1 つ**であるため、場が鍵になる。
- * 1 つの Group が複数の場に対応することは、鍵の違う行が複数あることとして表れる。
+ * 壊す変更は 2 回のリリースに分ける（`docs/adr/0011`）ため、落とすのは次のリリース（#45）になる。
  */
 export const placeMappings = pgTable(
   'place_mappings',

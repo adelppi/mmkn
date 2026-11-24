@@ -12,7 +12,6 @@
  * | src/infra/**    | src/domain/**・src/usecase/**・src/infra/**      | next/*                                                |
  * | app/**          | 制限なし                                          | —                                                     |
  * | proxy.ts        | 制限なし                                          | —                                                     |
- * | scripts/**      | 制限なし                                          | —                                                     |
  *
  * `app/` 配下のパス単位のルールは `docs/adr/0009-web-ui.md`「配置と命名」の表を正とする。
  *
@@ -54,30 +53,30 @@ module.exports = {
       comment: 'ドメイン層が参照してよいのはドメイン層だけ',
       severity: 'error',
       from: { path: '^src/domain/' },
-      to: { path: '^(src|app|scripts|tests)/', pathNot: '^src/domain/' },
+      to: { path: '^(src|app|tests)/', pathNot: '^src/domain/' },
     },
     {
       name: 'usecase-imports',
       comment: 'ユースケース層が参照してよいのはドメイン層だけ',
       severity: 'error',
       from: { path: '^src/usecase/' },
-      to: { path: '^(src|app|scripts|tests)/', pathNot: '^src/(domain|usecase)/' },
+      to: { path: '^(src|app|tests)/', pathNot: '^src/(domain|usecase)/' },
     },
     {
       name: 'adapter-imports',
       comment: 'アダプタ層が参照してよいのはドメイン層とユースケース層だけ',
       severity: 'error',
       from: { path: '^src/adapter/' },
-      to: { path: '^(src|app|scripts|tests)/', pathNot: '^src/(domain|usecase|adapter)/' },
+      to: { path: '^(src|app|tests)/', pathNot: '^src/(domain|usecase|adapter)/' },
     },
     {
       name: 'infra-imports',
       comment: 'インフラ層が参照してよいのはドメイン層とユースケース層とインフラ層だけ',
       severity: 'error',
       from: { path: '^src/infra/' },
-      to: { path: '^(src|app|scripts|tests)/', pathNot: '^src/(domain|usecase|infra)/' },
+      to: { path: '^(src|app|tests)/', pathNot: '^src/(domain|usecase|infra)/' },
     },
-    // app/**・proxy.ts・scripts/** は制限なし。参照の向きの規則を持たない（表の 5〜7 行目）。
+    // app/**・proxy.ts は制限なし。参照の向きの規則を持たない（表の 5〜6 行目）。
 
     // ── 逆向きの明示的な禁止（`adr/0008`）─────────────────────────────────
     {
@@ -86,13 +85,6 @@ module.exports = {
       severity: 'error',
       from: { path: '^src/usecase/' },
       to: { path: '^src/(adapter|infra)/' },
-    },
-    {
-      name: 'no-src-to-scripts',
-      comment: 'scripts/ はアプリが読み込まない道具。src/ から参照しない（adr/0008）',
-      severity: 'error',
-      from: { path: '^src/' },
-      to: { path: '^scripts/' },
     },
 
     // ── app/ 配下のパス単位のルール（`adr/0009`「配置と命名」）───────────────
@@ -103,7 +95,7 @@ module.exports = {
       severity: 'error',
       from: { path: 'container\\.tsx$' },
       to: {
-        path: '^(src|app|scripts|tests)/',
+        path: '^(src|app|tests)/',
         pathNot: ['^app/_lib/[^/]+$', '^src/adapter/web/', '^app/_ui/', 'presentation\\.tsx$'],
       },
     },
@@ -114,7 +106,7 @@ module.exports = {
       severity: 'error',
       from: { path: 'presentation\\.tsx$' },
       to: {
-        path: '^(src|app|scripts|tests)/',
+        path: '^(src|app|tests)/',
         pathNot: ['^src/adapter/web/presenter/', '^app/_ui/'],
       },
     },
@@ -124,7 +116,7 @@ module.exports = {
         'UI の部品は層ではない。app/_ui から層（src/**）と合成ルート（app/_lib）を参照しない（adr/0009）',
       severity: 'error',
       from: { path: '^app/_ui/' },
-      to: { path: '^(src|app/_lib|scripts|tests)/' },
+      to: { path: '^(src|app/_lib|tests)/' },
     },
 
     // ── 層ごとの禁止モジュール ──────────────────────────────────────────────

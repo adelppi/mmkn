@@ -50,10 +50,9 @@ export const config = {
    * 通さないもの。
    *
    * - 静的ファイル・Next.js の内部 … セッションを持たないため、更新するものが無い
-   * - `api/` … Discord の署名付きエンドポイント（`docs/adr/0006`）。cookie を持たない
    * - `auth/` … ログインの往復の戻り先。**そこは Route Handler が自分で cookie を書ける**
    */
   matcher: [
-    '/((?!api/|auth/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!auth/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

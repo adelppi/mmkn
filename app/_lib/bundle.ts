@@ -1,7 +1,6 @@
 import type { ExternalAccountRepository } from '@/src/usecase/port/external-account-repository'
 import type { GroupRepository } from '@/src/usecase/port/group-repository'
 import type { PaymentRepository } from '@/src/usecase/port/payment-repository'
-import type { PlaceMappingRepository } from '@/src/usecase/port/place-mapping-repository'
 import type { TransferRepository } from '@/src/usecase/port/transfer-repository'
 import type { UserRepository } from '@/src/usecase/port/user-repository'
 
@@ -84,18 +83,9 @@ export const bundledTransfers = (
 })
 
 /**
- * 場の対応。**引数が素の値ではないため、同じ場を指していても別の呼び出しとして扱われ得る。**
- * 束ならないだけで結果は変わらない（`find` は読み取りのみ）。
+ * `findUserId` は外部アカウント（オブジェクト）を受け取る。**引数が素の値ではないため、同じものを
+ * 指していても別の呼び出しとして扱われ得る。** 束ならないだけで結果は変わらない。
  */
-export const bundledPlaceMappings = (
-  repository: PlaceMappingRepository,
-  bundle: BundleReads,
-): PlaceMappingRepository => ({
-  ...repository,
-  find: bundle(repository.find),
-})
-
-/** 同上。`findUserId` は外部アカウント（オブジェクト）を受け取る。 */
 export const bundledExternalAccounts = (
   repository: ExternalAccountRepository,
   bundle: BundleReads,

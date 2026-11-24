@@ -5,7 +5,6 @@ import {
   type ExternalAccount,
 } from '../../domain/group/login-method'
 import type { Member } from '../../domain/group/member'
-import type { Place, PlaceMapping } from '../../domain/group/place-mapping'
 import type { User } from '../../domain/group/user'
 import {
   idEquals,
@@ -31,7 +30,6 @@ import type { CreateGroupOutcome, GroupRepository } from './group-repository'
 import type { IdGenerator } from './id-generator'
 import type { InviteCodeGenerator } from './invite-code-generator'
 import type { PaymentRepository } from './payment-repository'
-import type { PlaceMappingRepository } from './place-mapping-repository'
 import type { TransferRepository } from './transfer-repository'
 import type { CreateUserOutcome, UserRepository } from './user-repository'
 
@@ -350,33 +348,5 @@ export const fakeTransferRepository = (
     },
 
     stored: () => [...transfers.values()],
-  }
-}
-
-export type FakePlaceMappingRepository = PlaceMappingRepository & {
-  readonly stored: () => readonly PlaceMapping[]
-}
-
-export const fakePlaceMappingRepository = (
-  initial: readonly PlaceMapping[] = [],
-): FakePlaceMappingRepository => {
-  const key = (place: Place) => `${place.service} ${place.id}`
-  const mappings = new Map<string, PlaceMapping>(
-    initial.map((mapping) => [key(mapping.place), mapping]),
-  )
-
-  return {
-    find: async (place: Place) => mappings.get(key(place)),
-
-    // 場を鍵とするため、既に別の Group が対応していれば置き換わる（後勝ち）。
-    save: async (mapping: PlaceMapping) => {
-      mappings.set(key(mapping.place), mapping)
-    },
-
-    remove: async (place: Place) => {
-      mappings.delete(key(place))
-    },
-
-    stored: () => [...mappings.values()],
   }
 }

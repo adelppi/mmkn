@@ -40,7 +40,7 @@ export const requiredEnv = (name: 'SUPABASE_URL' | 'SUPABASE_ANON_KEY'): string 
  * 結びつくため、リクエストをまたいで意味を持つ状態になる。`docs/adr/0003`）。
  *
  * **偽の認証に切り替わる口がここにある**（`stub.ts`）。**アプリ層には分岐が要らない**
- * （`app/_lib/session.ts`・`app/api/discord/route.ts`・`proxy.ts` は変わらない）。
+ * （`app/_lib/session.ts`・`proxy.ts` は変わらない）。
  * **切り替わるのは `E2E_AUTH_STUB` が立っているときだけで、既定は本物である。**
  *
  * **分岐は `infra/auth` の中に 2 つある。** 接続（ここ）と、署名を検証する公開鍵（`jwks.ts`）。

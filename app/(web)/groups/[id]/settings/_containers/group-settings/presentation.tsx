@@ -19,9 +19,6 @@ import type { GroupSettingsView, SaveSettingsView } from '@/src/adapter/web/pres
  *
  * **参加コードは共有リンクとしてしか出さない**（`docs/domain/group.md`「Group の属性」：
  * 人が読んで手で入力する経路を持たない）。
- *
- * **場と Group の対応づけはここに無い。** 場を選べるのは外部サービスの側だけであり、
- * その画面は Discord のアダプタが持つ（`docs/features.md` #13）。
  */
 export function GroupSettingsPresentation(
   props: GroupSettingsView & {

@@ -11,7 +11,7 @@ import { logged } from './usecase-log'
  * 「出す項目を絞ってある」ことで守る。ここではその絞り込みが実際に効いているかを見る。
  */
 
-const context = { correlationId: 'corr-1', client: 'web' as const }
+const context = { correlationId: 'corr-1' }
 
 const captured = (): { lines: UseCaseLog[]; restore: () => void } => {
   const lines: UseCaseLog[] = []
@@ -36,7 +36,6 @@ describe('ユースケースをログで包む', () => {
     expect(log.lines).toHaveLength(1)
     expect(log.lines[0]).toMatchObject({
       correlationId: 'corr-1',
-      client: 'web',
       usecase: 'registerPayment',
       outcome: 'ok',
     })

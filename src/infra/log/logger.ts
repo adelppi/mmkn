@@ -10,18 +10,13 @@
  * 任意の値を渡せる口を作らない。
  */
 
-/** どの提供形態から来た操作か。 */
-export type Client = 'web' | 'discord'
-
 /**
- * 1 リクエスト（1 Interaction）で一貫する文脈。
+ * 1 リクエストで一貫する文脈。
  *
- * **応答を返したあとに続く処理も同じ相関 ID で出す**（`docs/adr/0003-tech-stack.md`）。
- * 「◯時ごろ Discord が無反応だった」という報告から該当の実行を特定できる状態を作るためのもの。
+ * 「◯時ごろ保存できなかった」という報告から、該当の実行を特定できる状態を作るためのもの。
  */
 export type LogContext = {
   readonly correlationId: string
-  readonly client: Client
 }
 
 /**

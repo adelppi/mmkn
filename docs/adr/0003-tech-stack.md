@@ -1,17 +1,14 @@
-# ADR-0003: 技術スタックを Next.js + Supabase + Discord HTTP Interactions にする
+# ADR-0003: 技術スタックを Next.js + Supabase にする
 
-- ステータス: 採用 [確定]
-- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`, `adr/0012-login.md`, `adr/0014-logging.md`, `adr/0015-backup.md`
+- ステータス: 採用 [確定] — 2026-11-24 改訂（Discord クライアントの廃止に伴い、その前提を外した。`adr/0017-web-only.md`）
+- 関連: `docs/overview.md`, `docs/features.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0007-external-account-linking.md`, `adr/0008-layer-internals.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0011-ci-and-release.md`, `adr/0012-login.md`, `adr/0014-logging.md`, `adr/0015-backup.md`
 
 ## コンテキスト
 
 `overview.md` は次を前提として確定している。
 
-- スマホでの利用を前提とした Web アプリと、Discord アプリの 2 つの提供形態
-- **2 つの提供形態で機能に差を設けない**
+- スマホでの利用を前提とした Web アプリ
 - 個人開発・無料
-
-「機能に差を設けない」を個人開発で維持するには、2 つの提供形態を**同じ実装の上に載せる**しかない。どちらか一方にしか存在しないロジックを作らないことが、スタック選定の最大の制約になる。
 
 この決定は PoC での技術検証を踏まえている。PoC ではクライアント 2 種・永続化 3 種・アカウント連携 2 方式の差し替えを実際に行い、いずれもこの構成で成立することを確認した。
 
@@ -22,7 +19,6 @@
 | 言語 | TypeScript | — |
 | ランタイム | Next.js App Router / Vercel | — |
 | Web の実行モデル | Server Actions | 後述 |
-| Discord | HTTP Interactions（常駐 Bot を持たない） | `adr/0006-discord-http-interactions.md` |
 | DB | Supabase Postgres（ORM は Drizzle） | `adr/0005-data-access-and-authorization.md` |
 | 認証 | Supabase Auth | `adr/0012-login.md`（ログインとログイン手段の追加） |
 | 層の構成 | クリーンアーキテクチャ | `adr/0004-layers-and-dependencies.md` / `adr/0008-layer-internals.md` |
@@ -32,7 +28,7 @@
 
 ### Web の実行モデル
 
-Web からの操作は **Server Actions** を経路とする。クライアントからの fetch + API Routes は使わない。Discord のエンドポイントと合わせて、入口が 2 つ（Server Action / Discord の署名付きエンドポイント）に収まる。
+Web からの操作は **Server Actions** を経路とする。クライアントからの fetch + API Routes は使わない。
 
 **JS 無効時に動作することは要件にしない。** Server Actions を採用した結果として動く場面はあるが、保証すべき要件としては扱わない。ターゲットはスマホでの利用を前提とした Web アプリ（`overview.md`）であり、全画面を JS 有効・無効の 2 通りで検証するコストを個人開発で背負わない。
 
@@ -50,8 +46,6 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 | DB のコネクションプール | 業務上の意味を持たず、失われても次のリクエストで作り直されるだけ |
 | リクエスト内で完結する取得の重複排除 | 同一リクエストの中で閉じ、リクエストをまたがない（`adr/0009`） |
 | セッションの署名を検証する公開鍵 | 誰のものでもない公開の鍵であり、失われても取り直されるだけ（`adr/0008`「セッションの読み取り」） |
-
-**応答を返したあとに処理を続ける手段（`waitUntil` 相当）を使う。** `adr/0006` の「メッセージで応答する Interaction は一律に deferred response を返し、本文は follow-up で送る」は、応答を返した時点で実行が終わる形では成立しない。deferred を返したうえで同じ実行の中で処理を継続し、follow-up を送る。
 
 ### 環境変数の区分
 
@@ -72,20 +66,13 @@ Vercel 上で動くことから、次が**層に関係なく全コードにか�
 ## 結果
 
 - 良い点：
-  - Web と Discord が同じユースケースを共有するため、「機能に差を設けない」がコードの構造として保たれる（`adr/0004`）
   - 常駐プロセスを持たないため、スケール・死活監視・再起動の考慮が要らない
   - DB と認証が同一プラットフォームに載るため、個人開発で管理する対象が減る
 - 留意点：
   - Supabase を採用しても、DB を信頼境界にはしない（`adr/0005`）
-  - **応答後の処理継続はホスティング環境の挙動に依存する。** ここが期待どおり動かないと `adr/0006` の一律 deferred が成立しないため、着手時に確認する（`docs/operations.md`）
-  - Discord のスラッシュコマンドの登録はデプロイと別作業になる（`adr/0006`）
-  - `domain/group.md`「User と外部アカウント」により、Discord から入ってきた人にも mmkn のアカウント（名前）が要る。作る導線は Web が持つ（`adr/0012`）
-  - **Discord はクライアントの 1 つにすぎない。** Slack や CLI を足せる状態を保つのは `adr/0004` の責務であり、このスタック選定はそれを妨げない
 
 ## 検討した代替案
 
-- **Web と Discord を別実装にする**：それぞれ最短で作れるが、「2 つの提供形態で機能に差を設けない」（`overview.md`）を人間の注意力だけで守り続けることになる。個人開発で維持できない。
-- **常駐 Bot（Gateway 接続）を別サーバーで動かす**：不採用の理由は `adr/0006-discord-http-interactions.md` を正とする。
 - **Neon + Auth.js**：DB としては問題ないが、認証が別建てになる。外部アカウントとアプリのアカウントの紐付け表を自前で持つことになり、`adr/0012` が認証基盤に委ねているもの（複数のログイン手段の管理）を自分で実装・保守することになる。個人開発で持つ責務としては割に合わない。
 - **バックエンドを別言語（Go / Kotlin 等）で建てる**：Web の UI と型を共有できず、個人開発で扱う言語が 2 つになる。ドメインの定義を 2 か所に持つ危険もある。
-- **Vercel 以外のホスティング（常駐プロセスを持てる環境）**：常駐 Bot を選ぶなら必要になるが、その選択をしないため利点がない。
+- **Vercel 以外のホスティング（常駐プロセスを持てる環境）**：常駐させるものが無いため利点がない。
