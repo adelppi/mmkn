@@ -151,10 +151,10 @@ describe('参加コードの下見', () => {
     expect(view.kind).toBe('notFound')
   })
 
-  it('ログインしていなければ、ログインへの導線が出る', () => {
+  it('ログインしていなければ、この招待に戻れるログインへの導線が出る', () => {
     const view = toInviteView('invite-1', err({ kind: 'notAuthenticated' }))
 
-    expect(view.kind === 'notAuthenticated' && view.loginHref).toBe('/login')
+    expect(view.kind === 'notAuthenticated' && view.loginHref).toBe('/login?invite=invite-1')
   })
 })
 

@@ -1,6 +1,8 @@
 'use server'
 
 import { scope } from '@/app/_lib/action'
+import { rememberInvite } from '@/app/_lib/invite'
+import { optionalField } from '@/src/adapter/web/presenter/form'
 import { startLogin } from '@/src/infra/auth/session'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -22,7 +24,9 @@ const callbackUrl = async (): Promise<string> => {
 }
 
 /** ログインを始める。**User は作られない**（`docs/domain/group.md`「ログインする」）。 */
-export async function startLoginAction() {
+export async function startLoginAction(data: FormData) {
+  await rememberInvite(optionalField(data, 'inviteCode'))
+
   const { client } = await scope()
   const url = await startLogin(client, await callbackUrl())
 

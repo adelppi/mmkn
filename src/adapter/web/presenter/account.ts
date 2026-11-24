@@ -5,7 +5,7 @@ import type { CreateAccountError } from '../../../usecase/account/create-account
 import type { ViewAccountError } from '../../../usecase/account/view-account'
 import type { TextFieldLimits } from './form'
 import { messageOf } from './message'
-import { route } from './route'
+import { route, type LoginFailure } from './route'
 
 /**
  * アカウントの表示（`docs/features.md` #11）。
@@ -19,13 +19,42 @@ import { route } from './route'
 
 // ── ログイン（`docs/domain/group.md`「ログインする」）─────────────────────────
 
-export type LoginView = {
-  readonly kind: 'ok'
-  /** ログインを始めるボタンの文言。どのサービスかの正は `docs/adr/0012-login.md`。 */
-  readonly start: string
+export type LoginView =
+  | { readonly kind: 'input'; readonly form: LoginFields; readonly start: string }
+  | {
+      readonly kind: 'failed'
+      readonly form: LoginFields
+      readonly start: string
+      readonly message: string
+    }
+
+export type LoginFields = {
+  /** 開いていた招待。**ログインしたあとに戻る**（`docs/domain/group.md`「ログインする」）。 */
+  readonly inviteCode: string | undefined
 }
 
-export const toLoginView = (): LoginView => ({ kind: 'ok', start: 'Discord で続ける' })
+/** ログインを始めるボタンの文言。どのサービスかの正は `docs/adr/0012-login.md`。 */
+const START = 'Discord で続ける'
+
+const LOGIN_FAILURES: readonly string[] = [
+  'loginDenied',
+  'loginFailed',
+] satisfies readonly LoginFailure[]
+
+const isLoginFailure = (value: string | undefined): value is LoginFailure =>
+  value !== undefined && LOGIN_FAILURES.includes(value)
+
+/** **読めない理由は、理由が無いのと同じに扱う。** 印は誰でも打てる。 */
+export const toLoginView = (input: {
+  readonly inviteCode?: string | undefined
+  readonly failure?: string | undefined
+}): LoginView => {
+  const form = { inviteCode: input.inviteCode }
+
+  return isLoginFailure(input.failure)
+    ? { kind: 'failed', form, start: START, message: messageOf({ kind: input.failure }) }
+    : { kind: 'input', form, start: START }
+}
 
 // ── アカウント作成（`docs/domain/group.md`「アカウントを作成する」）───────────
 
@@ -37,10 +66,13 @@ export type CreateAccountView =
 export type CreateAccountFields = {
   readonly name: string
   readonly nameLimits: TextFieldLimits
+  /** 開いていた招待。**作成したあとに戻る**（`docs/domain/group.md`「アカウントを作成する」）。 */
+  readonly inviteCode: string | undefined
 }
 
-const createAccountFields = (name: string): CreateAccountFields => ({
+const createAccountFields = (name: string, inviteCode: string | undefined): CreateAccountFields => ({
   name,
+  inviteCode,
   // **数値はドメイン層の定数から取る**（`docs/adr/0009`「クライアント側の入力検査」）。
   nameLimits: { maxLength: USER_NAME_MAX_LENGTH, required: true },
 })
@@ -51,9 +83,9 @@ const createAccountFields = (name: string): CreateAccountFields => ({
  * **名前の入力欄は空から始まる。** 外部サービス側の名前を初期値に使わない
  * （`docs/domain/group.md`「アカウントを作成する」）。
  */
-export const initialCreateAccountView = (): CreateAccountView => ({
+export const initialCreateAccountView = (inviteCode?: string): CreateAccountView => ({
   kind: 'input',
-  form: createAccountFields(''),
+  form: createAccountFields('', inviteCode),
 })
 
 /**
@@ -62,12 +94,20 @@ export const initialCreateAccountView = (): CreateAccountView => ({
  * （`docs/adr/0012-login.md`）。ユースケース自身はセッションの存在を知らない（`docs/adr/0008`）。
  */
 export const toCreateAccountView = (
-  name: string,
+  input: { readonly name: string; readonly inviteCode?: string | undefined },
   result: Result<User, CreateAccountError | { readonly kind: 'notAuthenticated' }>,
 ): CreateAccountView =>
   result.ok
-    ? { kind: 'created', form: createAccountFields(result.value.name), redirectTo: route.groups() }
-    : { kind: 'invalid', form: createAccountFields(name), message: messageOf(result.error) }
+    ? {
+        kind: 'created',
+        form: createAccountFields(result.value.name, input.inviteCode),
+        redirectTo: route.entrance(input.inviteCode),
+      }
+    : {
+        kind: 'invalid',
+        form: createAccountFields(input.name, input.inviteCode),
+        message: messageOf(result.error),
+      }
 
 // ── アカウント ────────────────────────────────────────────────────────────────
 

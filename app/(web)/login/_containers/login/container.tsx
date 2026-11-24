@@ -7,6 +7,14 @@ import { LoginPresentation } from './presentation'
  * **ここはユースケースを呼ばない。** ログインはまだ始まっていない。
  * 実際に始めるのは Server Action（`../../actions.ts`）。
  */
-export async function LoginContainer({ action }: { readonly action: () => void }) {
-  return <LoginPresentation {...toLoginView()} action={action} />
+export async function LoginContainer({
+  inviteCode,
+  failure,
+  action,
+}: {
+  readonly inviteCode: string | undefined
+  readonly failure: string | undefined
+  readonly action: (data: FormData) => void
+}) {
+  return <LoginPresentation {...toLoginView({ inviteCode, failure })} action={action} />
 }

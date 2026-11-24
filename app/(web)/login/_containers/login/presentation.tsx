@@ -1,5 +1,5 @@
 import { Button } from '@/app/_ui/button'
-import { Screen } from '@/app/_ui/notice'
+import { Notice, Screen } from '@/app/_ui/notice'
 import type { LoginView } from '@/src/adapter/web/presenter/account'
 
 /**
@@ -7,7 +7,7 @@ import type { LoginView } from '@/src/adapter/web/presenter/account'
  *
  * **パスワードの入力欄も、再設定の導線も無い**（`docs/adr/0012-login.md`）。
  */
-export function LoginPresentation(props: LoginView & { readonly action: () => void }) {
+export function LoginPresentation(props: LoginView & { readonly action: (data: FormData) => void }) {
   return (
     <Screen className="justify-center gap-10 px-7 pb-24">
       <p className="tabular text-2xl font-light tracking-[0.24em]">mmkn</p>
@@ -16,7 +16,13 @@ export function LoginPresentation(props: LoginView & { readonly action: () => vo
         お使いのアカウントでログインします。
       </p>
 
+      {props.kind === 'failed' ? <Notice tone="error">{props.message}</Notice> : null}
+
       <form action={props.action}>
+        {props.form.inviteCode === undefined ? null : (
+          <input type="hidden" name="inviteCode" value={props.form.inviteCode} readOnly />
+        )}
+
         <Button type="submit" variant="outline" className="h-11 w-full font-normal">
           {props.start}
         </Button>

@@ -42,6 +42,10 @@ export const field = (data: FormData, name: string): string => {
   return typeof value === 'string' ? value : ''
 }
 
+/** 無くてもよい入力。**空文字も、無いものとして扱う。** */
+export const optionalField = (data: FormData, name: string): string | undefined =>
+  field(data, name) || undefined
+
 /** 同じ名前で複数送られてくる入力（負担者の選択など）を取り出す。 */
 export const fields = (data: FormData, name: string): readonly string[] =>
   data.getAll(name).flatMap((value) => (typeof value === 'string' && value !== '' ? [value] : []))

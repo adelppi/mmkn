@@ -164,7 +164,11 @@ export const toInviteView = (
 ): InviteView => {
   if (!result.ok) {
     return result.error.kind === 'notAuthenticated'
-      ? { kind: 'notAuthenticated', message: messageOf(result.error), loginHref: route.login() }
+      ? {
+          kind: 'notAuthenticated',
+          message: messageOf(result.error),
+          loginHref: route.login({ inviteCode }),
+        }
       : { kind: 'notFound', message: messageOf(result.error), groupsHref: route.groups() }
   }
 

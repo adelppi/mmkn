@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 
+import { single } from '@/app/_lib/search-param'
 import { RowsSkeleton } from '@/app/_ui/skeleton'
 import { Announce } from '@/app/_ui/toast'
 import { NOTICE_PARAM, toNoticeView } from '@/src/adapter/web/presenter/notice'
@@ -28,7 +29,3 @@ export default async function GroupPage({ params, searchParams }: PageProps<'/gr
     </>
   )
 }
-
-/** 同じ名前が複数付いていても、知らせは 1 つしか出さない。 */
-const single = (value: string | readonly string[] | undefined): string | undefined =>
-  typeof value === 'string' ? value : value?.[0]

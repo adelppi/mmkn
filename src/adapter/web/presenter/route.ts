@@ -1,6 +1,24 @@
 import { invitePath } from '../../shared/invite'
 import { NOTICE_PARAM, type NoticeTag } from './notice'
 
+/** 開いていた招待の参加コードを運ぶ場所（問い合わせ文字列）。 */
+export const INVITE_PARAM = 'invite'
+
+/** ログインできなかった理由を運ぶ場所（問い合わせ文字列）。**印だけで、文言は載せない。** */
+export const LOGIN_FAILURE_PARAM = 'failure'
+
+/** ログインできなかった理由。文言は `message.ts` が持つ。 */
+export type LoginFailure = 'loginDenied' | 'loginFailed'
+
+const withQuery = (path: string, query: Readonly<Record<string, string | undefined>>): string => {
+  const params = new URLSearchParams()
+  for (const [name, value] of Object.entries(query)) {
+    if (value !== undefined) params.set(name, value)
+  }
+
+  return params.size === 0 ? path : `${path}?${params}`
+}
+
 /**
  * 画面の場所（`docs/adr/0009-web-ui.md`）。
  *
@@ -9,11 +27,23 @@ import { NOTICE_PARAM, type NoticeTag } from './notice'
  * シリアライズ可能な素の値だけで構成されるため（`docs/adr/0009`）。
  */
 export const route = {
-  login: () => '/login',
-  signUp: () => '/signup',
+  login: (options: { readonly inviteCode?: string; readonly failure?: LoginFailure } = {}) =>
+    withQuery('/login', {
+      [INVITE_PARAM]: options.inviteCode,
+      [LOGIN_FAILURE_PARAM]: options.failure,
+    }),
+  signUp: (inviteCode?: string) => withQuery('/signup', { [INVITE_PARAM]: inviteCode }),
   account: () => '/account',
 
   groups: () => '/',
+
+  /**
+   * ログインした、またはアカウントを作成したあとに着く場所（`docs/domain/group.md`「ログインする」）。
+   *
+   * **受け取るのは参加コードで、行き先ではない。** 行き先を受け取らないため、外へは送り出せない
+   * （`docs/adr/0012-login.md`「招待への戻り方」）。
+   */
+  entrance: (inviteCode?: string) => (inviteCode === undefined ? '/' : invitePath(inviteCode)),
   newGroup: () => '/groups/new',
 
   /**

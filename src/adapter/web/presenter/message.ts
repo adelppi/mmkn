@@ -38,6 +38,10 @@ const MESSAGES = {
   notFound: '見つかりませんでした。',
   notMember: 'このグループのメンバーではありません。',
 
+  // ログイン（`docs/domain/group.md`「ログインする」）
+  loginDenied: 'Discord での許可が得られなかったため、ログインしていません。',
+  loginFailed: 'ログインできませんでした。もう一度お試しください。',
+
   // User の名前
   nameEmpty: '名前を入力してください。',
   nameTooLong: `名前は ${USER_NAME_MAX_LENGTH} 文字以内です。`,

@@ -9,8 +9,12 @@
  * 経路は持たない」と定めている。**参加コードを裸で表示しない。**
  */
 
-/** 共有リンクの path。Web の画面の場所でもある（`src/adapter/web/presenter/route.ts`）。 */
-export const invitePath = (inviteCode: string): string => `/j/${inviteCode}`
+/**
+ * 共有リンクの path。**参加コードは 1 区間に収める**（区切りを含む値が来ても、別の場所を指さない）。
+ * Web の画面の場所でもある（`src/adapter/web/presenter/route.ts`）。
+ */
+export const invitePath = (inviteCode: string): string =>
+  `/j/${encodeURIComponent(inviteCode)}`
 
 /** 人に渡す形。`origin` は入口が渡す（アダプタは実行環境を知らない）。 */
 export const inviteUrl = (origin: string, inviteCode: string): string =>

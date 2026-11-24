@@ -14,15 +14,18 @@ import { expect, test, type Browser, type Page } from '@playwright/test'
  * （`src/infra/auth/stub.ts`）。
  */
 
-/** その人としてログインし、アカウントを作る。**アプリは空の DB から始まる。** */
-const signUp = async (browser: Browser, origin: string, identifier: string, name: string) => {
+/** その人としてログインできる状態で、ブラウザを開く。**まだログインしていない。** */
+const open = async (browser: Browser, origin: string, identifier: string) => {
   const context = await browser.newContext()
 
   // **誰としてログインするかを先に置く。** 本物では認可画面で選ぶところにあたる。
   await context.addCookies([{ name: 'mmkn-e2e-login-as', value: identifier, url: origin }])
 
-  const page = await context.newPage()
-  await page.goto('/login')
+  return { context, page: await context.newPage() }
+}
+
+/** ログイン画面から、認可画面をまたいで戻ってくる。 */
+const passAuthorization = async (page: Page) => {
   await page.getByRole('button', { name: 'Discord で続ける' }).click()
 
   // **ここだけ、偽の認証と本物とで往復の形が違う。** 本物は外部の認可画面へブラウザごと出て、
@@ -30,11 +33,23 @@ const signUp = async (browser: Browser, origin: string, identifier: string, name
   // アプリが決めた戻り先をそのまま使う（行き先を E2E 側で組み立てない）。
   await expect(page).toHaveURL(/\/auth\/callback\?code=/)
   await page.goto(page.url())
+}
 
+/** 名前を決めて、アカウントを作る。 */
+const createAccount = async (page: Page, name: string) => {
   // User がまだいないため、名前を決める画面に着く（`docs/domain/group.md`「ログインする」）。
-  await expect(page).toHaveURL(/\/signup$/)
+  await expect(page).toHaveURL(/\/signup(\?|$)/)
   await page.getByLabel('名前', { exact: true }).fill(name)
   await page.getByRole('button', { name: 'はじめる' }).click()
+}
+
+/** その人としてログインし、アカウントを作る。**アプリは空の DB から始まる。** */
+const signUp = async (browser: Browser, origin: string, identifier: string, name: string) => {
+  const { context, page } = await open(browser, origin, identifier)
+
+  await page.goto('/login')
+  await passAuthorization(page)
+  await createAccount(page, name)
 
   // ログイン済みの画面（グループ一覧）に着く。
   await expect(page.getByRole('link', { name: 'グループを作成' })).toBeVisible()
@@ -200,4 +215,52 @@ test('Web の一巡（グループ作成 → 参加 → 支払い → 清算案 
 
   await taro.context.close()
   await jiro.context.close()
+})
+
+test('招待リンクからログインすると、その招待に戻る', async ({ browser, baseURL }) => {
+  const origin = baseURL ?? ''
+
+  const taro = await signUp(browser, origin, 'e2e-invite-taro', 'たろう')
+  await taro.page.goto('/groups/new')
+  await taro.page.getByLabel('グループ名').fill('E2E 招待')
+  await taro.page.getByRole('button', { name: '作成する' }).click()
+  await expect(taro.page).toHaveURL(/\/groups\/(?!new$)[^/]+$/)
+
+  await goTo(taro.page, taro.page.url(), '/settings')
+  const inviteUrl = await taro.page.getByText(/\/j\//).innerText()
+  const invitePath = new URL(inviteUrl.trim()).pathname
+
+  // ── アカウントを作る人 ─────────────────────────────────────────────────────
+  const jiro = await open(browser, origin, 'e2e-invite-jiro')
+  await jiro.page.goto(invitePath)
+  await jiro.page.getByRole('link', { name: 'ログインする' }).click()
+  await passAuthorization(jiro.page)
+  await createAccount(jiro.page, 'じろう')
+
+  await expect(jiro.page).toHaveURL(new RegExp(`${invitePath}$`))
+  await expect(jiro.page.getByText('E2E 招待')).toBeVisible()
+
+  // ── 既にアカウントを持つ人 ─────────────────────────────────────────────────
+  const again = await open(browser, origin, 'e2e-invite-jiro')
+  await again.page.goto(invitePath)
+  await again.page.getByRole('link', { name: 'ログインする' }).click()
+
+  // 認可画面で失敗しても、理由が出て、招待は失われない。
+  await again.page.getByRole('button', { name: 'Discord で続ける' }).click()
+  await expect(again.page).toHaveURL(/\/auth\/callback\?code=/)
+  await again.page.goto('/auth/callback?error=access_denied')
+  await expect(again.page.getByText('許可が得られなかった')).toBeVisible()
+
+  await passAuthorization(again.page)
+  await expect(again.page).toHaveURL(new RegExp(`${invitePath}$`))
+  await expect(again.page.getByText('E2E 招待')).toBeVisible()
+
+  // ── 招待からでないログインは、前の招待に引きずられない ─────────────────────
+  await again.page.goto('/login')
+  await passAuthorization(again.page)
+  await expect(again.page.getByRole('link', { name: 'グループを作成' })).toBeVisible()
+
+  await taro.context.close()
+  await jiro.context.close()
+  await again.context.close()
 })

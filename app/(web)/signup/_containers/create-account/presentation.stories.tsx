@@ -24,22 +24,22 @@ type Story = StoryObj<typeof meta>
 export const 入力前: Story = { args: initialCreateAccountView() }
 
 export const 名前が空: Story = {
-  args: toCreateAccountView('  ', err({ kind: 'nameEmpty' })),
+  args: toCreateAccountView({ name: '  ' }, err({ kind: 'nameEmpty' })),
 }
 
 export const 名前が長すぎる: Story = {
-  args: toCreateAccountView('あ'.repeat(24), err({ kind: 'nameTooLong' })),
+  args: toCreateAccountView({ name: 'あ'.repeat(24) }, err({ kind: 'nameTooLong' })),
 }
 
 /** 1 つの外部アカウントから 2 つの User はできない（`docs/domain/group.md`）。 */
 export const すでに作られている: Story = {
-  args: toCreateAccountView('たろう', err({ kind: 'alreadyRegistered' })),
+  args: toCreateAccountView({ name: 'たろう' }, err({ kind: 'alreadyRegistered' })),
 }
 
 export const 本人確認が切れている: Story = {
-  args: toCreateAccountView('たろう', err({ kind: 'notAuthenticated' })),
+  args: toCreateAccountView({ name: 'たろう' }, err({ kind: 'notAuthenticated' })),
 }
 
 export const 作成できた: Story = {
-  args: toCreateAccountView('たろう', ok(taro)),
+  args: toCreateAccountView({ name: 'たろう' }, ok(taro)),
 }

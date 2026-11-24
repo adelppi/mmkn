@@ -98,6 +98,26 @@ export const startLogin = async (client: AuthClient, redirectTo: string): Promis
 }
 
 /**
+ * 認可画面から何を持って戻ってきたか。
+ *
+ * **認証基盤の戻り方を知っているのはこの層だけである。** 本人が断ると `error=access_denied` だけが
+ * 付き、認証基盤自身の失敗には `error_code` も付く。
+ */
+export type LoginReturn =
+  | { readonly kind: 'code'; readonly code: string }
+  | { readonly kind: 'denied' }
+  | { readonly kind: 'failed' }
+
+export const loginReturn = (params: URLSearchParams): LoginReturn => {
+  const code = params.get('code')
+  if (code) return { kind: 'code', code }
+
+  return params.get('error') === 'access_denied' && !params.get('error_code')
+    ? { kind: 'denied' }
+    : { kind: 'failed' }
+}
+
+/**
  * 認可画面から戻ってきた往復を完了させる。
  *
  * `rejected` は認証基盤が往復を受け付けなかったことを表す。

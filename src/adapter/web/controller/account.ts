@@ -5,7 +5,7 @@ import type {
 import type { User } from '../../../domain/group/user'
 import type { UseCase } from '../../../usecase/usecase'
 import { toCreateAccountView, type CreateAccountView } from '../presenter/account'
-import { field } from '../presenter/form'
+import { field, optionalField } from '../presenter/form'
 
 /**
  * アカウントへの操作（`docs/adr/0008-layer-internals.md`「Controller と Presenter」）。
@@ -30,14 +30,14 @@ export const createAccount =
     loginIdentifier: string | undefined
   }) =>
   async (_previous: CreateAccountView, data: FormData): Promise<CreateAccountView> => {
-    const name = field(data, 'name')
+    const input = { name: field(data, 'name'), inviteCode: optionalField(data, 'inviteCode') }
 
     if (deps.loginIdentifier === undefined) {
-      return toCreateAccountView(name, { ok: false, error: { kind: 'notAuthenticated' } })
+      return toCreateAccountView(input, { ok: false, error: { kind: 'notAuthenticated' } })
     }
 
     return toCreateAccountView(
-      name,
-      await deps.createAccount({ loginIdentifier: deps.loginIdentifier, name }),
+      input,
+      await deps.createAccount({ loginIdentifier: deps.loginIdentifier, name: input.name }),
     )
   }

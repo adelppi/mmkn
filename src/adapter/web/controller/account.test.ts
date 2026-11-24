@@ -45,6 +45,15 @@ describe('アカウントを作成する', () => {
     expect(view.kind === 'invalid' && view.message).toBe('ログインが必要です。')
   })
 
+  it('開いていた招待に戻る先を渡す', async () => {
+    const view = await createAccount({
+      createAccount: async () => ok(taro),
+      loginIdentifier: 'auth-1',
+    })(initialCreateAccountView('invite-1'), form({ name: 'たろう', inviteCode: 'invite-1' }))
+
+    expect(view.kind === 'created' && view.redirectTo).toBe('/j/invite-1')
+  })
+
   it('失敗はビューモデルのタグとして戻る', async () => {
     const view = await createAccount({
       createAccount: async () => err({ kind: 'nameTooLong' as const }),
