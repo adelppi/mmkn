@@ -54,7 +54,9 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: devices['Desktop Chrome'] }],
   webServer: {
     // **本番と同じ形で起動する**（開発サーバーではない）。E2E が見るのはビルドされたアプリ。
-    command: `npm run build && npx next start --port ${PORT}`,
+    // **ビルドには DB の接続先を渡さない。** デプロイのビルドにも無い（`.github/workflows/main.yml`）ため、
+    // ビルド中に DB へ触れるようになったことを、マイグレーションより前のここで落とす。
+    command: `DATABASE_URL= npm run build && npx next start --port ${PORT}`,
     url: origin,
     reuseExistingServer: !process.env.CI,
     timeout: 300_000,
