@@ -7,13 +7,9 @@ import { Empty, Notice } from '@/app/_ui/notice'
 import type { RecordListView } from '@/src/adapter/web/presenter/record'
 
 /**
- * 記録一覧（設計 03）。
+ * 記録一覧（設計 03）。並びはビューモデルの通りで、ここで並べ替えない。
  *
- * **Payment と Transfer をまとめて 1 つの列として並べる**（`docs/domain/record.md`「記録の並び」）。
- * 並びはビューモデルの通りで、ここで並べ替えない。
- *
- * **あふれるのは一覧だけである**（設計 03）。「支払いを記録する」は一覧の外にあり、
- * 記録が何件あっても画面の下端にとどまる。
+ * **あふれるのは一覧だけである。** 「支払いを記録する」は一覧の外にあり、画面の下端にとどまる。
  */
 export function RecordListPresentation(props: RecordListView) {
   if (props.kind !== 'ok' && props.kind !== 'empty') {

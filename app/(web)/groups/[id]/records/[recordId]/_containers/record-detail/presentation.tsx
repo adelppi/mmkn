@@ -23,14 +23,7 @@ import type { FormAction } from '@/src/adapter/web/presenter/form'
 import type { NoticeView } from '@/src/adapter/web/presenter/notice'
 import type { RecordDetailView, RecordFormView } from '@/src/adapter/web/presenter/record'
 
-/**
- * 記録の詳細（設計 08）。
- *
- * **負担額は保存されていない**（`docs/domain/record.md`「負担額の配分」）。届くのは
- * そのつど導出された配分である。
- *
- * **削除は復元できない。** そのことを確認の文面で伝え、取り消しの導線は持たない。
- */
+/** 記録の詳細（設計 08）。 */
 export function RecordDetailPresentation(
   props: RecordDetailView & {
     readonly deleteAction: FormAction<RecordFormView>

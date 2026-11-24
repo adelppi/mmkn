@@ -7,15 +7,7 @@ import type { GroupRepository } from '../port/group-repository'
 import type { UserRepository } from '../port/user-repository'
 import type { UseCase } from '../usecase'
 
-/**
- * 参加コードが指すグループを、参加する前に見る（`docs/domain/group.md`「グループに参加する」）。
- *
- * **参加コードを持つ人には、グループ名と Member の表示名が見える。** 記録・収支・清算案の中身は
- * 含まない（`docs/domain/group.md`「前提条件を満たさなかったとき」の「起きないこと」）。
- *
- * 前提条件は「mmkn の User としてログインしていること」と「参加コードに対応する Group が
- * 存在すること」。**参加そのものは起きない**（それは `join-group.ts` の責務）。
- */
+/** 参加コードが指すグループを、参加する前に見る（`docs/domain/group.md`「グループに参加する」）。 */
 
 export type ViewInviteInput = {
   readonly actor: UserId | undefined

@@ -4,16 +4,9 @@ import type { UserRepository } from '../port/user-repository'
 import type { UseCase } from '../usecase'
 
 /**
- * ログアウトする（`docs/domain/group.md`「ログアウトする」・`docs/features.md` #11）。
+ * ログアウトする（`docs/domain/group.md`「ログアウトする」）。
  *
- * **ここが持つのは前提条件（ログインしていること）の判定だけで、セッションは扱わない。**
- * 「以降の操作がどの User の操作でもなくなる」を実際に起こすのはセッションを持っている側であり、
- * **ユースケースは `UserId` を受け取るだけでセッションの存在を知らない**
- * （`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
- * 呼び出し側は、これが成功したときにセッションを終わらせる（`app/_lib/session.ts`）。
- *
- * **ログアウトは退会ではない**（`docs/features.md`「mmkn が持たないもの」）。
- * User も、Group・Member・記録も、ログイン手段も、何一つ変わらない。次も同じように入れる。
+ * **ここが持つのは前提条件の判定だけ。** 呼び出し側は、これが成功したときにセッションを終わらせる。
  */
 
 export type LogOutInput = {

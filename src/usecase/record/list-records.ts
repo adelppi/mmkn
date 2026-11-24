@@ -12,11 +12,7 @@ import { loadGroupAsMember } from '../group/access'
 /**
  * グループの記録を一覧する（`docs/domain/record.md`「記録の並び」）。
  *
- * **Payment と Transfer をまとめて 1 つの列として扱う。種類によって分けない。**
- * 並びの規則はドメインが持つ（`compareRecords`）。
- *
- * 記録と一緒に版を返すのは、そのまま編集・削除に進めるようにするため
- * （`docs/adr/0005-data-access-and-authorization.md`：取得側は記録と版を組で返す）。
+ * 版を一緒に返すのは、そのまま編集・削除に進めるようにするため。
  */
 
 export type ListRecordsInput = {

@@ -10,15 +10,7 @@ import type { TransferRepository } from '../port/transfer-repository'
 import type { UserRepository } from '../port/user-repository'
 import type { UseCase } from '../usecase'
 
-/**
- * 自分が Member であるグループを一覧する（`docs/domain/group.md`「Member の属性」）。
- *
- * **読み取りもユースケースを通す**（`docs/adr/0009-web-ui.md`）。
- *
- * 一緒に返すのは**操作する User 自身の収支だけ**である。他の Member の収支は
- * グループの中で見るもの（`docs/domain/settlement.md`）で、一覧に並べる必要がない。
- * **収支は保存せず、そのつど記録から導出する。**
- */
+/** 自分が Member であるグループを一覧する。一緒に返すのは**操作する User 自身の収支だけ**である。 */
 
 export type ListGroupsInput = {
   readonly actor: UserId | undefined
@@ -32,12 +24,7 @@ export type ViewerBalance = {
 
 export type GroupSummary = {
   readonly group: Group
-  /**
-   * 操作する User の収支。**過不足が 0 の通貨は含まない。**
-   *
-   * 収支が 0 の通貨まで並べると、清算の要らない通貨が一覧を埋める。0 を落としても
-   * `docs/domain/settlement.md` の収支そのものは変わらない（導出結果の見せ方の話）。
-   */
+  /** 操作する User の収支。**過不足が 0 の通貨は含まない。** */
   readonly balances: readonly ViewerBalance[]
 }
 

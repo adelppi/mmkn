@@ -2,11 +2,7 @@ import { idEquals, type GroupId, type MemberId, type UserId } from '../id'
 import { err, ok, type Result } from '../result'
 import { constrainText, DISPLAY_NAME_MAX_LENGTH } from './text'
 
-/**
- * ある User の、ある Group における立場（`docs/domain/group.md`「Member の属性」）。
- *
- * User そのものではない。同じ User が複数の Group に参加すれば、それぞれ別の Member になる。
- */
+/** ある User の、ある Group における立場（`docs/domain/group.md`「Member の属性」）。 */
 export type Member = {
   readonly id: MemberId
   readonly groupId: GroupId
@@ -61,9 +57,5 @@ const byUser = (members: readonly Member[], userId: UserId): Member | undefined 
 const byId = (members: readonly Member[], memberId: MemberId): Member | undefined =>
   members.find((member) => idEquals(member.id, memberId))
 
-/**
- * Member への操作と参照。
- *
- * ID は受け取るだけで、ここでは作らない（`docs/adr/0008-layer-internals.md`）。
- */
+/** Member への操作と参照。 */
 export const Member = { create, rename, byUser, byId }

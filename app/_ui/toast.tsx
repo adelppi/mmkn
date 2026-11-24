@@ -6,14 +6,9 @@ import { CheckIcon, Trash2Icon, XIcon } from 'lucide-react'
 import { cn } from '@/app/_ui/utils'
 
 /**
- * 済んだことの知らせ（設計「トースト（成功・削除・失敗）」）。
+ * 済んだことの知らせ（`docs/adr/0009-web-ui.md`「トースト」）。
  *
- * **何を伝えるかはここで決めない。** 文言と印はビューモデルとして届く
- * （`src/adapter/web/presenter/notice.ts`・`docs/adr/0009-web-ui.md`「トースト」）。
- * ここが持つのは、下端に積むこと・一定時間で消すこと・印ごとの見た目だけである。
- *
- * **操作の口を持たない。** 押せるものを置かないのは、削除に取り消しが無いため
- * （`docs/domain/record.md`「削除」）。やり直しの導線は、それを持つ画面の側に置く。
+ * 文言と印はビューモデルとして届く。ここが持つのは、積むこと・消すこと・印ごとの見た目だけである。
  */
 
 export type ToastTone = 'done' | 'removed' | 'failed'

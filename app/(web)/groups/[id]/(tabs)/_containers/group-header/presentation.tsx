@@ -7,13 +7,7 @@ import { TabBar } from '@/app/_ui/tab-bar'
 import type { GroupHeaderView } from '@/src/adapter/web/presenter/group'
 
 /**
- * グループの上端（設計 03〜05 に共通）。
- *
- * **3 つのタブで 1 つを共有する**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
- * 切り替えても作り直されないため、どのタブを選んでいるかはここが持たない。
- *
- * **失敗もここで描く。** 3 区別（未ログイン／見つからない／Member でない）は
- * ビューモデルのタグとして届く（`docs/domain/group.md`「前提条件を満たさなかったとき」）。
+ * グループの上端（設計 03〜05 に共通。`docs/adr/0009-web-ui.md`「上端を共有する」）。
  *
  * `children` はタブの上に入るもの（設計 03 の「あなたの収支」）。**出し分けは渡す側が決める。**
  */

@@ -7,15 +7,7 @@ import type { TextFieldLimits } from './form'
 import { messageOf } from './message'
 import { route, type LoginFailure } from './route'
 
-/**
- * アカウントの表示（`docs/features.md` #11）。
- *
- * **失敗はビューモデルのタグとして表す**（`docs/adr/0009-web-ui.md`「失敗の描画」）。
- * Container は成功と失敗で分岐せず、Presentational だけで失敗形も確認できる。
- *
- * **パスワードの入力欄も、再設定の導線もここに無い**（`docs/adr/0012-login.md`：
- * mmkn はパスワードを持たず、メールも送らない）。
- */
+/** アカウントの表示（`docs/features.md` #11）。 */
 
 // ── ログイン（`docs/domain/group.md`「ログインする」）─────────────────────────
 
@@ -77,22 +69,13 @@ const createAccountFields = (name: string, inviteCode: string | undefined): Crea
   nameLimits: { maxLength: USER_NAME_MAX_LENGTH, required: true },
 })
 
-/**
- * 初期状態（`docs/adr/0009`「フォーム」：初期状態も Presenter が持つ）。
- *
- * **名前の入力欄は空から始まる。** 外部サービス側の名前を初期値に使わない
- * （`docs/domain/group.md`「アカウントを作成する」）。
- */
+/** 初期状態。**名前の入力欄は空から始まる**（`docs/domain/group.md`「アカウントを作成する」）。 */
 export const initialCreateAccountView = (inviteCode?: string): CreateAccountView => ({
   kind: 'input',
   form: createAccountFields('', inviteCode),
 })
 
-/**
- * `notAuthenticated` が加わるのは、**入口の側でだけ起こり得る失敗**だからである。
- * 本人であることが確かめられていなければ、ユースケースを呼ぶための識別子が手に入らない
- * （`docs/adr/0012-login.md`）。ユースケース自身はセッションの存在を知らない（`docs/adr/0008`）。
- */
+/** `notAuthenticated` は**入口の側でだけ起こり得る失敗**で、ユースケースの失敗には無い。 */
 export const toCreateAccountView = (
   input: { readonly name: string; readonly inviteCode?: string | undefined },
   result: Result<User, CreateAccountError | { readonly kind: 'notAuthenticated' }>,

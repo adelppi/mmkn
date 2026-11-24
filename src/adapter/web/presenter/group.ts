@@ -12,18 +12,12 @@ import type { JoinGroupError } from '../../../usecase/group/join-group'
 import type { ListGroupsError, ListGroupsOutput } from '../../../usecase/group/list-groups'
 import type { ViewGroupError, ViewGroupOutput } from '../../../usecase/group/view-group'
 import type { ViewInviteError, ViewInviteOutput } from '../../../usecase/group/view-invite'
-import { currencyNameOf, moneyText, type MoneyText } from '../../shared/money'
+import { currencyNameOf, moneyText, type MoneyText } from '../money'
 import type { TextFieldLimits } from './form'
 import { messageOf } from './message'
-import { inviteUrl } from '../../shared/invite'
 import { route } from './route'
 
-/**
- * グループとメンバーの表示（`docs/features.md` #1〜#4）。
- *
- * **失敗はビューモデルのタグとして表す**（`docs/adr/0009-web-ui.md`「失敗の描画」）。
- * `docs/domain/group.md`「前提条件を満たさなかったとき」の 3 区別が、そのままタグになる。
- */
+/** グループとメンバーの表示（`docs/features.md` #1〜#4）。 */
 
 /** 入力候補に出す通貨（`docs/domain/money.md`「廃止された通貨」）。 */
 export type CurrencyOptionView = {
@@ -223,13 +217,7 @@ export const toJoinView = (
 /** 記録・収支・精算の切り替え。**切り替えは画面の移動である。** */
 export type GroupTab = 'records' | 'balances' | 'settlement'
 
-/**
- * タブ 1 つ分。
- *
- * **どれを見ているかは持たない**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
- * 上端は 3 つのタブで共有され、切り替えのたびに作り直されない。作り直されないものは
- * 「いまどこにいるか」を知り得ないため、選択状態は場所を見ている側（`app/_ui/tab-bar.tsx`）が決める。
- */
+/** タブ 1 つ分。**どれを見ているかは持たない**（`docs/adr/0009-web-ui.md`「上端を共有する」）。 */
 export type GroupTabView = {
   readonly href: string
   readonly label: string
@@ -339,7 +327,7 @@ export const toGroupSettingsView = (
       displayName: member.displayName,
       isViewer: member.id === viewer.id,
     })),
-    inviteUrl: inviteUrl(origin, group.inviteCode),
+    inviteUrl: route.inviteUrl(origin, group.inviteCode),
   }
 }
 

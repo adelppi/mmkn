@@ -9,17 +9,7 @@ import { Notice, Screen } from '@/app/_ui/notice'
 import type { CreateAccountView } from '@/src/adapter/web/presenter/account'
 import type { FormProps } from '@/src/adapter/web/presenter/form'
 
-/**
- * アカウント作成（設計 13）。
- *
- * **props はビューモデルそのもの**（`docs/adr/0009-web-ui.md`）。Server Action だけは
- * 値ではなく操作の口であるため、別に受け取る（`src/adapter/web/presenter/form.ts`）。
- *
- * **フォームの状態は Server Action の戻り値である。** 状態管理のライブラリを持たない。
- *
- * **入力欄の上限はビューモデルから来る。** 画面側に数値を打たない
- * （正は `docs/domain/group.md`。`docs/adr/0009`「クライアント側の入力検査」）。
- */
+/** アカウント作成（設計 13）。 */
 export function CreateAccountPresentation(props: FormProps<CreateAccountView>) {
   const [view, action, pending] = useActionState(props.action, props)
 

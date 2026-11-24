@@ -22,12 +22,7 @@ import {
   type SaveSettingsView,
 } from '../presenter/group'
 
-/**
- * グループとメンバーへの操作（`docs/features.md` #1〜#4）。
- *
- * **入力の変換だけを行う。** 名前の長さも通貨の可否も見ない。判定はドメイン層にあり、
- * 失敗はビューモデルのタグとして戻る（`docs/adr/0009-web-ui.md`）。
- */
+/** グループとメンバーへの操作（`docs/features.md` #1〜#4）。**入力の変換だけを行う。** */
 
 export const createGroup =
   (deps: {

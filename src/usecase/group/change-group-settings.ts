@@ -6,12 +6,7 @@ import type { GroupRepository } from '../port/group-repository'
 import type { UseCase } from '../usecase'
 import { loadGroupAsMember } from './access'
 
-/**
- * グループ設定を変更する（`docs/domain/group.md`「グループ設定を変更する」・`docs/features.md` #4）。
- *
- * **過去の記録は一切変わらない。** 既定通貨は入力の初期値でしかないため、
- * 既に記録された Payment / Transfer の通貨は書き換わらない。
- */
+/** グループ設定を変更する（`docs/domain/group.md`「グループ設定を変更する」・`docs/features.md` #4）。 */
 
 export type ChangeGroupSettingsInput = {
   readonly actor: UserId | undefined

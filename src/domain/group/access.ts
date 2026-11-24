@@ -2,13 +2,7 @@ import type { UserId } from '../id'
 import { err, ok, type Result } from '../result'
 import { Member } from './member'
 
-/**
- * 認可の判定。
- *
- * 前提条件を満たさなかった理由の 3 区別（未ログイン / 存在しない / Member でない）は
- * `docs/domain/group.md`「前提条件を満たさなかったとき」が正で、**すべての操作に共通して効く**。
- * この判定をドメイン層に置くことは `docs/adr/0005-data-access-and-authorization.md` の決定。
- */
+/** 認可の判定（`docs/domain/group.md`「前提条件を満たさなかったとき」）。 */
 
 /** 対象は存在するが、操作する User がその Group の Member でない。 */
 export type NotMember = { kind: 'notMember' }
@@ -25,11 +19,7 @@ export type GroupAccessDenied = MemberAccessDenied | { kind: 'notFound' }
  */
 type HasMembers = { readonly members: readonly Member[] }
 
-/**
- * 操作する User が、その Group の Member であることを確かめ、その Member を返す。
- *
- * 対象の Group が手元にある操作（設定の変更・場の対応づけなど）で使う。
- */
+/** 操作する User が、その Group の Member であることを確かめ、その Member を返す。 */
 export const requireMember = (
   group: HasMembers,
   actor: UserId | undefined,

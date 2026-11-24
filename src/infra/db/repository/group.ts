@@ -8,11 +8,7 @@ import { fromGroup, fromMember, toGroup, toGroups } from '../mapper/group'
 import { groups, members } from '../schema'
 import { GROUPS_INVITE_CODE_UNIQUE, isUniqueViolation } from './constraint'
 
-/**
- * `GroupRepository` の実装（`docs/adr/0005-data-access-and-authorization.md`）。
- *
- * **トランザクションはこの中に閉じる。** ユースケースはその存在を知らない（`docs/adr/0008`）。
- */
+/** `GroupRepository` の実装（`docs/adr/0005-data-access-and-authorization.md`）。 */
 export const drizzleGroupRepository = (db: Database): GroupRepository => {
   /**
    * Group と、その Member を **1 本の問い合わせ**で読む。Member を別に引くと往復が 2 段になる。

@@ -11,12 +11,7 @@ import { Select } from '@/app/_ui/select'
 import type { FormProps } from '@/src/adapter/web/presenter/form'
 import type { CreateGroupView } from '@/src/adapter/web/presenter/group'
 
-/**
- * グループ作成（設計 09）。
- *
- * **既定通貨は入力の初期値でしかない**（`docs/domain/group.md`）。ここで選んだ通貨が、
- * そのグループで使える通貨を絞ることはない。
- */
+/** グループ作成（設計 09）。 */
 export function CreateGroupPresentation(
   props: FormProps<CreateGroupView> & { readonly groupsHref: string },
 ) {

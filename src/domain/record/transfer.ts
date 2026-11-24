@@ -10,13 +10,7 @@ import { plainDate, type PlainDate, type PlainDateInvalid } from './date'
 /**
  * 送金（`docs/domain/record.md`「Transfer（送金）」）。
  *
- * **ある Member から別の Member へのお金の移動**を記録する。それ以上の意味を持たない。
- * 「借りの解消」「返金」「立替の返済」を区別せず、特定の Payment とも紐付かない。
- *
  * **清算案の送金（`settlementTransfer`）とは別のもの**（`docs/glossary.md`「名前の付け方」）。
- * 清算案から登録した Transfer も、手で入力したものと区別されない。
- *
- * **「内容」を持たない。** 送金そのものだけを記録し、「なぜ送ったか」を残さない。送金手段も記録しない。
  */
 export type Transfer = {
   readonly id: TransferId
@@ -65,12 +59,7 @@ type Validated = {
   occurredOn: PlainDate
 }
 
-/**
- * Transfer のルール（`docs/domain/record.md`「ルール」）。
- *
- * 送り手と受け手は**異なる** Member で、どちらもその Transfer が属するグループの Member に限る。
- * **グループ外への送金は扱わない。**
- */
+/** Transfer のルール（`docs/domain/record.md`「ルール」）。 */
 const attributes = (group: Group, input: Attributes): Result<Validated, TransferInvalid> => {
   if (!isMember(group, input.sender)) return err({ kind: 'senderNotMember' })
   if (!isMember(group, input.recipient)) return err({ kind: 'recipientNotMember' })
@@ -90,11 +79,7 @@ const attributes = (group: Group, input: Attributes): Result<Validated, Transfer
   })
 }
 
-/**
- * 送金を記録する。
- *
- * ID と登録日時は受け取るだけで、ここでは作らない（`docs/adr/0008-layer-internals.md`）。
- */
+/** 送金を記録する。 */
 const create = (
   input: {
     id: TransferId
@@ -115,12 +100,7 @@ const create = (
   })
 }
 
-/**
- * 送金を編集する（`docs/domain/record.md`「編集」）。
- *
- * **過去の Transfer との整合性を検査しない。** 編集後の内容がそのまま現在の記録になる。
- * **登録日時を取り直さない。** ID・グループ・登録者も変わらない。
- */
+/** 送金を編集する（`docs/domain/record.md`「編集」）。登録日時・ID・グループ・登録者は変わらない。 */
 const edit = (
   transfer: Transfer,
   input: { group: Group; actor: UserId | undefined } & Attributes,
@@ -134,9 +114,5 @@ const edit = (
   return ok({ ...transfer, ...validated.value })
 }
 
-/**
- * Transfer への操作。
- *
- * **削除はここに無い。** 理由は `payment.ts` と同じ。
- */
+/** Transfer への操作。**削除はここに無い。** 理由は `payment.ts` と同じ。 */
 export const Transfer = { create, edit }

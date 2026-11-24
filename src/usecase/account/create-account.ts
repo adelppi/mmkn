@@ -4,34 +4,15 @@ import type { IdGenerator } from '../port/id-generator'
 import type { UserRepository } from '../port/user-repository'
 import type { UseCase } from '../usecase'
 
-/**
- * アカウントを作成する（`docs/domain/group.md`「アカウントを作成する」・`docs/features.md` #11）。
- *
- * **前提条件は無い。** ログインしていない人が行う操作であるため、`actor` を取らない。
- *
- * **外部アカウントは、本人であることが確かめられた状態で受け取る。** 確かめる手段は
- * 認証基盤に委ねてあり（`docs/adr/0012-login.md`）、ここへ届くのはその結果の識別子だけである。
- * **ユースケースはセッションの存在を知らない**（`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
- *
- * **そのアカウントがログイン手段になる。** 後から増えることも替わることも無い。
- */
+/** アカウントを作成する（`docs/domain/group.md`「アカウントを作成する」）。 */
 
 export type CreateAccountInput = {
-  /**
-   * ログインしたときに行き着く、その人を指すもの。**名前ともログイン手段とも別のもの。**
-   * 何を識別子とするかは `docs/adr/0012-login.md` を正とする。
-   */
+  /** 本人であることが確かめられた結果として届く（`docs/adr/0012-login.md`）。 */
   readonly loginIdentifier: string
   readonly name: string
 }
 
-/**
- * 失敗。
- *
- * `alreadyRegistered` は「**1 つの外部アカウントから、2 つの User ができることはない**」
- * （`docs/domain/group.md`）にあたる。判定は 1 人の User だけを見てもできないため
- * ドメインでは扱わず、DB の制約が担う（`docs/adr/0005`「一意性・参照の整合」）。
- */
+/** `alreadyRegistered` の判定は DB の制約が担う（`docs/adr/0005`「一意性・参照の整合」）。 */
 export type CreateAccountError = UserNameInvalid | { readonly kind: 'alreadyRegistered' }
 
 export const createAccount =

@@ -7,11 +7,7 @@ import type { UseCase, Version, Versioned } from '../usecase'
 import { loadGroupAsMember } from '../group/access'
 import { requireRecord, type VersionConflict } from './access'
 
-/**
- * 送金を編集する（`docs/domain/record.md`「編集」・`docs/features.md` #7）。
- *
- * **過去の Transfer との整合性を検査しない。** 編集後の内容がそのまま現在の記録になる。
- */
+/** 送金を編集する（`docs/domain/record.md`「編集」・`docs/features.md` #7）。 */
 
 export type EditTransferInput = {
   readonly actor: UserId | undefined

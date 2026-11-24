@@ -12,14 +12,7 @@ import { Select } from '@/app/_ui/select'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
 import type { GroupSettingsView, SaveSettingsView } from '@/src/adapter/web/presenter/group'
 
-/**
- * グループ設定・表示名（設計 11）。
- *
- * **既定通貨を変えても過去の記録は変わらない**（`docs/domain/group.md`）。そのことを画面で伝える。
- *
- * **参加コードは共有リンクとしてしか出さない**（`docs/domain/group.md`「Group の属性」：
- * 人が読んで手で入力する経路を持たない）。
- */
+/** グループ設定・表示名（設計 11）。**参加コードは共有リンクとしてしか出さない**（`docs/domain/group.md`「Group の属性」）。 */
 export function GroupSettingsPresentation(
   props: GroupSettingsView & {
     readonly settingsAction: FormAction<SaveSettingsView>

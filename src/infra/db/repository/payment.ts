@@ -7,13 +7,7 @@ import type { Database } from '../client'
 import { fromPayment, fromPaymentBearers, toPayment, toPayments } from '../mapper/payment'
 import { paymentBearers, payments } from '../schema'
 
-/**
- * `PaymentRepository` の実装。
- *
- * **トランザクションはこの中に閉じる**（`docs/adr/0008-layer-internals.md`）。
- * 記録単位の楽観ロックも、ここで `version` の一致を条件にした更新・削除として実現する
- * （`docs/adr/0005-data-access-and-authorization.md`「同時書き込みの競合」）。
- */
+/** `PaymentRepository` の実装（`docs/adr/0005-data-access-and-authorization.md`）。 */
 
 /** 最初の版。 */
 const INITIAL_VERSION: Version = 1

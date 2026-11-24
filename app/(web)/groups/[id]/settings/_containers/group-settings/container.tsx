@@ -8,12 +8,7 @@ import {
 import { recordedCurrenciesOf } from '@/src/adapter/web/presenter/record'
 import { GroupSettingsPresentation } from './presentation'
 
-/**
- * グループ設定（設計 11）。
- *
- * **既に記録がある通貨は、廃止済みでも候補に残す**（`docs/domain/money.md`「廃止された通貨」）。
- * そのために記録も読む。同じ取得は他の Container と束ねられる。
- */
+/** グループ設定（設計 11）。既に記録がある通貨を候補に残すため、記録も読む（`docs/domain/money.md`「廃止された通貨」）。 */
 export async function GroupSettingsContainer({
   groupId,
   origin,

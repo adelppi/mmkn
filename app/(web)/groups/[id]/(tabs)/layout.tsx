@@ -8,17 +8,9 @@ import { GroupHeaderContainer } from './_containers/group-header/container'
 import { ViewerBalanceContainer } from './_containers/viewer-balance/container'
 
 /**
- * 記録・収支・精算に共通の上端（設計 03〜05）。
+ * 記録・収支・精算に共通の上端（設計 03〜05。`docs/adr/0009-web-ui.md`「上端を共有する」）。
  *
- * **3 つのタブで 1 つを共有する**（`docs/adr/0009-web-ui.md`「上端を共有する」）。
- * ここに置いたものはタブを切り替えても作り直されないため、グループ名も設定もタブも
- * 取り直しにならない。切り替えで待つのは `children` だけである。
- *
- * **上端・あなたの収支・タブは動かず、スクロールするのは中身だけ**（設計 03）。
- * 画面の高さを固定し、あふれる場所を `children` の中に閉じ込めている。
- *
- * 記録の登録・詳細・グループ設定はこの上端を持たない（設計 06〜08・11）。
- * そのため 3 つのタブだけを `(tabs)` にまとめ、他の画面はこの層の外に置いている。
+ * **スクロールするのは中身だけ**で、あふれる場所を `children` の中に閉じ込めている。
  */
 export default async function GroupTabsLayout({ children, params }: LayoutProps<'/groups/[id]'>) {
   const { id } = await params

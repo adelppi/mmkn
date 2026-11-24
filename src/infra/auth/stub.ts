@@ -3,40 +3,19 @@ import type { AuthClient, CookieStore } from './client'
 /**
  * E2E だけが使う偽の認証（`docs/adr/0010-testing.md`「E2E が使う認証基盤」）。
  *
- * **本物の認証基盤には繋がない。** CI 内でアプリを起動する以上アプリは認証基盤に繋がるが、
- * 本番に向ければ E2E が本物のアカウントを作る。使い捨ての認証基盤も、認可画面をまたぐ自動化も
- * 持たないと決めた（`docs/adr/0010`）ため、**ログイン済みの状態を偽の認証で作る。**
- *
  * ```
- * ログインの往復（本物）  ブラウザ → 認可画面 → /auth/callback?code=… → セッションの cookie
- * ログインの往復（ここ）  ブラウザ →   ここ   → /auth/callback?code=… → セッションの cookie
+ * 本物  ブラウザ → 認可画面 → /auth/callback?code=… → セッションの cookie
+ * ここ  ブラウザ →   ここ   → /auth/callback?code=… → セッションの cookie
  * ```
  *
- * **外部サービスの認可画面の代わりをするだけで、それ以外の経路は本物と同じものが動く。**
- * 画面もユースケースも永続化も差し替えない。
- *
- * ## 何を確かめられなくなるか
- *
- * **本物の認証基盤の挙動は、E2E では何一つ確かめられない**（同じ外部アカウントで再ログインした
- * ときに同じ user が返るか）。それは
- * `docs/operations.md`「実装着手時に必ず確かめること」の手動確認が正であり、ここは代わりにならない。
- *
- * ## 有効になる条件
- *
- * **`E2E_AUTH_STUB` が `1` のときだけ切り替わる**（`src/infra/auth/client.ts`）。
- * **この変数をホスティング環境に置かない**（`docs/operations.md`「環境変数」）。置いた時点で、
- * 本物のログインを通らずに任意の識別子でログインできる状態になる。
+ * **`E2E_AUTH_STUB` が `1` のときだけ切り替わる**（`client.ts`・`jwks.ts`）。
+ * **この変数をホスティング環境に置かない。** 置くと、任意の識別子でログインできる。
  */
 
 /** ログイン済みであることを表す cookie。**値がそのままログイン識別子になる。** */
 export const SESSION_COOKIE = 'mmkn-e2e-session'
 
-/**
- * 次のログインで、誰としてログインするか。**テストが先に置く。**
- *
- * 本物では認可画面で選ぶ部分にあたる。ブラウザの文脈ごとに別の値を置くことで、
- * 1 つの E2E の中で複数の利用者を扱える（グループを作る人と、参加する人）。
- */
+/** 次のログインで、誰としてログインするか。**テストが先に置く。** 本物では認可画面で選ぶ部分にあたる。 */
 const LOGIN_AS_COOKIE = 'mmkn-e2e-login-as'
 
 /** 偽の認証に切り替える環境変数。**手元と CI だけで立て、ホスティング環境には置かない。** */
@@ -63,20 +42,10 @@ const putCookie = (cookies: CookieStore, name: string, value: string): void => {
 const callbackWith = (redirectTo: string, code: string): string =>
   `${redirectTo}?code=${encodeURIComponent(code)}`
 
-/**
- * 偽の認証への接続。
- *
- * **本物と同じ形の値を返す**（`src/infra/auth/session.ts` が読む形）。
- * 型は認証基盤の SDK のものであり、そのすべてを持たないため、使われる分だけを作って変換する。
- */
+/** 偽の認証への接続。使われる分だけを、本物と同じ形で返す。 */
 export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
   const auth = {
-    /**
-     * **本物では署名の検証にあたる**（`docs/adr/0008-layer-internals.md`「セッションの検証」）。
-     * 偽の認証は署名を持たないため、cookie の値をそのまま識別子として返す。
-     *
-     * **本物と同じく、ここでも認証基盤へは出ない。**
-     */
+    /** **本物では署名の検証にあたる。** ここでは cookie の値をそのまま識別子として返す。 */
     getClaims: async () => {
       const loginIdentifier = cookieValue(cookies, SESSION_COOKIE)
       if (loginIdentifier === undefined) return { data: null, error: null }
@@ -84,14 +53,7 @@ export const createStubAuthClient = (cookies: CookieStore): AuthClient => {
       return { data: { claims: { sub: loginIdentifier } }, error: null }
     },
 
-    /**
-     * **入口が更新を起こすために呼ぶ**（`proxy.ts`）。
-     *
-     * **偽の認証のトークンは期限切れにならないため、更新すべきものは無い。**
-     * したがって E2E は「期限切れが入口で更新される」ことを確かめられない
-     * （`docs/adr/0010-testing.md`「E2E が使う認証基盤」）。手で確かめる手順が
-     * `docs/operations.md` にあり、そちらが正である。
-     */
+    /** **入口が更新を起こすために呼ぶ**（`proxy.ts`）。偽のトークンは期限切れにならない。 */
     getSession: async () => {
       const loginIdentifier = cookieValue(cookies, SESSION_COOKIE)
       if (loginIdentifier === undefined) return { data: { session: null }, error: null }

@@ -10,15 +10,7 @@ import { AppBar, Empty, Notice, Screen } from '@/app/_ui/notice'
 import type { FormAction } from '@/src/adapter/web/presenter/form'
 import type { InviteView, JoinView } from '@/src/adapter/web/presenter/group'
 
-/**
- * 招待リンクから参加（設計 10）。
- *
- * **参加する前に見えるのは、グループ名と Member の表示名まで**
- * （`docs/domain/group.md`「グループに参加する」）。記録・収支・清算案の中身は含まない。
- *
- * **表示名の初期値は、その User の名前。** 二重に参加しても新しい Member は作られず、
- * 入力した表示名も反映されない（同上）。そのことは画面で先に伝える。
- */
+/** 招待リンクから参加（設計 10。`docs/domain/group.md`「グループに参加する」）。 */
 export function InvitePresentation(
   props: InviteView & {
     readonly action: FormAction<JoinView>

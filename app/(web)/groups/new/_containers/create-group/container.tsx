@@ -6,11 +6,7 @@ import { CreateGroupPresentation } from './presentation'
 /** 既定通貨の初期値。**扱える通貨を絞るものではない**（`docs/domain/group.md`）。 */
 const INITIAL_CURRENCY = 'JPY'
 
-/**
- * グループ作成（設計 09）。
- *
- * **初期状態も Presenter が持つ**（`docs/adr/0009-web-ui.md`「フォーム」）。
- */
+/** グループ作成（設計 09）。 */
 export async function CreateGroupContainer({
   action,
 }: {

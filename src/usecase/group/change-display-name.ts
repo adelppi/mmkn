@@ -7,12 +7,7 @@ import type { GroupRepository } from '../port/group-repository'
 import type { UseCase } from '../usecase'
 import { loadGroupAsMember } from './access'
 
-/**
- * 表示名を変更する（`docs/domain/group.md`「表示名を変更する」・`docs/features.md` #3）。
- *
- * **同じ User の、他のグループの Member の表示名は変わらない。**
- * 過去の記録は Member を指しているため、記録側は書き換えない。
- */
+/** 表示名を変更する（`docs/domain/group.md`「表示名を変更する」・`docs/features.md` #3）。 */
 
 export type ChangeDisplayNameInput = {
   readonly actor: UserId | undefined
