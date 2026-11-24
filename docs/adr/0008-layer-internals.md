@@ -1,7 +1,7 @@
 # ADR-0008: 各層の内部構造と実装の型を定める
 
 - ステータス: 採用 [確定]
-- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `docs/domain/money.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0014-logging.md`, `adr/0016-currency-table-committed.md`
+- 関連: `docs/domain/group.md`, `docs/domain/record.md`, `docs/domain/money.md`, `adr/0002-invite-code.md`, `adr/0003-tech-stack.md`, `adr/0004-layers-and-dependencies.md`, `adr/0005-data-access-and-authorization.md`, `adr/0007-external-account-linking.md`, `adr/0009-web-ui.md`, `adr/0010-testing.md`, `adr/0014-logging.md`, `adr/0016-currency-table-committed.md`
 
 ## コンテキスト
 
@@ -138,12 +138,11 @@ cookie の読み取りはフレームワーク（`next/headers`）に依存す�
 
 #### どのリクエストで更新するか [確定]
 
-**更新するものが無いリクエストでは、認証基盤に問い合わせない。** 素通しするのは次の 3 つで、いずれも理由は「保存すべき新しいトークンが生まれない」ことである。
+**更新するものが無いリクエストでは、認証基盤に問い合わせない。** 素通しするのは次の 2 つで、いずれも理由は「保存すべき新しいトークンが生まれない」ことである。
 
 | 素通しするもの | 理由 |
 |---|---|
 | 静的ファイル・フレームワークの内部 | セッションを持たない |
-| 署名付きのエンドポイント（`adr/0006`） | セッションを持たない。本人の確認は署名が行う |
 | ログインの往復の戻り先 | **そこは自分で cookie を書ける**（Route Handler） |
 
 **セッションを持たない人も素通しする。** 更新するものが無いのに往復を挟むと、ログイン前の画面に何も起きない待ち時間だけが増える。**これは認可の判定ではない**（判定はドメイン層。`adr/0005`）。ここが見るのは「更新するものがあるか」だけで、通す・通さないは決めない。
@@ -180,22 +179,9 @@ cookie の中身をそのまま信じないという要求は変わらない。�
 
 外れても壊れないため、**気づく手段は検査ではなく診断になる。** 手順は `docs/operations.md`「診断」を正とする。
 
-### Discord のペイロード型
-
-**`discord-api-types` を使い、Interaction の型を自前で定義しない。** 型のみでランタイム依存を持たないため、アダプタ層のフレームワーク非依存を壊さない。
-
-**採用の理由が「型のみ」である以上、値としても import しない** [確定]。このパッケージは種別や部品の番号を enum として持つが、それを値として使うとランタイムのコードが 1 つ増える。代わりに、**必要な数値を 1 か所に書き、`import type` した enum の型に照らして固定する。**
-
-```ts
-export const INTERACTION = { ping: 1, /* … */ } as const satisfies Record<string, InteractionType>
-//                                  ^ 誤った数値はここで型検査に落ちる
-```
-
-数値の正はパッケージの側にあり、書き写しの誤りは検査で落ちる。**プロトコルの定数をここ以外に打たない**（置き場は上記ツリーの `protocol.ts`）。
-
 ### ディレクトリ構造
 
-**このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアントごとに増える場所を `adapter/`・`infra/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
+**このツリーがディレクトリ構造の正である。** `adr/0004` が定めた 3 つの規則（トップレベルを層で切る／`src/domain/` を `docs/domain/` と 1 対 1 にする／クライアント固有のものを `adapter/` の直下に限る）を、この ADR で定めた内訳まで展開したもの。
 
 **大半のテストファイルは対象の隣に置くため、ツリーには現れない。** 層をまたぐテストだけがトップレベルの `tests/` に出る（どちらに置くかの基準は `adr/0010` を正とする）。
 
@@ -211,7 +197,6 @@ app/
 │   ├─ page.tsx
 │   ├─ actions.ts                 … 'use server'。adapter/web/controller へ委譲
 │   └─ _containers/<name>/        … adr/0009
-├─ api/discord/route.ts           … 署名検証 → defer → 応答後に継続 → follow-up
 └─ auth/callback/route.ts         … ログインとログイン手段の追加のコールバック（adr/0012）
 
 src/
@@ -227,19 +212,10 @@ src/
 │   │   ├─ group-repository.ts / payment-repository.ts / transfer-repository.ts
 │   │   ├─ user-repository.ts
 │   │   ├─ external-account-repository.ts   … (サービス種別, 外部 ID) → User
-│   │   ├─ place-mapping-repository.ts      … (サービス種別, 場の識別子) → Group
 │   │   ├─ id-generator.ts / clock.ts / invite-code-generator.ts
 │   │   └─ fake.ts                … ポートの偽実装（テスト専用。adr/0010）
 │   └─ group/  record/  settlement/  account/
 ├─ adapter/
-│   ├─ discord/
-│   │   ├─ router.ts              … Interaction 種別で分岐
-│   │   ├─ context.ts             … 外部 ID → User、場 → Group。解決できなければ案内を返す
-│   │   ├─ definitions.ts         … コマンド・部品・モーダルの宣言と可視性（adr/0006）
-│   │   ├─ protocol.ts            … Interaction の種別・応答・部品の数値（後述「Discord のペイロード型」）
-│   │   ├─ payload.ts             … ペイロードから値を読む（引数・モーダルの入力・運ばれた候補）
-│   │   ├─ controller/command/  controller/component/  controller/modal/
-│   │   └─ presenter/             … モーダルの組み立てもここ（永続化に問い合わせない。adr/0006）
 │   ├─ web/
 │   │   ├─ controller/
 │   │   └─ presenter/
@@ -249,23 +225,18 @@ src/
     ├─ db/                        … client / schema / migrations / mapper / repository
     │                                加えて test-support（永続化テストの下ごしらえ。テスト専用）
     ├─ auth/                      … client / session / external-account
-    ├─ discord/                   … signature / client
     ├─ log/                       … 構造化ログの出力（adr/0014）
     └─ system/                    … clock / id / invite-code
 
 tests/                            … 層をまたぐテストのみ（adr/0010）
-├─ client-parity/                 … Web と Discord の結果が一致すること
 └─ e2e/                           … Playwright
-
-scripts/                          … アプリが読み込まない道具
-└─ discord/                       … コマンドの登録と、設定の診断（adr/0006・docs/operations.md）
 ```
 
 - `adapter/*/controller` と `adapter/*/presenter` が対になっていることを、ディレクトリ名で読み取れる状態にする
 - `infra/db/mapper` を独立させ、ORM の推論型がリポジトリの外へ漏れない壁とする（`adr/0005`）
 - **テスト専用のものも、対象と同じ層に置く。** 偽実装はポートの隣（それが実装するもののそば）、前提データはユースケース層の直下、永続化テストの下ごしらえは `infra/db` の中に置く。層をまたがないため `tests/` には出さない（`adr/0010`）
 - ログイン手段（外部アカウント）の参照は `infra/auth` に置く。認証基盤のスキーマ依存をそこだけに閉じるため（`adr/0012`）
-- `adapter/shared` はクライアント固有でないものだけを置く。`adapter/` 直下がクライアントごとに増える場所であることは変わらない
+- `adapter/shared` はクライアント固有でないものだけを置く
 
 ### 依存方向の機械検査のルール
 
@@ -279,19 +250,14 @@ scripts/                          … アプリが読み込まない道具
 | `src/infra/**` | `src/domain/**`・`src/usecase/**`・`src/infra/**` | `next/*` |
 | `app/**` | 制限なし | — |
 | `proxy.ts` | 制限なし | — |
-| `scripts/**` | 制限なし | — |
 
 加えて、`src/usecase/**` から `src/adapter/**`・`src/infra/**` への参照を**逆向きとして明示的に禁止する**。`app/` 配下のパス単位のルールは `adr/0009` を正とする。
-
-**`scripts/**` を制限なしとするのは、アプリが読み込まない場所だからである。** ここに置いた道具がどんな依存を持っても、`src/**` に流れ込まないことは**逆向きの参照を禁止すること**で担保する。**`src/**` から `scripts/**` への参照は禁止する。**
-
-**`scripts/` には Discord のコマンド登録と診断を置く** [確定]。どちらもアプリの実行時には走らず、宣言（`adapter/discord/definitions.ts`）と API クライアント（`infra/discord/`）を読む。層をまたぐが、`src/**` から参照されない場所であるため向きの問題は起きない。手順は `docs/operations.md` を正とする。
 
 ## 結果
 
 - 良い点：
-  - Web と Discord の入口が同じ形（Controller が入力変換 → ユースケース → Presenter を繋ぐ）になり、2 つの提供形態の差分を目で追える
-  - 失敗の分岐漏れが型検査で落ちるため、片方のクライアントだけ案内が抜ける事故が構造的に起きにくい
+  - どの入口も同じ形（Controller が入力変換 → ユースケース → Presenter を繋ぐ）になる
+  - 失敗の分岐漏れが型検査で落ちるため、案内が抜ける事故が構造的に起きにくい
   - ユースケースが依存を引数で受けるため、テストで偽実装に差し替えるのに仕掛けが要らない（`adr/0004` のテスト方針がそのまま成立する）
   - トランザクションがリポジトリの実装に閉じるため、永続化を差し替えてもユースケースが変わらない
 - 留意点：
@@ -311,6 +277,5 @@ scripts/                          … アプリが読み込まない道具
 - **ID をドメインが自分で生成する**：記述は最も短いが、`adr/0004` の「ドメインは依存を持たない」と機械検査に正面から衝突する。テストで毎回異なる ID を見ることにもなる。
 - **ドメインとユースケースに基底クラスを置く**：形の統一が継承で表現でき、共通処理の置き場ができる。ただし ID 生成を基底クラスに移しても依存が移動するだけであること、DB からの復元経路が二重になること、ユースケース側は入れるべき共通処理が残らないことから、得るものが名前だけになる。ドメインイベントを持つようになれば再検討する。
 - **DI コンテナのライブラリを導入する**：依存が増えたときの組み立てが宣言的になる。ただしユースケースが依存を引数で受ける形であれば `wire()` 1 つで足り、デコレータやメタデータの仕組みを個人開発で保守する理由がない。
-- **Interaction の型を自前で定義する**：依存が 1 つ減る。ただし Discord の API の形を自分で追い続けることになり、`adr/0006` が列挙した上限や種別の変化に手で追随することになる。
 - **先読みを、入口が見分けられる形に留める**：素通しの表を変えずに済む。ただし見分けられる先読みは**形しか取ってこない**ため、`adr/0009`「直前に見たものを取り直さない」が狙った「押した先が既にある」状態にならない。
 - **更新を、cookie を確実に書ける経路（文書の遷移・Server Action・Route Handler）だけで起こす**：先読みかどうかを見分けずに済む。ただし**画面の移動だけで過ごす間は更新の機会が無くなり**、この節がまさに避けようとした「しばらく使っていると勝手にログアウトされる」に近づく。

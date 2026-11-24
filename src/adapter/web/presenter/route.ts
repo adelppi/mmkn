@@ -37,8 +37,7 @@ export const route = {
   /**
    * 参加コードを埋め込んだ共有リンク（`docs/domain/group.md`「Group の属性」）。
    *
-   * **形の正は `src/adapter/shared/invite.ts`。** 参加の画面を持つのは Web だが、
-   * リンクを人に渡すのは Discord からも起きるため、path はクライアントをまたいで 1 か所にある。
+   * **形の正は `src/adapter/shared/invite.ts`。**
    */
   invite: (inviteCode: string) => invitePath(inviteCode),
 } as const

@@ -2,7 +2,6 @@ import {
   bundledExternalAccounts,
   bundledGroups,
   bundledPayments,
-  bundledPlaceMappings,
   bundledTransfers,
   bundledUsers,
   noBundling,
@@ -13,7 +12,6 @@ import { supabaseExternalAccountRepository } from '@/src/infra/auth/external-acc
 import { database, sqlClient } from '@/src/infra/db/client'
 import { drizzleGroupRepository } from '@/src/infra/db/repository/group'
 import { drizzlePaymentRepository } from '@/src/infra/db/repository/payment'
-import { drizzlePlaceMappingRepository } from '@/src/infra/db/repository/place-mapping'
 import { drizzleTransferRepository } from '@/src/infra/db/repository/transfer'
 import { drizzleUserRepository } from '@/src/infra/db/repository/user'
 import type { LogContext } from '@/src/infra/log/logger'
@@ -26,16 +24,12 @@ import { createAccount } from '@/src/usecase/account/create-account'
 import { logIn } from '@/src/usecase/account/log-in'
 import { logOut } from '@/src/usecase/account/log-out'
 import { removeLoginMethod } from '@/src/usecase/account/remove-login-method'
-import { resolveActor } from '@/src/usecase/account/resolve-actor'
 import { viewAccount } from '@/src/usecase/account/view-account'
-import { assignPlace } from '@/src/usecase/group/assign-place'
 import { changeDisplayName } from '@/src/usecase/group/change-display-name'
 import { changeGroupSettings } from '@/src/usecase/group/change-group-settings'
 import { createGroup } from '@/src/usecase/group/create-group'
 import { joinGroup } from '@/src/usecase/group/join-group'
 import { listGroups } from '@/src/usecase/group/list-groups'
-import { releasePlace } from '@/src/usecase/group/release-place'
-import { resolvePlace } from '@/src/usecase/group/resolve-place'
 import { viewGroup } from '@/src/usecase/group/view-group'
 import { viewInvite } from '@/src/usecase/group/view-invite'
 import { deletePayment } from '@/src/usecase/record/delete-payment'
@@ -78,7 +72,6 @@ export function wire(context: LogContext, auth: AuthClient, bundle: BundleReads 
     users,
     payments: bundledPayments(drizzlePaymentRepository(db), bundle),
     transfers: bundledTransfers(drizzleTransferRepository(db), bundle),
-    placeMappings: bundledPlaceMappings(drizzlePlaceMappingRepository(db), bundle),
     // **ログイン手段だけは mmkn の DB に無い。** 実体は認証基盤の側にある（`adr/0012`）。
     externalAccounts: bundledExternalAccounts(
       supabaseExternalAccountRepository({ sql: sqlClient(), client: auth, users }),
@@ -98,18 +91,11 @@ export function wire(context: LogContext, auth: AuthClient, bundle: BundleReads 
     removeLoginMethod: logged(context, 'removeLoginMethod', removeLoginMethod(deps)),
     viewAccount: logged(context, 'viewAccount', viewAccount(deps)),
 
-    // グループとメンバー（`docs/features.md` #1〜#4・#13）
+    // グループとメンバー（`docs/features.md` #1〜#4）
     createGroup: logged(context, 'createGroup', createGroup(deps)),
     joinGroup: logged(context, 'joinGroup', joinGroup(deps)),
     changeGroupSettings: logged(context, 'changeGroupSettings', changeGroupSettings(deps)),
     changeDisplayName: logged(context, 'changeDisplayName', changeDisplayName(deps)),
-    assignPlace: logged(context, 'assignPlace', assignPlace(deps)),
-    releasePlace: logged(context, 'releasePlace', releasePlace(deps)),
-
-    // 外部サービスから届いた操作の、主と対象の解決（`docs/adr/0006-discord-http-interactions.md`）。
-    // **ここを通すのは、ユースケースを通さないデータアクセス経路を作らないため**（`docs/adr/0005`）。
-    resolveActor: logged(context, 'resolveActor', resolveActor(deps)),
-    resolvePlace: logged(context, 'resolvePlace', resolvePlace(deps)),
     listGroups: logged(context, 'listGroups', listGroups(deps)),
     viewGroup: logged(context, 'viewGroup', viewGroup(deps)),
     viewInvite: logged(context, 'viewInvite', viewInvite(deps)),

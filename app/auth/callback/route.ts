@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   // あるときも、ここで断られる**（`docs/adr/0012`）。データは何も変わっていない。
   if (completed.kind === 'rejected') return to(route.login())
 
-  const usecases = wire({ correlationId: crypto.randomUUID(), client: 'web' }, client)
+  const usecases = wire({ correlationId: crypto.randomUUID() }, client)
 
   const addedService = url.searchParams.get('add')
   if (addedService === null) {

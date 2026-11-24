@@ -68,15 +68,15 @@ Transfer ─┘
 
 ## 現状
 
-**土台ができたところ。** 機能はまだ 1 つも実装していない。
+**v1 の機能を実装済み。** クライアントは Web だけ（`docs/adr/0017-web-only.md`）。
 
 - ドメインモデルは `docs/domain/` の 4 文書に確定済み
-- 技術的意思決定は ADR 15 本（`docs/adr/0001`〜`0015`）
+- 技術的意思決定は `docs/adr/`
 - 未確定の論点はゼロ（`docs/open-questions.md`）
-- v1 は機能一覧の 13 機能すべて。段階リリースをしない（`docs/features.md`）
+- v1 は機能一覧の 12 機能すべて。段階リリースをしない（`docs/features.md`）
 - 層のディレクトリと依存方向の検査、lint / 型検査 / 単体テストが PR の CI で回る
 
-技術スタックは TypeScript / Next.js / Vercel / Supabase、Discord は常駐 Bot を持たず HTTP Interactions（`docs/adr/0003-tech-stack.md`）。
+技術スタックは TypeScript / Next.js / Vercel / Supabase（`docs/adr/0003-tech-stack.md`）。
 
 手元での回し方は `docs/operations.md`「手元の準備」「検査の回し方」。ディレクトリ構造の正は `docs/adr/0008-layer-internals.md`。
 

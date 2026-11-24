@@ -32,7 +32,7 @@ import { cache } from 'react'
  */
 
 const context = cache(
-  (): LogContext => ({ correlationId: crypto.randomUUID(), client: 'web' }),
+  (): LogContext => ({ correlationId: crypto.randomUUID() }),
 )
 
 /** 読み取りの文脈では cookie を書けない（`app/_lib/session.ts`）。 */

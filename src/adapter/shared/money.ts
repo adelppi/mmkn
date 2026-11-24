@@ -3,7 +3,6 @@ import { minorUnitOf, type Currency } from '../../domain/money/currency'
 /**
  * 通貨の表示整形（`docs/adr/0008-layer-internals.md` のツリー：`adapter/shared`）。
  *
- * **クライアント固有のものは置かない。** Web も Discord も同じ整形を使う。
  * **最小単位の桁数は `domain/money` が正**であり、ここでは決めない。
  *
  * 記号と通貨名は言語標準の国際化 API から得る。**表に持たないのは、それが

@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
 import { loadEnv } from 'vite'
-import { E2E_DISCORD_PUBLIC_KEY } from './tests/e2e/support/discord-key'
 
 /**
  * E2E の設定（`docs/adr/0010-testing.md`「E2E の範囲」・`docs/adr/0011-ci-and-release.md`）。
@@ -11,7 +10,6 @@ import { E2E_DISCORD_PUBLIC_KEY } from './tests/e2e/support/discord-key'
  * ```
  * DATABASE_URL      使い捨ての Postgres（ループバック以外は下ごしらえが弾く）
  * E2E_AUTH_STUB     偽の認証に切り替える（src/infra/auth/stub.ts）
- * DISCORD_PUBLIC_KEY E2E が自分で署名するための鍵（tests/e2e/support/discord-key.ts）
  * ```
  *
  * **E2E は PR では回さない**（`docs/adr/0011`「PR で回すもの」）。手元では必要なときだけ、
@@ -67,7 +65,6 @@ export default defineConfig({
       // ワークフローが渡す使い捨ての Postgres）。
       DATABASE_URL: process.env.DATABASE_URL ?? '',
       E2E_AUTH_STUB: '1',
-      DISCORD_PUBLIC_KEY: E2E_DISCORD_PUBLIC_KEY,
     },
   },
 })

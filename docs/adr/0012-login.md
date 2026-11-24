@@ -1,7 +1,7 @@
 # ADR-0012: ログインを外部サービスの OAuth に委ね、1 User が複数のログイン手段を持てるようにする
 
 - ステータス: 採用 [確定] — 2026-08-14 改訂（2 度目）
-- 関連: `docs/domain/group.md`, `docs/features.md`, `docs/overview.md`, `adr/0003-tech-stack.md`, `adr/0006-discord-http-interactions.md`, `adr/0007-external-account-linking.md`（廃止）, `adr/0008-layer-internals.md`
+- 関連: `docs/domain/group.md`, `docs/features.md`, `docs/overview.md`, `adr/0003-tech-stack.md`, `adr/0007-external-account-linking.md`（廃止）, `adr/0008-layer-internals.md`, `adr/0017-web-only.md`
 
 **この ADR は 2 度改訂している。** 撤回した決定と理由は次のとおり。
 
@@ -22,7 +22,7 @@
 
 制約は 3 つ。
 
-- **mmkn は Discord に依存しない**（`overview.md`）。Discord は提供形態の 1 つであり、それを持たない人も Web だけで完結して使える必要がある
+- **mmkn は Discord に依存しない**（`overview.md`）。Discord のアカウントを持たない人も使える必要がある
 - 個人開発であり、認証まわりの画面と文言を自分で保守することになる（`overview.md`）
 - **運用コストも無料枠に収める**（`overview.md`「前提」[確定]）
 
@@ -96,7 +96,6 @@
 | 確かめること | 外れたときの影響 |
 |---|---|
 | 同じ外部アカウントで再ログインしたとき、認証基盤が同じ user を返すか | 同じ人が毎回別の User になる |
-| 認証基盤が保存する Discord のユーザー ID と、スラッシュコマンドで届くユーザー ID が同一か | Discord 側が丸ごと動かない |
 | 最後の 1 つのログイン手段を削除しようとしたときに、認証基盤が拒むか | 拒まないなら mmkn 側で止める。`domain/group.md` の規則が実現方式に依存しない形になっているかの確認 |
 | 認可画面をまたぐログイン手段の追加が実際に成立するか（自動化しないため手動。`adr/0010`） | ログイン手段を増やせない |
 

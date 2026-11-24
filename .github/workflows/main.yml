@@ -6,7 +6,6 @@
 #   1. E2E                     使い捨ての Postgres と、ここで起動したアプリに対して回す
 #   2. マイグレーションの適用   本番 DB。失敗したら 3 以降に進まない
 #   3. デプロイ                 Vercel
-#   4. スラッシュコマンドの登録  定義に差分があるときだけ実行される
 #
 # **時刻で起動するものはここにも他にも無い**（`docs/adr/0011`「定期実行するものを持たない」・
 # `docs/adr/0016`）。走るのは PR（`pr.yml`）と main の 2 経路だけである。
@@ -77,7 +76,7 @@ jobs:
 
   # ── 3. デプロイ ────────────────────────────────────────────────────────────
   # **Vercel の Git 連携による自動デプロイには任せない**（`docs/adr/0011`・`vercel.json`）。
-  # マイグレーションの適用とコマンド登録をデプロイの前後に挟むため、順序を自分で持つ。
+  # マイグレーションの適用をデプロイの前に挟むため、順序を自分で持つ。
   #
   # **`needs: migrate` が「マイグレーションが失敗したらデプロイしない」の実体である。**
   deploy:
@@ -97,27 +96,3 @@ jobs:
       - run: npx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
       - run: npx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
       - run: npx vercel@latest deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-  # ── 4. スラッシュコマンドの登録 ─────────────────────────────────────────────
-  # **定義に差分があるときだけ登録される**（判定はスクリプトの中。`scripts/discord/register.ts`）。
-  #
-  # **ここが失敗してもデプロイは巻き戻さない**（`docs/adr/0011`）。Discord 側が古い定義のまま
-  # 動くだけで、Web は正常に動く。**巻き戻す手順を置かないことがその実体である。**
-  # 失敗したときの確認は `docs/operations.md`「途中で失敗したときの確認」。
-  register-commands:
-    needs: deploy
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: npm
-      - run: npm ci
-      - run: npm run discord:register
-        env:
-          # **この 2 つはホスティング環境に置かない**（`docs/adr/0011`「秘密情報の置き場」）。
-          # 署名検証は公開鍵で行うため、アプリは Bot Token を必要としない。
-          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-          DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
