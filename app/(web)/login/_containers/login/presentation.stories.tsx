@@ -12,4 +12,10 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const ログイン: Story = { args: toLoginView() }
+export const ログイン: Story = { args: toLoginView({}) }
+
+export const 招待から: Story = { args: toLoginView({ inviteCode: 'invite-1' }) }
+
+export const 認可画面で断った: Story = { args: toLoginView({ failure: 'loginDenied' }) }
+
+export const ログインに失敗した: Story = { args: toLoginView({ failure: 'loginFailed' }) }

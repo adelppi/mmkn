@@ -193,3 +193,31 @@ describe('信じてはいけない cookie', () => {
     expect(await currentLoginIdentifier(requestWith())).toBeUndefined()
   })
 })
+
+describe('認可画面から何を持って戻ってきたか', () => {
+  const returned = async (query: string) =>
+    (await freshSession()).loginReturn(new URLSearchParams(query))
+
+  it('code があれば、往復を完了できる', async () => {
+    expect(await returned('code=abc')).toEqual({ kind: 'code', code: 'abc' })
+  })
+
+  it('本人が断った', async () => {
+    expect(await returned('error=access_denied&error_description=denied')).toEqual({
+      kind: 'denied',
+    })
+  })
+
+  it('認証基盤の側で失敗した', async () => {
+    expect(await returned('error=server_error&error_code=unexpected_failure')).toEqual({
+      kind: 'failed',
+    })
+    expect(await returned('error=access_denied&error_code=signup_disabled')).toEqual({
+      kind: 'failed',
+    })
+  })
+
+  it('何も持たずに戻ったときも、失敗として扱う', async () => {
+    expect(await returned('')).toEqual({ kind: 'failed' })
+  })
+})

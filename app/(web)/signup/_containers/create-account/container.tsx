@@ -12,9 +12,11 @@ import { CreateAccountPresentation } from './presentation'
  * ここが決めるものは無く、フォームの状態の正は常に「サーバーが返したビューモデル」1 つになる。
  */
 export async function CreateAccountContainer({
+  inviteCode,
   action,
 }: {
+  readonly inviteCode: string | undefined
   readonly action: FormAction<CreateAccountView>
 }) {
-  return <CreateAccountPresentation {...initialCreateAccountView()} action={action} />
+  return <CreateAccountPresentation {...initialCreateAccountView(inviteCode)} action={action} />
 }

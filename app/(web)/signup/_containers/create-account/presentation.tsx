@@ -35,6 +35,10 @@ export function CreateAccountPresentation(props: FormProps<CreateAccountView>) {
       </div>
 
       <form action={action} className="flex flex-col gap-5">
+        {view.form.inviteCode === undefined ? null : (
+          <input type="hidden" name="inviteCode" value={view.form.inviteCode} readOnly />
+        )}
+
         <Field label="名前" htmlFor="name">
           <Input
             id="name"
