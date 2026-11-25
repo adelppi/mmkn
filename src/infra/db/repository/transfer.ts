@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql, type SQL } from 'drizzle-orm'
 import type { GroupId, TransferId } from '../../../domain/id'
 import type { Transfer } from '../../../domain/record/transfer'
 import type { TransferRepository } from '../../../usecase/port/transfer-repository'
@@ -12,18 +12,26 @@ import { transfers } from '../schema'
 /** 最初の版。 */
 const INITIAL_VERSION: Version = 1
 
+const load = async (db: Database, where: SQL): Promise<readonly Versioned<Transfer>[]> => {
+  const rows = await db.select().from(transfers).where(where)
+
+  return rows.map((row) => ({ record: toTransfer(row), version: row.version }))
+}
+
 export const drizzleTransferRepository = (db: Database): TransferRepository => ({
   async find(id: TransferId) {
-    const [row] = await db.select().from(transfers).where(eq(transfers.id, id)).limit(1)
-    if (row === undefined) return undefined
-
-    return { record: toTransfer(row), version: row.version }
+    const [found] = await load(db, eq(transfers.id, id))
+    return found
   },
 
   async listByGroup(groupId: GroupId) {
-    const rows = await db.select().from(transfers).where(eq(transfers.groupId, groupId))
+    return load(db, eq(transfers.groupId, groupId))
+  },
 
-    return rows.map((row): Versioned<Transfer> => ({ record: toTransfer(row), version: row.version }))
+  async listByGroups(groupIds: readonly GroupId[]) {
+    if (groupIds.length === 0) return []
+
+    return load(db, inArray(transfers.groupId, [...groupIds]))
   },
 
   async create(transfer: Transfer) {

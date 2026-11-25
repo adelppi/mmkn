@@ -22,7 +22,7 @@ afterAll(async () => {
 
 describe('RLS の網羅', () => {
   it('public のテーブルが 1 つ以上ある（走査そのものが空振りしていない）', async () => {
-    const rows = await database.db.execute<{ tablename: string }>(
+    const { rows } = await database.db.execute<{ tablename: string }>(
       sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
     )
 
@@ -30,7 +30,7 @@ describe('RLS の網羅', () => {
   })
 
   it('すべてのテーブルで RLS が有効になっている', async () => {
-    const rows = await database.db.execute<{ tablename: string }>(sql`
+    const { rows } = await database.db.execute<{ tablename: string }>(sql`
       SELECT c.relname AS tablename
         FROM pg_class c
         JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -43,7 +43,7 @@ describe('RLS の網羅', () => {
   })
 
   it('すべてのテーブルに「誰も通さない」ポリシーが置かれている', async () => {
-    const rows = await database.db.execute<{ tablename: string }>(sql`
+    const { rows } = await database.db.execute<{ tablename: string }>(sql`
       SELECT c.relname AS tablename
         FROM pg_class c
         JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -62,7 +62,7 @@ describe('RLS の網羅', () => {
   it('ポリシーは業務ルールを持たず、常に false で拒否する', async () => {
     // 業務ルールを DB のポリシーに書かない（`docs/adr/0005`「認可の置き場所」）。
     // 条件が `false` 以外になっていたら、ルールが 2 か所に分裂している。
-    const rows = await database.db.execute<{ policyname: string; qual: string | null }>(sql`
+    const { rows } = await database.db.execute<{ policyname: string; qual: string | null }>(sql`
       SELECT policyname, qual
         FROM pg_policies
        WHERE schemaname = 'public'

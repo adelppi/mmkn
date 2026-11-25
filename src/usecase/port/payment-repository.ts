@@ -10,6 +10,9 @@ export type PaymentRepository = {
   /** そのグループの Payment をすべて読む。**並び順はここでは決めない。** */
   listByGroup(groupId: GroupId): Promise<readonly Versioned<Payment>[]>
 
+  /** 複数のグループの Payment を**まとめて**読む。グループの数だけ読み取りを走らせないためにある。 */
+  listByGroups(groupIds: readonly GroupId[]): Promise<readonly Versioned<Payment>[]>
+
   /** Payment と、その負担者を書き込む。最初の版を返す。 */
   create(payment: Payment): Promise<Version>
 

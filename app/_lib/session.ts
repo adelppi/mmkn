@@ -1,12 +1,12 @@
-import type { UserId } from '@/src/domain/id'
+import type { User } from '@/src/domain/group/user'
 import { createAuthClient, type AuthClient, type CookieStore } from '@/src/infra/auth/client'
-import { currentUserId as resolveUserId } from '@/src/infra/auth/session'
+import { currentUser as resolveUser } from '@/src/infra/auth/session'
 import { database } from '@/src/infra/db/client'
 import { drizzleUserRepository } from '@/src/infra/db/repository/user'
 import { cookies } from 'next/headers'
 
 /**
- * 現在の `UserId` を得る（`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
+ * 操作する User を得る（`docs/adr/0008-layer-internals.md`「セッションの読み取り」）。
  *
  * **解決そのものは `infra/auth` にあり、ここは cookie へのアクセス手段を渡すだけである。**
  */
@@ -46,6 +46,6 @@ export const readOnlyAuthClient = async (): Promise<AuthClient> =>
 export const authClient = async (): Promise<AuthClient> =>
   createAuthClient(await writableCookies())
 
-/** 現在の `UserId`。ログインしていない、またはその識別子の User がまだいなければ `undefined`。 */
-export const currentUserId = async (client: AuthClient): Promise<UserId | undefined> =>
-  await resolveUserId(client, drizzleUserRepository(database()))
+/** 操作する User。ログインしていない、またはその識別子の User がまだいなければ `undefined`。 */
+export const currentUser = async (client: AuthClient): Promise<User | undefined> =>
+  await resolveUser(client, drizzleUserRepository(database()))

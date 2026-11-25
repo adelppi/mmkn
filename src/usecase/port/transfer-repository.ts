@@ -10,6 +10,9 @@ export type TransferRepository = {
   /** そのグループの Transfer をすべて読む。収支・清算案・一覧の材料になる。 */
   listByGroup(groupId: GroupId): Promise<readonly Versioned<Transfer>[]>
 
+  /** 複数のグループの Transfer を**まとめて**読む。グループの数だけ読み取りを走らせないためにある。 */
+  listByGroups(groupIds: readonly GroupId[]): Promise<readonly Versioned<Transfer>[]>
+
   /** Transfer を書き込む。最初の版を返す。 */
   create(transfer: Transfer): Promise<Version>
 

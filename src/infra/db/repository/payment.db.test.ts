@@ -100,6 +100,18 @@ describe('Payment 集約の保存と読み出し', () => {
     expect(found.every((it) => it.record.bearers.length === 2)).toBe(true)
   })
 
+  it('複数のグループをまとめて読める。他のグループの記録は混ざらない', async () => {
+    const other = groupOf([{ user: taro, memberId: 'm9' }], { id: 'g2', inviteCode: 'invite-2' })
+    await drizzleGroupRepository(database.db).create(other)
+    await repository().create(paymentOf({ id: 'p1' }))
+
+    const both = await repository().listByGroups([toGroupId('g1'), toGroupId('g2')])
+
+    expect(both).toEqual([{ record: paymentOf({ id: 'p1' }), version: 1 }])
+    expect(await repository().listByGroups([toGroupId('g2')])).toEqual([])
+    expect(await repository().listByGroups([])).toEqual([])
+  })
+
   it('記録が 1 件も無ければ空', async () => {
     expect(await repository().listByGroup(toGroupId('g1'))).toEqual([])
   })
@@ -114,6 +126,7 @@ describe('Payment 集約の保存と読み出し', () => {
 
     expect(found.map((it) => it.record.id)).toEqual([toPaymentId('p1')])
     expect(found[0]?.record.bearers).toEqual([])
+    expect((await repository().find(toPaymentId('p1')))?.record.bearers).toEqual([])
   })
 
   it('存在しない Payment は undefined', async () => {

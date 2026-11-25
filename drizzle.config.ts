@@ -1,4 +1,7 @@
 import { defineConfig } from 'drizzle-kit'
+import { connectionString } from './src/infra/db/connection-string'
+
+const url = process.env.DATABASE_URL ?? ''
 
 /**
  * ORM の設定。
@@ -14,7 +17,8 @@ export default defineConfig({
   dialect: 'postgresql',
   schema: './src/infra/db/schema.ts',
   out: './src/infra/db/migrations',
-  dbCredentials: { url: process.env.DATABASE_URL ?? '' },
+  // 適用もアプリと同じ読み方で繋ぐ（`docs/adr/0011`「着手時の確認結果」）。
+  dbCredentials: { url: url === '' ? url : connectionString(url) },
   // ロールは mmkn では作らない。RLS の全拒否ポリシーが指すのは組み込みの `public` だけ。
   entities: { roles: false },
   strict: true,

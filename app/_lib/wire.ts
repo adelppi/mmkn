@@ -3,8 +3,8 @@ import {
   bundledPayments,
   bundledTransfers,
   bundledUsers,
-  noBundling,
-  type BundleReads,
+  unbundled,
+  type Reads,
 } from '@/app/_lib/bundle'
 import { database } from '@/src/infra/db/client'
 import { drizzleGroupRepository } from '@/src/infra/db/repository/group'
@@ -40,15 +40,15 @@ import { viewSettlement } from '@/src/usecase/settlement/view-settlement'
 /**
  * 合成ルート（`docs/adr/0008-layer-internals.md`「合成ルート」）。リクエストごとに呼ぶ。
  *
- * **`bundle` を立てるのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない**
+ * **`reads` を渡すのは読み取りだけの経路（`app/_lib/read.ts`）に限り、既定は束ねない**
  * （`docs/adr/0009-web-ui.md`「束ねる位置」）。
  */
-export function wire(context: LogContext, bundle: BundleReads = noBundling) {
+export function wire(context: LogContext, { bundle, viewer }: Reads = unbundled) {
   const db = database()
 
   const deps = {
     groups: bundledGroups(drizzleGroupRepository(db), bundle),
-    users: bundledUsers(drizzleUserRepository(db), bundle),
+    users: bundledUsers(drizzleUserRepository(db), bundle, viewer),
     payments: bundledPayments(drizzlePaymentRepository(db), bundle),
     transfers: bundledTransfers(drizzleTransferRepository(db), bundle),
     ids: cuid2IdGenerator,

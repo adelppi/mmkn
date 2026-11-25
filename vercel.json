@@ -3,5 +3,5 @@
   "git": {
     "deploymentEnabled": false
   },
-  "regions": ["icn1"]
+  "regions": ["syd1"]
 }
