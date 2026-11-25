@@ -10,7 +10,7 @@ const UNIQUE_VIOLATION = '23505'
 /** ORM が元の例外を包むため、包みの何段か内側まで見る。 */
 const MAX_DEPTH = 5
 
-type DriverError = { readonly code: unknown; readonly constraint_name?: unknown }
+type DriverError = { readonly code: unknown; readonly constraint?: unknown }
 
 const isDriverError = (value: unknown): value is DriverError =>
   typeof value === 'object' && value !== null && 'code' in value
@@ -30,7 +30,7 @@ const driverError = (error: unknown): DriverError | undefined => {
 export const isUniqueViolation = (error: unknown, constraint: string): boolean => {
   const driver = driverError(error)
 
-  return driver?.code === UNIQUE_VIOLATION && driver.constraint_name === constraint
+  return driver?.code === UNIQUE_VIOLATION && driver.constraint === constraint
 }
 
 /** 制約の名前。`src/infra/db/schema.ts` で明示的に付けたものと揃える。 */

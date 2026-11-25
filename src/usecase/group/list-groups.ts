@@ -1,6 +1,6 @@
 import type { Group } from '../../domain/group/group'
 import { Member } from '../../domain/group/member'
-import { idEquals, type UserId } from '../../domain/id'
+import { idEquals, type GroupId, type UserId } from '../../domain/id'
 import type { Currency } from '../../domain/money/currency'
 import { err, ok } from '../../domain/result'
 import { balancesOf } from '../../domain/settlement/balance'
@@ -8,7 +8,7 @@ import type { GroupRepository } from '../port/group-repository'
 import type { PaymentRepository } from '../port/payment-repository'
 import type { TransferRepository } from '../port/transfer-repository'
 import type { UserRepository } from '../port/user-repository'
-import type { UseCase } from '../usecase'
+import type { UseCase, Versioned } from '../usecase'
 
 /** 自分が Member であるグループを一覧する。一緒に返すのは**操作する User 自身の収支だけ**である。 */
 
@@ -51,35 +51,43 @@ export const listGroups =
 
     const groups = await deps.groups.listByUser(actor)
 
-    const summaries = await Promise.all(
-      groups.map(async (group): Promise<GroupSummary> => {
-        const viewer = Member.byUser(group.members, actor)
-        // `listByUser` が返した時点でその User は Member である。
-        // それでも仮定せず、収支の無い形で返す（`docs/domain/group.md`）。
-        if (viewer === undefined) return { group, balances: [] }
+    // `listByUser` が返した時点でその User は Member である。
+    // それでも仮定せず、Member でないグループの記録は読まない（`docs/domain/group.md`）。
+    const viewed = groups.map((group) => ({ group, viewer: Member.byUser(group.members, actor) }))
+    const readable = viewed.flatMap(({ group, viewer }) => (viewer === undefined ? [] : [group.id]))
 
-        const [payments, transfers] = await Promise.all([
-          deps.payments.listByGroup(group.id),
-          deps.transfers.listByGroup(group.id),
-        ])
+    // **グループごとに読まない。** 読むと、グループの数だけ問い合わせと接続が増える。
+    const [payments, transfers] = await Promise.all([
+      deps.payments.listByGroups(readable),
+      deps.transfers.listByGroups(readable),
+    ])
 
-        const balances = balancesOf({
-          payments: payments.map((it) => it.record),
-          transfers: transfers.map((it) => it.record),
-        }).flatMap(({ currency, balances }) => {
-          const mine = balances.find((balance) => idEquals(balance.member, viewer.id))
-          if (mine === undefined || mine.amount === 0) return []
-          return [{ currency, amount: mine.amount }]
-        })
+    const summaries = viewed.map(({ group, viewer }): GroupSummary => {
+      if (viewer === undefined) return { group, balances: [] }
 
-        return { group, balances }
-      }),
-    )
+      const balances = balancesOf({
+        payments: recordsOf(group, payments),
+        transfers: recordsOf(group, transfers),
+      }).flatMap(({ currency, balances }) => {
+        const mine = balances.find((balance) => idEquals(balance.member, viewer.id))
+        if (mine === undefined || mine.amount === 0) return []
+        return [{ currency, amount: mine.amount }]
+      })
+
+      return { group, balances }
+    })
 
     return ok({
-      groups: [...summaries].sort((a, b) => compareByName(a.group, b.group)),
+      groups: summaries.sort((a, b) => compareByName(a.group, b.group)),
     })
   }
+
+/** まとめて読んだ記録から、そのグループのものだけを取り出す。 */
+const recordsOf = <T extends { readonly groupId: GroupId }>(
+  group: Group,
+  records: readonly Versioned<T>[],
+): readonly T[] =>
+  records.flatMap(({ record }) => (idEquals(record.groupId, group.id) ? [record] : []))
 
 /** 名前が同じグループがあり得る（`docs/domain/group.md` は一意性を要求していない）ため、識別子で決着させる。 */
 const compareByName = (a: Group, b: Group): number => {

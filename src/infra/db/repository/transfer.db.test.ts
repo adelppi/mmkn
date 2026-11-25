@@ -91,6 +91,18 @@ describe('Transfer の保存と読み出し', () => {
     expect(found).toHaveLength(2)
   })
 
+  it('複数のグループをまとめて読める。他のグループの記録は混ざらない', async () => {
+    const other = groupOf([{ user: taro, memberId: 'm9' }], { id: 'g2', inviteCode: 'invite-2' })
+    await drizzleGroupRepository(database.db).create(other)
+    await repository().create(transferOf())
+
+    const both = await repository().listByGroups([toGroupId('g1'), toGroupId('g2')])
+
+    expect(both).toEqual([{ record: transferOf(), version: 1 }])
+    expect(await repository().listByGroups([toGroupId('g2')])).toEqual([])
+    expect(await repository().listByGroups([])).toEqual([])
+  })
+
   it('存在しない Transfer は undefined', async () => {
     expect(await repository().find(toTransferId('いない'))).toBeUndefined()
   })

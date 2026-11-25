@@ -204,6 +204,11 @@ export const fakePaymentRepository = (
     listByGroup: async (groupId: GroupId) =>
       [...payments.values()].filter((payment) => idEquals(payment.record.groupId, groupId)),
 
+    listByGroups: async (groupIds: readonly GroupId[]) =>
+      [...payments.values()].filter((payment) =>
+        groupIds.some((groupId) => idEquals(payment.record.groupId, groupId)),
+      ),
+
     create: async (payment: Payment) => {
       payments.set(payment.id, { record: payment, version: INITIAL_VERSION })
       return INITIAL_VERSION
@@ -246,6 +251,11 @@ export const fakeTransferRepository = (
 
     listByGroup: async (groupId: GroupId) =>
       [...transfers.values()].filter((transfer) => idEquals(transfer.record.groupId, groupId)),
+
+    listByGroups: async (groupIds: readonly GroupId[]) =>
+      [...transfers.values()].filter((transfer) =>
+        groupIds.some((groupId) => idEquals(transfer.record.groupId, groupId)),
+      ),
 
     create: async (transfer: Transfer) => {
       transfers.set(transfer.id, { record: transfer, version: INITIAL_VERSION })

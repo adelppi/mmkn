@@ -1,4 +1,4 @@
-import { authClient, currentUserId } from '@/app/_lib/session'
+import { authClient, currentUser } from '@/app/_lib/session'
 import { wire } from '@/app/_lib/wire'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -13,7 +13,7 @@ export const scope = async () => {
   const client = await authClient()
   const usecases = wire({ correlationId: crypto.randomUUID() })
 
-  return { client, usecases, actor: await currentUserId(client) }
+  return { client, usecases, actor: (await currentUser(client))?.id }
 }
 
 /**

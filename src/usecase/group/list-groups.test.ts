@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { toGroupId, toMemberId } from '../../domain/id'
 import { groupOf, hanako, jiro, taro } from '../fixture'
 import {
@@ -96,6 +96,43 @@ describe('自分が Member であるグループを一覧する', () => {
     const result = await listGroups(deps())({ actor: taro.id })
 
     expect(result.ok && result.value.groups[0]?.balances).toEqual([])
+  })
+
+  it('複数のグループの記録が混ざらない', async () => {
+    const d = await withPayment(deps())
+    // 台湾旅行では、はなこが 3,000 JPY 支払い、負担者は 2 人。
+    const registered = await registerPayment(d)({
+      actor: hanako.id,
+      group: toGroupId('g2'),
+      payer: toMemberId('m4'),
+      bearers: [toMemberId('m3'), toMemberId('m4')],
+      amount: 3_000,
+      currency: 'JPY',
+      occurredOn: '2026-08-14',
+      description: '昼食',
+    })
+    expect(registered.ok).toBe(true)
+
+    const result = await listGroups(d)({ actor: jiro.id })
+
+    expect(
+      result.ok && result.value.groups.map(({ group, balances }) => [group.name, balances]),
+    ).toEqual([
+      ['台湾旅行', [{ currency: 'JPY', amount: -1_500 }]],
+      ['沖縄旅行', [{ currency: 'JPY', amount: -5_000 }]],
+    ])
+  })
+
+  it('グループの数によらず、支払いも送金も 1 回しか読まれない', async () => {
+    const d = deps()
+    const payments = vi.spyOn(d.payments, 'listByGroups')
+    const transfers = vi.spyOn(d.transfers, 'listByGroups')
+
+    const result = await listGroups(d)({ actor: jiro.id })
+
+    expect(result.ok && result.value.groups).toHaveLength(2)
+    expect(payments).toHaveBeenCalledTimes(1)
+    expect(transfers).toHaveBeenCalledTimes(1)
   })
 
   it('ログインしていなければ失敗する', async () => {

@@ -122,9 +122,9 @@ export function wire(context: LogContext) {
 
 ### セッションの読み取り
 
-**現在の `UserId` の解決は `infra/auth` に置き、cookie へのアクセス手段はアプリ層から注入する。**
+**操作する User の解決は `infra/auth` に置き、cookie へのアクセス手段はアプリ層から注入する。**
 
-cookie の読み取りはフレームワーク（`next/headers`）に依存するため、`infra/auth` に直接持たせると、下の検査ルールが `src/infra/**` に課している「`next/*` 禁止」に触れる。`app/_lib/session.ts` が読み取り手段を渡し、`infra/auth` はそれを使って `UserId` を返す。
+cookie の読み取りはフレームワーク（`next/headers`）に依存するため、`infra/auth` に直接持たせると、下の検査ルールが `src/infra/**` に課している「`next/*` 禁止」に触れる。`app/_lib/session.ts` が読み取り手段を渡し、`infra/auth` はそれを使って User を返す。
 
 ユースケースは `UserId` を入力で受け取るだけで、セッションの存在を知らない（`adr/0004` の「ユースケースは対象を常にアプリの ID で受け取る」と同じ形）。
 
@@ -191,7 +191,7 @@ proxy.ts                          … リクエストの入口。セッション
 app/
 ├─ _lib/
 │   ├─ wire.ts                    … ポート実装を組み、ユースケースを返す（合成ルート）
-│   └─ session.ts                 … infra/auth 経由で現在の UserId を得る
+│   └─ session.ts                 … infra/auth 経由で操作する User を得る
 ├─ _ui/                           … UI の部品（adr/0009）
 ├─ (web)/groups/[id]/
 │   ├─ page.tsx

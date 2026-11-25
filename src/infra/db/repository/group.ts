@@ -4,7 +4,7 @@ import type { Member } from '../../../domain/group/member'
 import type { GroupId, UserId } from '../../../domain/id'
 import type { CreateGroupOutcome, GroupRepository } from '../../../usecase/port/group-repository'
 import type { Database } from '../client'
-import { fromGroup, fromMember, toGroup, toGroups } from '../mapper/group'
+import { fromGroup, fromMember, toGroups } from '../mapper/group'
 import { groups, members } from '../schema'
 import { GROUPS_INVITE_CODE_UNIQUE, isUniqueViolation } from './constraint'
 
@@ -14,16 +14,19 @@ export const drizzleGroupRepository = (db: Database): GroupRepository => {
    * Group と、その Member を **1 本の問い合わせ**で読む。Member を別に引くと往復が 2 段になる。
    *
    * **外部結合にするのは、Member のいない Group を落とさないためである。**
-   * 鍵で 1 件に絞るため、たたみ直した結果は 0 件か 1 件になる。
    */
-  const load = async (where: SQL): Promise<Group | undefined> => {
-    const rows = await db
-      .select({ group: groups, member: members })
-      .from(groups)
-      .leftJoin(members, eq(members.groupId, groups.id))
-      .where(where)
+  const loadAll = async (where: SQL): Promise<readonly Group[]> =>
+    toGroups(
+      await db
+        .select({ group: groups, member: members })
+        .from(groups)
+        .leftJoin(members, eq(members.groupId, groups.id))
+        .where(where),
+    )
 
-    const [group] = toGroups(rows)
+  /** 鍵で 1 件に絞って読む。 */
+  const load = async (where: SQL): Promise<Group | undefined> => {
+    const [group] = await loadAll(where)
     return group
   }
 
@@ -37,28 +40,13 @@ export const drizzleGroupRepository = (db: Database): GroupRepository => {
     },
 
     async listByUser(userId: UserId) {
-      // その User が Member である Group の識別子を先に引く。
-      const belongs = await db
+      // **他の Member も読むため、その User の行だけに絞らない。** 絞り込むのは Group の側である。
+      const belongs = db
         .select({ groupId: members.groupId })
         .from(members)
         .where(eq(members.userId, userId))
 
-      const ids = belongs.map((row) => row.groupId)
-      if (ids.length === 0) return []
-
-      // **Group ごとに Member を引き直さない。** 該当する Group の Member をまとめて読み、
-      // Group の識別子で振り分ける（1 件ずつ読むと Group の数だけ問い合わせが増える）。
-      const [groupRows, memberRows] = await Promise.all([
-        db.select().from(groups).where(inArray(groups.id, ids)),
-        db.select().from(members).where(inArray(members.groupId, ids)),
-      ])
-
-      return groupRows.map((row) =>
-        toGroup(
-          row,
-          memberRows.filter((member) => member.groupId === row.id),
-        ),
-      )
+      return loadAll(inArray(groups.id, belongs))
     },
 
     async create(group: Group): Promise<CreateGroupOutcome> {

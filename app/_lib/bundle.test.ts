@@ -2,10 +2,13 @@ import {
   bundledGroups,
   bundledPayments,
   bundledTransfers,
+  bundledUsers,
   noBundling,
+  unbundled,
   type BundleReads,
 } from '@/app/_lib/bundle'
 import { toGroupId, toMemberId } from '@/src/domain/id'
+import { listGroups } from '@/src/usecase/group/list-groups'
 import { viewGroup } from '@/src/usecase/group/view-group'
 import { groupOf, jiro, taro } from '@/src/usecase/fixture'
 import {
@@ -14,6 +17,7 @@ import {
   fakeIdGenerator,
   fakePaymentRepository,
   fakeTransferRepository,
+  fakeUserRepository,
 } from '@/src/usecase/port/fake'
 import { listRecords } from '@/src/usecase/record/list-records'
 import { registerPayment } from '@/src/usecase/record/register-payment'
@@ -127,6 +131,61 @@ describe('読み取りだけの経路で取得を束ねる', () => {
     await Promise.all([bundled.findById(GROUP), bundled.findById(toGroupId('g2'))])
 
     expect(findById).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('操作する User を読み直さない', () => {
+  const read = (viewer?: () => Promise<typeof taro | undefined>) => {
+    const users = fakeUserRepository([taro, jiro])
+    const findById = vi.spyOn(users, 'findById')
+
+    return { findById, users: bundledUsers(users, bundling(), viewer) }
+  }
+
+  it('既に読まれている人なら、問い合わせない', async () => {
+    const { findById, users } = read(async () => taro)
+
+    expect(await users.findById(taro.id)).toEqual(taro)
+    expect(findById).not.toHaveBeenCalled()
+  })
+
+  it('違う人なら読みに行く', async () => {
+    const { findById, users } = read(async () => taro)
+
+    expect(await users.findById(jiro.id)).toEqual(jiro)
+    expect(findById).toHaveBeenCalledTimes(1)
+  })
+
+  it('ログインしていなければ読みに行く', async () => {
+    const { findById, users } = read(async () => undefined)
+
+    expect(await users.findById(taro.id)).toEqual(taro)
+    expect(findById).toHaveBeenCalledTimes(1)
+  })
+
+  it('既定（書き込みを伴う経路）では、毎回読む', async () => {
+    const repository = fakeUserRepository([taro])
+    const findById = vi.spyOn(repository, 'findById')
+    const users = bundledUsers(repository, unbundled.bundle, unbundled.viewer)
+
+    await users.findById(taro.id)
+    await users.findById(taro.id)
+
+    expect(findById).toHaveBeenCalledTimes(2)
+  })
+
+  it('グループ一覧は、User を読み直さずに返る', async () => {
+    const { findById, users } = read(async () => taro)
+
+    const result = await listGroups({
+      users,
+      groups: fakeGroupRepository([groupOf([{ user: taro, memberId: 'm1' }])]),
+      payments: fakePaymentRepository(),
+      transfers: fakeTransferRepository(),
+    })({ actor: taro.id })
+
+    expect(result.ok && result.value.groups).toHaveLength(1)
+    expect(findById).not.toHaveBeenCalled()
   })
 })
 

@@ -1,4 +1,4 @@
-import type { UserId } from '../../domain/id'
+import type { User } from '../../domain/group/user'
 import type { UserRepository } from '../../usecase/port/user-repository'
 import type { AuthClient } from './client'
 import { verificationKeys } from './jwks'
@@ -30,16 +30,15 @@ export const refreshSession = async (client: AuthClient): Promise<void> => {
   await client.auth.getSession()
 }
 
-/** 現在の `UserId`。ログインしていない、またはその人の User がまだいなければ `undefined`。 */
-export const currentUserId = async (
+/** 操作する User。ログインしていない、またはその人の User がまだいなければ `undefined`。 */
+export const currentUser = async (
   client: AuthClient,
   users: UserRepository,
-): Promise<UserId | undefined> => {
+): Promise<User | undefined> => {
   const loginIdentifier = await currentLoginIdentifier(client)
   if (loginIdentifier === undefined) return undefined
 
-  const user = await users.findByLoginIdentifier(loginIdentifier)
-  return user?.id
+  return users.findByLoginIdentifier(loginIdentifier)
 }
 
 /** ログインに使う外部サービス。**正は `docs/adr/0012-login.md`。** */
